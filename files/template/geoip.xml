@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Ip>{{data["ip"]}}</Ip>
+    <CountryCode>{{data["country_code"]}}</CountryCode>
+    <CountryName>{{data["country_name"]}}</CountryName>
+    <RegionCode>{{data["region_code"]}}</RegionCode>
+    <RegionName>{{data["region_name"]}}</RegionName>
+    <City>{{data["city"]}}</City>
+    <ZipCode>{{data["zipcode"]}}</ZipCode>
+    <Latitude>{{data["latitude"]}}</Latitude>
+    <Longitude>{{data["longitude"]}}</Longitude>
+    <MetroCode>{{data["metrocode"]}}</MetroCode>
+</Response>

@@ -17,16 +17,11 @@
 # under the License.
 
 import cyclone.web
+import cyclone.escape
+from twisted.python import log
+from twisted.internet import defer
+
+import freegeoip.search
 
 class IndexHandler(cyclone.web.RequestHandler):
     pass
-
-class CsvHandler(cyclone.web.RequestHandler):
-    pass
-
-class XmlHandler(cyclone.web.RequestHandler):
-    pass
-
-class JsonHandler(cyclone.web.RequestHandler):
-    pass
-

@@ -21,23 +21,35 @@ import cyclone.web
 from twisted.enterprise import adbapi
 
 import freegeoip.views
+import freegeoip.geoip
+import freegeoip.timezone
+
 
 class Application(cyclone.web.Application):
     def __init__(self, database):
         db = adbapi.ConnectionPool("sqlite3", database, cp_max=1)
 
+        tzre = r"([A-Z]{,2})/([0-9A-Z]{,2})?"
+
         handlers = [
-            (r"/",          freegeoip.views.IndexHandler),
-            (r"/csv/.+",    freegeoip.views.CsvHandler),
-            (r"/xml/.+",    freegeoip.views.XmlHandler),
-            (r"/json/.+",   freegeoip.views.JsonHandler),
+            (r"/", freegeoip.views.IndexHandler),
+
+            # geoip queries
+            (r"/csv/(.+)",  freegeoip.geoip.CsvHandler),
+            (r"/xml/(.+)",  freegeoip.geoip.XmlHandler),
+            (r"/json/(.+)", freegeoip.geoip.JsonHandler),
+
+            # timezone queries
+            (r"/tz/csv/"+tzre,  freegeoip.timezone.CsvHandler),
+            (r"/tz/xml/"+tzre,  freegeoip.timezone.XmlHandler),
+            (r"/tz/json/"+tzre, freegeoip.timezone.JsonHandler),
         ]
 
         cwd = os.path.dirname(os.path.dirname(__file__))
         settings = {
             "db": db,
-            "static_path": os.path.join(cwd, "data", "static"),
-            "template_path": os.path.join(cwd, "data", "template")
+            "static_path": os.path.join(cwd, "files", "static"),
+            "template_path": os.path.join(cwd, "files", "template")
         }
 
         cyclone.web.Application.__init__(self, handlers, **settings)
