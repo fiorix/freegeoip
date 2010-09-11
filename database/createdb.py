@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
         1. ip_group_city.csv
         See http://ipinfodb.com/ip_database.php for details.
-        Download from http://ipinfodb.com/download.php?file=ipinfodb_one_table_full.csv.zip
+        Download from http://mirrors.ipinfodb.com/ipinfodb/ip_database/current/ipinfodb_one_table_full.csv.zip
 
         2. tz.csv
         See http://ipinfodb.com/timezonedatabase.php for details.
