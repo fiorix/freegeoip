@@ -40,6 +40,13 @@ Running
 
 There is a wrapper script ``freegeoip-server`` to start the server. It is also used as a configuration file for basic settings like the port number and network interface to listen on, and the path to the local version of the geoip database.
 
+On some systems, it's required to set the environment variable PYTHONPATH to the directory where ``freegeoip`` is::
+
+    cd /opt/freegeoip
+    expore PYTHONPATH=`pwd`
+    ./freegeoip-server
+
+
 Requirements
 ------------
 

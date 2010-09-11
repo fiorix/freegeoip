@@ -39,7 +39,7 @@ $(document).ready(function(){
 	
 	// buttons
 	$(".menuitem").click(function(){ $(this).effect("pulsate", {times:1}, 1000); });
-	$("#apidocs_button").click(function(){ location.href="http://github.com/fiorix/freegeoip"; });
+	$("#apidocs_button").click(function(){ location.href="http://github.com/fiorix/freegeoip/blob/master/README.rst"; });
 	$("#download_button").click(function(){ location.href="http://github.com/fiorix/freegeoip"; });
 
 	// maps
