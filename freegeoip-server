@@ -15,12 +15,22 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+# set to 0 for production
+# 1 means run in foreground
 DEBUG=1
 
+# path to the local version of the db
 DATABASE=./database/ipdb.sqlite
+
+# port and interface to listen on
 PORT=8888
 LISTEN=127.0.0.1
 
+# uncommend the following line if you're running
+# the service behind nginx
+#XHEADERS=-x
+
+# set your reactor and path to log files
 REACTOR=select # epoll, kqueue
 LOGFILE=/var/log/freegeoip.log
 PIDFILE=/var/run/freegeoip.pid
@@ -30,5 +40,5 @@ then
     exec twistd -n freegeoip --database=$DATABASE --port=$PORT --listen=$LISTEN
 else
     exec twistd --logfile=$LOGFILE --pidfile=$PIDFILE --reactor=$REACTOR \
-    freegeoip --database=$DATABASE --port=$PORT --listen=$LISTEN
+    freegeoip --database=$DATABASE --port=$PORT --listen=$LISTEN $XHEADERS
 fi

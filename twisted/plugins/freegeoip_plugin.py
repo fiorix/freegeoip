@@ -24,6 +24,10 @@ from twisted.application import service, internet
 import freegeoip
 
 class Options(usage.Options):
+    optFlags = [
+        ["xheaders", "x", "set this when running behind nginx"],
+    ]
+
     optParameters = [
         ["database", "d", "database/ipdb.sqlite", "set geoip database"],
         ["port", "p", 8888, "port number to listen on"],
@@ -38,7 +42,7 @@ class ServiceMaker(object):
 
     def makeService(self, options):
         return internet.TCPServer(int(options["port"]),
-            freegeoip.Application(options["database"]),
+            freegeoip.Application(options["xheaders"], options["database"]),
             interface=options["listen"])
 
 serviceMaker = ServiceMaker()

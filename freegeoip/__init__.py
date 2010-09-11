@@ -25,7 +25,7 @@ import freegeoip.timezone
 
 
 class Application(cyclone.web.Application):
-    def __init__(self, database):
+    def __init__(self, xheaders, database):
         db = adbapi.ConnectionPool("sqlite3", database, cp_max=1)
 
         tzre = r"([A-Z]{,2})/([0-9A-Z]{,2})?"
@@ -48,6 +48,7 @@ class Application(cyclone.web.Application):
         cwd = os.path.dirname(os.path.dirname(__file__))
         settings = {
             "db": db,
+            "xheaders": xheaders,
             "static_path": os.path.join(cwd, "files", "static"),
             "template_path": os.path.join(cwd, "files", "template")
         }
