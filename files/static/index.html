@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>freegeoip.net: IP Geolocation Web Service</title>
+<link rel="stylesheet" type="text/css" href="/static/css/custom-theme/jquery-ui-1.7.2.custom.css"/>
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="/static/js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="/static/js/jquery-ui-1.7.2.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/jquery.corner.js"></script>
+<script type="text/javascript" src="/static/js/freegeoip.js"></script>
+</head>
+
+<body>
+<div id="error">
+    <p>Your query did not return results or they are Reserved IP addresses.</p>
+</div>
+  
+<div class="container">
+    <div class="header">
+        <div id="download_button" class="menuitem">SOURCE CODE</div>
+        <div id="apidocs_button" class="menuitem">API / DOCS</div>
+  	
+        <table width="800px" border="0">
+            <tr>
+                <td><h1>freegeoip.net</h1></td>
+                <td><p>IP Geolocation Web Service</p></td>
+            </tr>
+        </table>
+    </div>
+  
+    <div id="left" class="left">
+        <h2>What is it?</h2>
+        <p>FREE Web Service for searching <a href="http://en.wikipedia.org/wiki/Geolocation" target="_blank">Geolocation</a> of IP addresses, and time zones.</p>
+        <p>The database is VERY accurate and contains the following data about IP addresses and time zones:</p>
+        <ul>
+            <li><span>Country (code and name)</span></li>
+            <li><span>Region (code and name)</span></li>
+            <li><span>City Name</span></li>
+            <li><span>Zip Code</span></li>
+            <li><span>Latitude and Longitude</span></li>
+            <li><span>Timezone name, DST flag, and GMT offset</span></li>
+        </ul>
+
+        <p>Data is served in up to three different formats:</p>
+
+        <ul><li><span><a href="http://en.wikipedia.org/wiki/Comma-separated_values" target="_blank">CSV</a>, <a href="http://en.wikipedia.org/wiki/XML" target="_blank">XML</a> and <a href="http://en.wikipedia.org/wiki/JSON" target="_blank">JSON</a></span></li><li><span>JSON callbacks are supported</span></li></ul>
+
+        <p>Requests are simple <a href="http://en.wikipedia.org/wiki/Representational_State_Transfer#RESTful_web_services" target="_blank">REST URLs</a>, allowing anyone to query from any programming language, or even small scripts using tools like <a href="http://www.gnu.org/software/wget/" target="_blank">wget</a> or <a href="http://curl.haxx.se/" target="_blank">curl</a>.</p>
+    
+        <h2>What about the data?</h2>
+        <p>This service is powered by a FREE database, available from <a href="http://ipinfodb.com" target="_blank">http://ipinfodb.com</a>.</p>
+        <p>&quot;This product includes GeoLite data created by MaxMind, available from <a href="http://maxmind.com/" target="_blank">http://maxmind.com/</a>&quot;</p>
+        <small>Last update: Sep 10 2010</small>
+</div> <!-- container -->
+ 
+<div class="right">
+    <center><form id="geoip" action="javascript:">
+        <input type="text" value="ip or hostname" size="15" id="inputbox" />
+        <input type= "submit" value="search" id="searchbutton" />
+    </form></center><br />
+
+  	<div class="infobox">
+    	<iframe id="map" width="365" height="300" frameborder="0" scrolling="No" marginheight="0" marginwidth="0" src=""></iframe>
+    </div><br /><br /><br /><br />
+	
+    <center><span class="cyclone">powered by <a href="http://github.com/fiorix/cyclone">cyclone</a></span></center>
+     <br />
+     <center><a "href="http://itunes.apple.com/WebObjects/MZStore.woa/wa/viewSoftware?id=330076252&mt=8"><span class="iphone">iPhone version available in the App Store</span></a></center>
+     <br />
+     <p class="copyright">© 2010 freegeoip.net</p>
+  </div>
+</div>
+
+</body>
+</html>
