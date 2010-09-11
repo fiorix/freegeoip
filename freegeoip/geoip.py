@@ -27,10 +27,13 @@ class BaseHandler(cyclone.web.RequestHandler):
     @defer.inlineCallbacks
     def get(self, address):
         try:
-            ip, data = yield freegeoip.search.geoip(self.settings.db, address)
+            ip, data = yield freegeoip.search.geoip(self.settings.db, 
+                address or self.request.remote_ip)
+
             if data:
                 data = cyclone.escape.json_decode(data[0][1])
                 data["ip"] = ip
+
         except ValueError, e:
             raise cyclone.web.HTTPError(400)
 

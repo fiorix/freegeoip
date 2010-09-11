@@ -20,7 +20,6 @@ import os.path
 import cyclone.web
 from twisted.enterprise import adbapi
 
-import freegeoip.views
 import freegeoip.geoip
 import freegeoip.timezone
 
@@ -32,12 +31,13 @@ class Application(cyclone.web.Application):
         tzre = r"([A-Z]{,2})/([0-9A-Z]{,2})?"
 
         handlers = [
-            (r"/", freegeoip.views.IndexHandler),
+            # static content
+            (r"/", cyclone.web.RedirectHandler, {"url":"/static/index.html"}),
 
             # geoip queries
-            (r"/csv/(.+)",  freegeoip.geoip.CsvHandler),
-            (r"/xml/(.+)",  freegeoip.geoip.XmlHandler),
-            (r"/json/(.+)", freegeoip.geoip.JsonHandler),
+            (r"/csv/(.*)",  freegeoip.geoip.CsvHandler),
+            (r"/xml/(.*)",  freegeoip.geoip.XmlHandler),
+            (r"/json/(.*)", freegeoip.geoip.JsonHandler),
 
             # timezone queries
             (r"/tz/csv/"+tzre,  freegeoip.timezone.CsvHandler),
