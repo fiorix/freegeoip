@@ -43,7 +43,7 @@ There is a wrapper script ``freegeoip-server`` to start the server. It is also u
 On some systems, it's required to set the environment variable PYTHONPATH to the directory where ``freegeoip`` is::
 
     cd /opt/freegeoip
-    expore PYTHONPATH=`pwd`
+    export PYTHONPATH=`pwd`
     ./freegeoip-server
 
 
