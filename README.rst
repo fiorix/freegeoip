@@ -14,20 +14,21 @@ Using
 -----
 
 The web service supports three different formats: CSV, XML and JSON (with callbacks).
-For querying GeoIP information (using curl)::
+
+- For querying GeoIP information (using curl)::
 
     curl http://freegeoip.net/csv/google.com
     curl http://freegeoip.net/xml/69.63.189.16
     curl http://freegeoip.net/json/74.200.247.59
     curl http://freegeoip.net/json/github.com?callback=doit
 
-For querying GeoIP information about your own IP::
+- For querying GeoIP information about your own IP::
 
     curl http://freegeoip.net/csv/
     curl http://freegeoip.net/xml/
     curl http://freegeoip.net/json/
 
-For querying Timezone information (/tz/``country_code``/``region_code``::
+- For querying Timezone information (/tz/``country_code``/``region_code``)::
 
     curl http://freegeoip.net/tz/xml/BR/27
     curl http://freegeoip.net/tz/json/US/10
