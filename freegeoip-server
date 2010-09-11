@@ -30,6 +30,10 @@ LISTEN=127.0.0.1
 # the service behind nginx
 #XHEADERS=-x
 
+# user and group to run the server with
+USER=www-data
+GROUP=www-data
+
 # set your reactor and path to log files
 REACTOR=select # epoll, kqueue
 LOGFILE=/var/log/freegeoip.log
@@ -39,6 +43,6 @@ if [ $DEBUG -eq 1 ]
 then
     exec twistd -n freegeoip --database=$DATABASE --port=$PORT --listen=$LISTEN
 else
-    exec twistd --logfile=$LOGFILE --pidfile=$PIDFILE --reactor=$REACTOR \
+    exec twistd --logfile=$LOGFILE --pidfile=$PIDFILE --reactor=$REACTOR --uid=$USER --gid=$GROUP \
     freegeoip --database=$DATABASE --port=$PORT --listen=$LISTEN $XHEADERS
 fi
