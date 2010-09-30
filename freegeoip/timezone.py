@@ -22,10 +22,9 @@ from twisted.internet import defer
 import freegeoip.search
 
 class BaseHandler(cyclone.web.RequestHandler):
-    @defer.inlineCallbacks
     def get(self, country_code, region_code):
         try:
-            data = yield freegeoip.search.timezone(self.settings.db, country_code, region_code)
+            data = freegeoip.search.timezone(self.settings.db, country_code, region_code)
             if data:
                 data = {"gmtoff":data[0][0], "isdst":data[0][1], "timezone":data[0][2]}
         except Exception, e:

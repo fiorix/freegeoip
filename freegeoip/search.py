@@ -39,7 +39,7 @@ def geoip(db, address):
         except:
             raise ValueError
 
-    result = yield db.runQuery("""
+    result = db.runQuery("""
         SELECT * FROM ip_group_city 
         WHERE ip_start < ? 
         ORDER BY ip_start DESC LIMIT 1""", (ip,))

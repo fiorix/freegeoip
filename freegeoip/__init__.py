@@ -18,15 +18,25 @@
 
 import os.path
 import cyclone.web
-from twisted.enterprise import adbapi
 
 import freegeoip.geoip
 import freegeoip.timezone
 
+import sqlite3
+
+class InlineSQLite:
+    def __init__(self, filename):
+        self.conn = sqlite3.connect(filename)
+        self.curs = self.conn.cursor()
+
+    def runQuery(self, query, *args, **kwargs):
+        self.curs.execute(query, *args, **kwargs)
+        return [row for row in self.curs]
+
 
 class Application(cyclone.web.Application):
     def __init__(self, xheaders, database):
-        db = adbapi.ConnectionPool("sqlite3", database, cp_max=1)
+        db = InlineSQLite(database)
 
         tzre = r"([A-Z]{,2})/([0-9A-Z]{,2})?"
 
