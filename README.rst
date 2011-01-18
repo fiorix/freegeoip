@@ -7,7 +7,7 @@ freegeoip.net
 About
 =====
 
-This is the software running behind the FREE IP Geolocation Web Service at `freegeoip.net <http://freegeoip.net>`_. 
+This is the software running behind the FREE IP Geolocation Web Service at `freegeoip.net <http://freegeoip.net>`_.
 The database is not shipped with the package. However, there are instructions for downloading and generating a local version of the database, using the ``database/createdb.py`` python script.
 
 Using
@@ -54,6 +54,17 @@ Requirements
 - `SQLite3 <http://www.sqlite.org/>`_ (usually ships with Python)
 - `Twisted <http://twistedmatrix.com/trac/>`_ 8.2 or newer
 - `Cyclone <http://github.com/fiorix/cyclone/>`_
+
+From the Command Line
+---------------------
+
+I usually use the following on ~/.bash_profile or ~/.bashrc in order to easily use geoip from the Unix command line::
+
+    # geoip
+    function geoip_curl_xml {
+        curl -D - http://freegeoip.net/xml/$1
+    }
+    alias geoip=geoip_curl_xml
 
 
 Credits
