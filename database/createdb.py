@@ -34,7 +34,7 @@ class import_city:
         for row in reader:
             data = {}
             for k, v in zip(headers[1:], row[1:]):
-                data[k] = v
+                data[k] = str(v)
 
             entities.append([row[0], simplejson.dumps(data)])
 
@@ -42,7 +42,7 @@ class import_city:
             if count % 10000 == 0:
                 self.insert(conn, curs, entities)
                 entities = []
-        
+
         if entities:
             self.insert(conn, curs, entities)
 
@@ -137,7 +137,7 @@ if __name__ == '__main__':
 
         2. tz.csv
         See http://ipinfodb.com/timezonedatabase.php for details.
-        Download from http://mirrors.ipinfodb.com/ipinfodb/timezonedatabase/tz.csv.zip   
+        Download from http://mirrors.ipinfodb.com/ipinfodb/timezonedatabase/tz.csv.zip
         """)
         sys.exit(1)
 

@@ -40,8 +40,8 @@ def geoip(db, address):
             raise ValueError
 
     result = db.runQuery("""
-        SELECT * FROM ip_group_city 
-        WHERE ip_start < ? 
+        SELECT data FROM ip_group_city
+        WHERE ip_start < ?
         ORDER BY ip_start DESC LIMIT 1""", (ip,))
 
     defer.returnValue((address, result))

@@ -27,11 +27,11 @@ class BaseHandler(cyclone.web.RequestHandler):
     @defer.inlineCallbacks
     def get(self, address):
         try:
-            ip, data = yield freegeoip.search.geoip(self.settings.db, 
+            ip, data = yield freegeoip.search.geoip(self.settings.db,
                 address or self.request.remote_ip)
 
             if data:
-                data = cyclone.escape.json_decode(data[0][1])
+                data = cyclone.escape.json_decode(data[0][0])
                 data["ip"] = ip
 
         except ValueError, e:
@@ -48,7 +48,7 @@ class BaseHandler(cyclone.web.RequestHandler):
 
     def dump(self, data):
         raise NotImplementedError
-    
+
 
 class CsvHandler(BaseHandler):
     def dump(self, data):
