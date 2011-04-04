@@ -43,6 +43,7 @@ class Application(cyclone.web.Application):
         handlers = [
             # static content
             (r"/", cyclone.web.RedirectHandler, {"url":"/static/index.html"}),
+            (r"/crossdomain.xml", cyclone.web.RedirectHandler, {"url":"/static/crossdomain.xml"}),
 
             # geoip queries
             (r"/csv/(.*)",  freegeoip.geoip.CsvHandler),
