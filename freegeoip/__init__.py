@@ -40,10 +40,19 @@ class Application(cyclone.web.Application):
 
         tzre = r"([A-Z]{,2})/([0-9A-Z]{,2})?"
 
+        cwd = os.path.dirname(os.path.dirname(__file__))
+        settings = {
+            "db": db,
+            "xheaders": xheaders,
+            "static_path": os.path.join(cwd, "files", "static"),
+            "template_path": os.path.join(cwd, "files", "template")
+        }
+
         handlers = [
             # static content
             (r"/", cyclone.web.RedirectHandler, {"url":"/static/index.html"}),
-            (r"/crossdomain.xml", cyclone.web.RedirectHandler, {"url":"/static/crossdomain.xml"}),
+            (r"/(crossdomain.xml)", cyclone.web.StaticFileHandler,
+                dict(path=settings["static_path"])),
 
             # geoip queries
             (r"/csv/(.*)",  freegeoip.geoip.CsvHandler),
@@ -55,13 +64,5 @@ class Application(cyclone.web.Application):
             (r"/tz/xml/"+tzre,  freegeoip.timezone.XmlHandler),
             (r"/tz/json/"+tzre, freegeoip.timezone.JsonHandler),
         ]
-
-        cwd = os.path.dirname(os.path.dirname(__file__))
-        settings = {
-            "db": db,
-            "xheaders": xheaders,
-            "static_path": os.path.join(cwd, "files", "static"),
-            "template_path": os.path.join(cwd, "files", "template")
-        }
 
         cyclone.web.Application.__init__(self, handlers, **settings)
