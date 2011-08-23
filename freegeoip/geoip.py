@@ -18,6 +18,7 @@
 
 import cyclone.web
 import cyclone.escape
+import socket
 from twisted.python import log
 from twisted.internet import defer
 
@@ -34,7 +35,10 @@ class BaseHandler(cyclone.web.RequestHandler):
                 data = cyclone.escape.json_decode(data[0][0])
                 data["ip"] = ip
 
-        except ValueError, e:
+        except socket.error:
+            raise cyclone.web.HTTPError(404)
+
+        except ValueError:
             raise cyclone.web.HTTPError(400)
 
         except Exception, e:

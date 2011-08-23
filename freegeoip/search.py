@@ -18,9 +18,11 @@
 
 import struct, socket
 from twisted.internet import defer, threads
+from twisted.names.client import getHostByName
 
 def gethostbyname(hostname):
-    return threads.deferToThread(socket.gethostbyname, hostname)
+    return getHostByName(hostname)
+#    return threads.deferToThread(socket.gethostbyname, hostname)
 
 def ip2uint32(address):
     return struct.unpack("!I", socket.inet_aton(address))[0]
@@ -37,7 +39,7 @@ def geoip(db, address):
             address = yield gethostbyname(address)
             ip = ip2uint32(address)
         except:
-            raise ValueError
+            raise socket.error
 
     result = db.runQuery("""
         SELECT data FROM ip_group_city
