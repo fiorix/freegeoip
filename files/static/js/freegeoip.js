@@ -20,7 +20,7 @@ function showResult(rs) {
         if(rs.latitude && rs.longitude) {
             location = rs.latitude.toFixed(2) + " " + rs.longitude.toFixed(2);
 
-        } else if(rs.country_name) { 
+        } else if(rs.country_name) {
             location = rs.countryname;
 
         } else {
@@ -36,7 +36,7 @@ $(document).ready(function(){
 	// widgets and dialogs
 	$("#left").corner("10px tl bl");
 	$("#error").dialog({autoOpen:false,width:600,modal:true,show:'puff',hide:'puff',buttons:{"Ok": function() {$(this).dialog("close");}}, title:'Ooops!'});
-	
+
 	// buttons
 	$(".menuitem").click(function(){ $(this).effect("pulsate", {times:1}, 1000); });
 	$("#apidocs_button").click(function(){ location.href="http://github.com/fiorix/freegeoip/blob/master/README.rst"; });
@@ -47,14 +47,15 @@ $(document).ready(function(){
 		var addr = $("input:first").val();
 		if(addr && addr != "ip or hostname") {
 			$("#searchbutton").effect("pulsate", {times:1}, 1000);
+            $.ajaxSetup({"error":function(){ $("#error").dialog("open"); }});
 			$.getJSON("/json/"+addr, function(rs){ if(!showResult(rs)) { $("#error").dialog("open"); } });
 		}
 	});
-	
+
 	$.getJSON("/json/", function(rs) {
 		if(rs.ip) { $("#inputbox").attr("value", rs.ip); }
 		if(!showResult(rs)) { $("#map").attr("src", mapurl+"z=0&q=africa"); }
 	});
-	
+
 	return false;
 });
