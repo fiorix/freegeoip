@@ -67,8 +67,9 @@ class XmlHandler(BaseHandler):
 class JsonHandler(BaseHandler):
     def dump(self, data):
         callback = self.get_argument("callback", None)
-        self.set_header("Content-Type", "application/json")
         if callback:
+            self.set_header("Content-Type", "text/javascript")
             self.finish("%s(%s);" % (callback, cyclone.escape.json_encode(data)))
         else:
+            self.set_header("Content-Type", "application/json")
             self.finish(cyclone.escape.json_encode(data))
