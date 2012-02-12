@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ### BEGIN INIT INFO
 # Provides:          foobar
@@ -19,7 +19,7 @@ SERVICE_NAME=foobar
 INSTANCES=4
 START_PORT=9901
 LISTEN="127.0.0.1"
-CONFIG=/path/to/$SERVICE_NAME.conf
+CONFIG=$SERVICE_DIR/$SERVICE_NAME.conf
 # Check out the start_service function for other customization options 
 # such as setting CPU affinity.
 
@@ -61,6 +61,7 @@ start_service() {
 
     # Set CPU affinity
     if [ -x /usr/bin/taskset ]; then
+      sleep 1
       /usr/bin/taskset -pc $n `cat $PIDFILE` &> /dev/null
     fi
   done
