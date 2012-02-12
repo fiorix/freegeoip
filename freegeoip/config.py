@@ -24,12 +24,15 @@ def parse_config(filename):
     settings["xsrf_cookies"] = xget(cfg.getboolean, "server", "xsrf_cookies", False)
     settings["cookie_secret"] = cfg.get("server", "cookie_secret")
 
+    # service limits
+    settings["expire"] = xget(cfg.getint, "limits", "expire", 3600)
+    settings["max_requests"] = xget(cfg.getint, "limits", "max_requests", 1000)
+
     # get project's absolute path
     root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     getpath = lambda k, v: os.path.join(root, xget(cfg.get, k, v))
 
     # locale, template and static directories' path
-    settings["locale_path"] = getpath("frontend", "locale_path")
     settings["static_path"] = getpath("frontend", "static_path")
     settings["template_path"] = getpath("frontend", "template_path")
 

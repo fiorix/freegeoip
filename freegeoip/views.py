@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import os
+import functools
 import socket
 import struct
 
@@ -23,6 +24,47 @@ def _gethostbyname(hostname):
     #return getHostByName(hostname)
     return threads.deferToThread(socket.gethostbyname, hostname)
 
+def checkQuota(method):
+    @defer.inlineCallbacks
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        key = "ip:%s" % self.request.remote_ip
+
+        try:
+            n = yield self.redis.get(key)
+        except Exception, e:
+            log.msg("Redis failed to get('%s'): %s" % (key, str(e)))
+            raise cyclone.web.HTTPError(503)
+
+        if n is None:
+            try:
+                yield self.redis.set(key, 1)
+            except Exception, e:
+                log.msg("Redis failed to set('%s', 1): %s" % (key, str(e)))
+                raise cyclone.web.HTTPError(503)
+
+            try:
+                yield self.redis.expire(key, self.settings.expire)
+            except Exception, e:
+                log.msg("Redis failed to expire('%s', %d): %s" % \
+                    (key, self.settings.expire, str(e)))
+                raise cyclone.web.HTTPError(503)
+
+        elif n <= self.settings.max_requests:
+            try:
+                yield self.redis.incr(key)
+            except Exception, e:
+                log.msg("Redis failed to incr('%s'): %s" % (key, str(e)))
+                raise cyclone.web.HTTPError(503)
+
+        else:
+            # Over quota, take this.
+            raise cyclone.web.HTTPError(403) # Forbidden
+
+        yield defer.maybeDeferred(method, self, *args, **kwargs)
+        defer.returnValue(None)
+    return wrapper
+
 
 class IndexHandler(BaseHandler):
     def get(self):
@@ -30,6 +72,7 @@ class IndexHandler(BaseHandler):
 
 
 class SearchIpHandler(BaseHandler, DatabaseMixin):
+    @checkQuota
     @defer.inlineCallbacks
     def get(self, fmt, address):
         address = address or self.request.remote_ip
@@ -70,6 +113,7 @@ class SearchIpHandler(BaseHandler, DatabaseMixin):
 
 
 class SearchTzHandler(BaseHandler, DatabaseMixin):
+    @checkQuota
     def get(self, fmt, country_code, region_code):
         try:
             rs = self.sqlite.runQuery("""
