@@ -14,6 +14,8 @@ class Application(cyclone.web.Application):
             (r"/",  cyclone.web.RedirectHandler, {"url":"/static/index.html"}),
             (ip_re, views.SearchIpHandler),
             (tz_re, views.SearchTzHandler),
+            (r"/(crossdomain.xml)", cyclone.web.StaticFileHandler,
+                                    dict(path=settings["static_path"]))
         ]
 
         utils.DatabaseMixin().setup(settings)
