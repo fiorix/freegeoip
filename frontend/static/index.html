@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>freegeoip.net</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" rel="stylesheet">
+    <style>
+      body {
+        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+      }
+      h1 {
+        color: #333;
+        font-size: 85px;
+        font-weight: bold;
+      }
+      h1 small {
+        color: #555;
+        font-size: 25px;
+        font-weight: bold;
+      }
+    </style>
+    <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap-responsive.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <h1>freegeoip.net <small>IP Geolocation Web Service</small></h1>
+      <br><br>
+
+      <div class="row">
+        <div class="span4">
+          <form class="form-search" id="ip_form">
+            <center>
+            <input type="text" class="span2 focused" id="ip_addr" placeholder="IP or Hostname">
+            <button type="submit" class="btn btn-primary">Search</button>
+            </center>
+          </form>
+
+          <div id="info"></div>
+        </div><!--/span6-->
+        <div class="span8" style="background-color:black;padding:5px 0 5px 0;">
+          <iframe id="map" class="span7" frameborder="0" scrolling="no"
+           marginwidth="0" marginheight="0" src="" style="margin-left:6.5%"></iframe>
+        </div><!--/span6-->
+      </div><!--/row-->
+
+      <br><br>
+      <div class="row">
+        <div class="span8">
+          <h2>About</h2>
+          <p>The <a href="http://freegeoip.net">freegeoip.net</a> offers a public <a href="http://en.wikipedia.org/wiki/Representational_state_transfer">RESTful Web Service</a> for searching <a href="http://en.wikipedia.org/wiki/Geolocation_software">geolocation</a> of IP addresses and host names.</p>
+          <p>This system has an internal database with geolocation information, which is queried via the web service. There's no magic or tricky calculations, it's a database. Thus, although it's very accurate, don't expect it to be perfect.</p>
+          <p>Originally, the database used by this system was provided by <a href="http://ipinfodb.com/">IPInfoDB</a>, as an improved version of the free database provided by <a href="http://www.maxmind.com/">MaxMind</a>. They are no longer distributing it for free.</a>
+          <p>The database was last updated in April 29, 2011</p>
+
+          <h2>Limits</h2>
+          <p>Due to the high volume of queries, we're implementing a throttling mechanism which allows at most 1000 queries per hour. After reaching this hourly quota, all of your requests will result in HTTP 503 (Service Unavailable) until it clears up on the next roll over.</p>
+          <p>There's absolutely no plans of selling services here. If this limit is a problem for you, please consider running your very own instance of this system. It's open source and freely available at GitHub.</p>
+          <a class="btn btn-primary" href="http://github.com/fiorix/freegeoip">Check out the source code</a>
+
+          <br><br>
+          <h3>Contact</h3>
+          <p>Feel free to share comments, suggestions or any other feedback. <a href="https://github.com/fiorix/">I'm here.</a></p>
+        </div><!--/span4-->
+
+        <div class="span4">
+          <h2>Usage</h2>
+          <p>Querying the web service very is simple. Make HTTP GET requests to:</p><p><code>http://freegeoip.net/{format}/{ip_or_hostname}</code></p>
+          <p>Where <i>format</i> is one of the available formats (<a href="http://en.wikipedia.org/wiki/Comma-separated_values">csv</a>, <a href="http://en.wikipedia.org/wiki/XML">xml</a> or <a href="http://en.wikipedia.org/wiki/JSON">json</a> - lower case). <i>IP or host name</i> is optional. It will search <i>your</i> IP if one is not provided.</p>
+          <p>JSON callbacks are supported by adding the <i>callback</i> argument to the query string:</p><p><code>http://freegeoip.net/json/google.com?callback=show</code></p>
+          <p>Results in:</p>
+          <pre>show({"city": "Mountain View", "region_code": "CA", "region_name": "California", "metrocode": "807", "zipcode": "94043", "longitude": "-122.057", "country_name": "United States", "country_code": "US", "ip": "209.85.145.147", "latitude": "37.4192"});</pre>
+        </div><!--/span4-->
+
+      </div><!--/row-->
+
+    </div> <!-- /container -->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script>
+      var mapurl = "http://maps.google.com/maps?f=q&source=s_q&hl=en&geocode=&ie=UTF8&iwloc=A&output=embed&";
+
+      function no_results(addr)
+      {
+        addr = addr!=null?addr:'your IP address';
+        var msg = '<div class="alert alert-block">No results for <i>'+addr+'</i></div>'+
+                  '<p>Try one of the following:</p>'+
+                  '<ul>'+
+                  '<li>Make sure you enter a valid IP address, or</li>'+
+                  '<li>A valid host name, or domain name (i.e.: google.com)</li>'+
+                  '<ul>';
+        $("#info").html(msg);
+      }
+
+      function search(addr)
+      {
+        $.getJSON("/json/"+(addr!=null?addr:''), function(rs){
+          if (rs.ip) {
+            $("#ip_addr").attr("value", rs.ip);
+          }
+
+          var qs = "";
+          var zoom = 2;
+          if (rs.country_name && rs.country_code != "RD") {
+            if (rs.region_name) {
+              if (rs.city) {
+                zoom = 6;
+                qs = rs.city+","+rs.region_name+","+rs.country_name;
+              } else {
+                zoom = 4;
+                qs = rs.region_name+","+rs.country_name;
+              }
+            } else {
+              if ((rs.latitude != 0) && (rs.longitude != 0)) {
+                var lat = new Number(rs.latitude).toFixed(2);
+                var lon = new Number(rs.longitude).toFixed(2);
+                qs = lat+" "+lon;
+              } else {
+                qs = rs.country_name;
+              }
+            }
+
+            var msg = '<h3>Response:</h3>'+
+              '<table class="table table-striped"><tbody>'+
+              '<tr><td>Country</td><td>'+rs.country_name+(rs.country_code?'('+rs.country_code+')':'')+'</td></tr>'+
+              '<tr><td>Region</td><td>'+rs.region_name+(rs.region_code?'('+rs.region_code+')':'')+'</td></tr>'+
+              '<tr><td>City</td><td>'+rs.city+'</td></tr>'+
+              '<tr><td>Zip code</td><td>'+rs.zipcode+'</td></tr>'+
+              '<tr><td>Latitude, Longitude</td><td>'+rs.latitude+", "+rs.longitude+'</td></tr>'+
+              '<tr><td>Metro code</td><td>'+rs.metrocode+'</td></tr>'+
+              '</tbody></table>';
+            $("#info").html(msg);
+          } else {
+            no_results(addr);
+            qs = "africa";
+          }
+
+          $("#map").attr("src", mapurl+"z="+zoom+"&q="+qs);
+        })
+        .error(function(){ no_results(addr); });
+      }
+
+      $(document).ready(function(){
+        $("#ip_addr").focus();
+        $("#map").height($("#map").width()/2.2);
+        $("#ip_form").submit(function(){
+          search($("#ip_addr").val());
+          return false;
+        });
+
+        // search your own ip on load
+        search();
+      });
+    </script>
+
+  </body>
+</html>
