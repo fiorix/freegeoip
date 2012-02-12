@@ -20,7 +20,7 @@ INSTANCES=4
 START_PORT=9901
 LISTEN="127.0.0.1"
 CONFIG=$SERVICE_DIR/$SERVICE_NAME.conf
-# Check out the start_service function for other customization options 
+# Check out the start_service function for other customization options
 # such as setting CPU affinity.
 
 # Set python path so twistd can find the plugin
@@ -94,7 +94,9 @@ case "$1" in
     stop_service
     ;;
   restart)
+    sp=$START_PORT
     stop_service
+    START_PORT=$sp
     start_service
     ;;
   *)
