@@ -98,12 +98,14 @@ class SearchIpHandler(BaseHandler, DatabaseMixin):
         else:
             raise cyclone.web.HTTPError(404)
 
+        rs = cyclone.escape.json_decode(json_data)
+        rs["ip"] = address
+
         if fmt in ("csv", "xml"):
-            rs = cyclone.escape.json_decode(json_data)
-            rs["ip"] = address
             self.set_header("Content-Type", "text/%s" % fmt)
             self.render("geoip.%s" % fmt, data=rs)
         else:
+            json_data = cyclone.escape.json_encode(rs)
             callback = self.get_argument("callback", None)
             if callback:
                 self.set_header("Content-Type", "text/javascript")
