@@ -4,7 +4,6 @@ import os
 import functools
 import socket
 import struct
-import datetime
 
 import cyclone.escape
 import cyclone.locale
@@ -29,20 +28,25 @@ def checkQuota(method):
     @defer.inlineCallbacks
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
-        # quota key: freegeoip:IP:YYYY:MM:DD:HH:MM
-        key = "freegeoip:quota:%s:%s" % (self.request.remote_ip,
-                datetime.datetime.now().strftime("%Y:%m:%d:%H:%M"))
+        key = "ip:%s" % _ip2uint32(self.request.remote_ip)
 
         try:
             n = yield self.redis.incr(key)
-            yield self.redis.expire(key, self.settings.expire)
-
-            if n >= self.settings.max_requests:
-                raise cyclone.web.HTTPError(403) # Over quota
-
         except Exception, e:
-            log.msg("Redis errors: key: %s - msg: %s" % (key, str(e)))
+            log.msg("Redis failed to incr('%s'): %s" % (key, str(e)))
             raise cyclone.web.HTTPError(503)
+
+        if n == 1:
+            try:
+                yield self.redis.expire(key, self.settings.expire)
+            except Exception, e:
+                log.msg("Redis failed to expire('%s', %d): %s" % \
+                    (key, self.settings.expire, str(e)))
+                raise cyclone.web.HTTPError(503)
+
+        elif n > self.settings.max_requests:
+            # Over quota, take this.
+            raise cyclone.web.HTTPError(403) # Forbidden
 
         yield defer.maybeDeferred(method, self, *args, **kwargs)
         defer.returnValue(None)

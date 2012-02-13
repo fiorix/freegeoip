@@ -1,23 +1,23 @@
 #!/bin/bash
 
 ### BEGIN INIT INFO
-# Provides:          foobar
+# Provides:          freegeoip
 # Required-Start:    $all
 # Required-Stop:     $all
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Starts a service for the Twisted plugin 'foobar'
-# Description:       Foobar
+# Short-Description: Starts a service for the Twisted plugin 'freegeoip'
+# Description:       Free GEOIP
 ### END INIT INFO
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/twistd
 
-SERVICE_DIR=/path/to/foobar
-SERVICE_NAME=foobar
+SERVICE_DIR=/opt/freegeoip
+SERVICE_NAME=freegeoip
 
 INSTANCES=4
-START_PORT=9901
+START_PORT=8880
 LISTEN="127.0.0.1"
 CONFIG=$SERVICE_DIR/$SERVICE_NAME.conf
 # Check out the start_service function for other customization options
@@ -43,7 +43,8 @@ start_service() {
   do
     PORT=$[START_PORT]
     PIDFILE=/var/run/$SERVICE_NAME.$PORT.pid
-    LOGFILE=/var/log/$SERVICE_NAME.$PORT.log
+    #LOGFILE=/var/log/$SERVICE_NAME.$PORT.log
+    LOGFILE=/dev/null
     DAEMON_OPTS="--pidfile=$PIDFILE --logfile=$LOGFILE $SERVICE_NAME -p $PORT -l $LISTEN -c $CONFIG"
     START_PORT=$[PORT+1]
 
@@ -60,8 +61,8 @@ start_service() {
     fi
 
     # Set CPU affinity
+    sleep 1
     if [ -x /usr/bin/taskset ]; then
-      sleep 1
       /usr/bin/taskset -pc $n `cat $PIDFILE` &> /dev/null
     fi
   done
