@@ -16,7 +16,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import simplejson
+import json
 import os, sys, csv, sqlite3
 
 dbname = "ipdb.sqlite"
@@ -36,7 +36,7 @@ class import_city:
             for k, v in zip(headers[1:], row[1:]):
                 data[k] = str(v)
 
-            entities.append([row[0], simplejson.dumps(data)])
+            entities.append([row[0], json.dumps(data)])
 
             count += 1
             if count % 10000 == 0:

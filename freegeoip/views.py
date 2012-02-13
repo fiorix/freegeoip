@@ -4,6 +4,7 @@ import os
 import functools
 import socket
 import struct
+import datetime
 
 import cyclone.escape
 import cyclone.locale
@@ -28,38 +29,20 @@ def checkQuota(method):
     @defer.inlineCallbacks
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
-        key = "ip:%s" % self.request.remote_ip
+        # quota key: freegeoip:IP:YYYY:MM:DD:HH:MM
+        key = "freegeoip:quota:%s:%s" % (self.request.remote_ip,
+                datetime.datetime.now().strftime("%Y:%m:%d:%H:%M"))
 
         try:
-            n = yield self.redis.get(key)
+            n = yield self.redis.incr(key)
+            yield self.redis.expire(key, self.settings.expire)
+
+            if n >= self.settings.max_requests:
+                raise cyclone.web.HTTPError(403) # Over quota
+
         except Exception, e:
-            log.msg("Redis failed to get('%s'): %s" % (key, str(e)))
+            log.msg("Redis errors: key: %s - msg: %s" % (key, str(e)))
             raise cyclone.web.HTTPError(503)
-
-        if n is None:
-            try:
-                yield self.redis.set(key, 1)
-            except Exception, e:
-                log.msg("Redis failed to set('%s', 1): %s" % (key, str(e)))
-                raise cyclone.web.HTTPError(503)
-
-            try:
-                yield self.redis.expire(key, self.settings.expire)
-            except Exception, e:
-                log.msg("Redis failed to expire('%s', %d): %s" % \
-                    (key, self.settings.expire, str(e)))
-                raise cyclone.web.HTTPError(503)
-
-        elif n <= self.settings.max_requests:
-            try:
-                yield self.redis.incr(key)
-            except Exception, e:
-                log.msg("Redis failed to incr('%s'): %s" % (key, str(e)))
-                raise cyclone.web.HTTPError(503)
-
-        else:
-            # Over quota, take this.
-            raise cyclone.web.HTTPError(403) # Forbidden
 
         yield defer.maybeDeferred(method, self, *args, **kwargs)
         defer.returnValue(None)
