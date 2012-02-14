@@ -44,8 +44,7 @@ start_service() {
     PORT=$[START_PORT]
     PIDFILE=/var/run/$SERVICE_NAME.$PORT.pid
     #LOGFILE=/var/log/$SERVICE_NAME.$PORT.log
-    LOGFILE=/dev/null
-    DAEMON_OPTS="--pidfile=$PIDFILE --logfile=$LOGFILE $SERVICE_NAME -p $PORT -l $LISTEN -c $CONFIG"
+    DAEMON_OPTS="--pidfile=$PIDFILE $SERVICE_NAME -p $PORT -l $LISTEN -c $CONFIG"
     START_PORT=$[PORT+1]
 
     start-stop-daemon -Sq -p $PIDFILE -x $DAEMON -- $DAEMON_OPTS
