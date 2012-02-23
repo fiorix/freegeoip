@@ -49,9 +49,9 @@
 
           <div id="info"></div>
         </div><!--/span6-->
-        <div class="span8" style="background-color:black;padding:5px 0 5px 0;">
-          <iframe id="map" class="span7" frameborder="0" scrolling="no"
-           marginwidth="0" marginheight="0" src="" style="margin-left:6.5%"></iframe>
+        <div class="span8">
+          <iframe id="map" class="span8" frameborder="0" scrolling="no"
+           marginwidth="0" marginheight="0" src=""></iframe>
         </div><!--/span6-->
       </div><!--/row-->
 
@@ -175,7 +175,7 @@
 
       $(document).ready(function(){
         $("#ip_addr").focus();
-        $("#map").height($("#map").width()/2.2);
+        $("#map").height($("#map").width()/2);
         $("#ip_form").submit(function(){
           search($("#ip_addr").val());
           return false;

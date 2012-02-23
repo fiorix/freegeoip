@@ -88,6 +88,7 @@ class SearchIpHandler(BaseHandler, DatabaseMixin):
         rs = cyclone.escape.json_decode(json_data)
         rs["ip"] = address
 
+        self.set_header("Access-Control-Allow-Origin", "*")
         if fmt in ("csv", "xml"):
             self.set_header("Content-Type", "text/%s" % fmt)
             self.render("geoip.%s" % fmt, data=rs)
@@ -98,6 +99,7 @@ class SearchIpHandler(BaseHandler, DatabaseMixin):
                 self.set_header("Content-Type", "text/javascript")
                 self.finish("%s(%s);" % (callback, json_data))
             else:
+                self.set_header("Content-Type", "application/json")
                 self.finish(json_data)
 
 
@@ -126,6 +128,7 @@ class SearchTzHandler(BaseHandler, DatabaseMixin):
         if not rs:
             raise cyclone.web.HTTPError(404)
 
+        self.set_header("Access-Control-Allow-Origin", "*")
         if fmt in ("csv", "xml"):
             self.set_header("Content-Type", "text/%s" % fmt)
             self.render("timezone.%s" % fmt, data=rs)
@@ -133,6 +136,8 @@ class SearchTzHandler(BaseHandler, DatabaseMixin):
             callback = self.get_argument("callback", None)
             json_data = cyclone.escape.json_encode(rs)
             if callback:
+                self.set_header("Content-Type", "text/javascript")
                 self.finish("%s(%s);" % (callback, json_data))
             else:
+                self.set_header("Content-Type", "application/json")
                 self.finish(json_data)
