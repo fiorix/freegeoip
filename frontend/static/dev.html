@@ -12,6 +12,7 @@
 
     <!-- Le styles -->
     <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" rel="stylesheet">
+    <link href="darkstrap.css" rel="stylesheet">
     <style>
       body {
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
@@ -35,7 +36,7 @@
 
     <div class="container">
 
-      <h1>freegeoip.net <small>IP Geolocation Web Service</small> <a class="pull-right" href="/static/dev.html"><img width="50" src="/static/skull-icon.png"></a></h1>
+      <h1 style="color:grey">freegeoip.net <small>for hackers</small> <a class="pull-right" href="/static/index.html"><img width="50" src="/static/skull-icon.png"></a></h1>
       <br><br>
 
       <div class="row">
@@ -56,34 +57,83 @@
       </div><!--/row-->
 
       <br><br>
-      <div class="row">
-        <div class="span4">
-          <h2>Usage</h2>
-          <p>Querying the web service very is simple. Make HTTP GET requests to:</p><p><code>http://freegeoip.net/{format}/{ip_or_hostname}</code></p>
-          <p>Where <i>format</i> is one of the available formats (<a href="http://en.wikipedia.org/wiki/Comma-separated_values">csv</a>, <a href="http://en.wikipedia.org/wiki/XML">xml</a> or <a href="http://en.wikipedia.org/wiki/JSON">json</a> - lower case). <i>IP or host name</i> is optional. It will search <i>your</i> IP if one is not provided.</p>
-          <p>JSON callbacks are supported by adding the <i>callback</i> argument to the query string:</p><p><code>http://freegeoip.net/json/google.com?callback=show</code></p>
-          <p>Results in:</p>
-          <pre>show({"city": "Mountain View", "region_code": "CA", "region_name": "California", "metrocode": "807", "zipcode": "94043", "longitude": "-122.057", "country_name": "United States", "country_code": "US", "ip": "209.85.145.147", "latitude": "37.4192"});</pre>
-        </div><!--/span4-->
+      <h2>Get it</h2>
+      <br>
+      <p><a class="btn btn-primary" href="https://github.com/fiorix/freegeoip.net">Download</a> the source code and run your own server of freegeoip.net.</p>
+      <br>
 
-        <div class="span8">
-          <h2>About</h2>
-          <p>The <a href="http://freegeoip.net">freegeoip.net</a> offers a public <a href="http://en.wikipedia.org/wiki/Representational_state_transfer">RESTful Web Service</a> for searching <a href="http://en.wikipedia.org/wiki/Geolocation_software">geolocation</a> of IP addresses and host names.</p>
-          <p>This system has an internal database with geolocation information, which is queried via the web service. There's no magic or tricky calculations, it's a database. Thus, although it's very accurate, don't expect it to be perfect.</p>
-          <p>Originally, the database used by this system was provided by <a href="http://ipinfodb.com/">IPInfoDB</a>, as an improved version of the free database provided by <a href="http://www.maxmind.com/">MaxMind</a>. They are no longer distributing it for free.</a>
-          <p>The database was last updated in April 29, 2011</p>
+      <script>
+        function show(rs, ip) {
+          var info = "";
+          if (rs.city) { info+=rs.city; }
+          if (rs.region_name) {
+            if (info) { info+=", " }
+            info+=rs.region_name;
+          }
+          if (rs.country_name) {
+            if (info) { info+=", " }
+            info+=rs.country_name;
+          }
+          alert(info);
+        }
+      </script>
+      <h3>Javascript <small>and jQuery #FTW.</small></h3>
+<pre>function show(rs, ip) {
+  var info = "";
+  if (rs.city) { info+=rs.city; }
+  if (rs.region_name) {
+    if (info) { info+=", " }
+    info+=rs.region_name;
+  }
+  if (rs.country_name) {
+    if (info) { info+=", " }
+    info+=rs.country_name;
+  }
+  alert(info);
+}
 
-          <h2>Limits</h2>
-          <p>Due to the high volume of queries, we're implementing a throttling mechanism which allows at most 1000 queries per hour. After reaching this hourly quota, all of your requests will result in HTTP 403 (Forbidden) until it clears up on the next roll over.</p>
-          <p>There's absolutely no plans of selling services here. If this limit is a problem for you, please consider running your very own instance of this system. It's open source and freely available at GitHub.</p>
-          <a class="btn btn-primary" href="http://github.com/fiorix/freegeoip">Check out the source code</a>
+function geoip(ip, success_cb, failure_cb) {
+  $.getJSON("http://freegeoip.net/json/"+(ip!=null?ip:''),
+  function(rs){
+    success_cb(rs, ip);
+  })
+  .error(function(e){
+    failure_cb(e, ip);
+  });
+}</pre>
+<a href="#" onclick="geoip('github.com', show, alert);">Try it:</a> <code>geoip('github.com', show, alert);</code>
 
-          <br><br>
-          <h3>Contact</h3>
-          <p>Feel free to share comments, suggestions or any other feedback. <a href="https://github.com/fiorix/">I'm here.</a></p>
-        </div><!--/span8-->
+      <br><br>
+      <h3>Embed <small>anywhere. Test with curl, on the command line.</small></h3>
+<pre>$ curl -D - http://freegeoip.net/xml/github.com
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Connection: keep-alive
+Access-Control-Allow-Origin: *
+Content-Length: 401
 
-      </div><!--/row-->
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;Response&gt;
+    &lt;Ip&gt;207.97.227.239&lt;/Ip&gt;
+    &lt;CountryCode&gt;US&lt;/CountryCode&gt;
+    &lt;CountryName&gt;United States&lt;/CountryName&gt;
+    &lt;RegionCode&gt;CA&lt;/RegionCode&gt;
+    &lt;RegionName&gt;California&lt;/RegionName&gt;
+    &lt;City&gt;San Francisco&lt;/City&gt;
+    &lt;ZipCode&gt;94110&lt;/ZipCode&gt;
+    &lt;Latitude&gt;37.7484&lt;/Latitude&gt;
+    &lt;Longitude&gt;-122.416&lt;/Longitude&gt;
+    &lt;MetroCode&gt;807&lt;/MetroCode&gt;
+&lt;/Response&gt;
+</pre>
+
+      <br>
+      <h3>Bash <small>you can turn it into a command.</small></h3>
+<pre>$ geoip github.com</pre>
+      <p>By adding this to your <code>~/.bash_profile</code>:</p>
+<pre># geoip
+function geoip_curl_xml { curl -D - http://freegeoip.net/xml/$1; }
+alias geoip=geoip_curl_xml</pre>
 
     </div> <!-- /container -->
 
@@ -172,6 +222,7 @@
       }
 
       function search_failure(e, ip) {
+        alert(e.status);
         switch(e.status) {
           case 400:
           case 404:
@@ -210,6 +261,7 @@
         ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
       })();
+
 
     </script>
 
