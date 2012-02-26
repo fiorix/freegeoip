@@ -9,7 +9,7 @@
 # $ twistd --reactor=cf -n freegeoip
 #
 # start the test:
-# $ ./test -n 100000 -c 1000
+# $ ./test -n 100000 -c 1000 -f xml
 #
 #from twisted.internet import cfreactor
 #cfreactor.install()
@@ -110,10 +110,10 @@ class report(object):
               (total_time, avgreq, avgbps)
 
 
-def randrequests(requests):
+def randrequests(fmt, requests):
     for n in xrange(requests):
         ip = ".".join(map(lambda n:str(random.randint(1,254)), xrange(4)))
-        d = fetch("http://localhost:8888/json/%s" % ip)
+        d = fetch("http://localhost:8888/%s/%s" % (fmt, ip))
         d.addBoth(report.update)
         yield d
 
@@ -125,6 +125,7 @@ class Options(usage.Options):
     optParameters = [
         ["requests", "n", 1000, "Number of requests", int],
         ["concurrent", "c", 1, "Concurrent requests", int],
+        ["format", "f", "json", "Set geoip's result format", str],
     ]
 
 def main():
@@ -136,12 +137,16 @@ def main():
         print "%s: Try --help for usage details." % sys.argv[0]
         sys.exit(1)
 
+    fmt = config["format"]
+    if fmt not in ("csv", "xml", "json"):
+        fmt = "json"
+
     report.requests = config["requests"]
     report.show_errmsg = config["errmsg"]
 
     tasks = []
     coop = task.Cooperator()
-    work = randrequests(report.requests)
+    work = randrequests(fmt, report.requests)
     for n in xrange(config["concurrent"]):
         d = coop.coiterate(work)
         tasks.append(d)
