@@ -84,9 +84,10 @@ class report(object):
 
     @classmethod
     def summary(self):
-        pct = self.total_requests*100/self.requests
-        print "% 3s%% % 4d req/s @ % 8s/s" % \
-              (pct, self.rps, humanreadable(self.bps))
+        if self.rps:
+            pct = self.total_requests*100/self.requests
+            print "% 3s%% % 4d req/s @ % 8s/s" % \
+                  (pct, self.rps, humanreadable(self.bps))
         print "--"
         if self.total_errors:
             errpct = self.total_errors*100/self.total_requests
