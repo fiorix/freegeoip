@@ -58,10 +58,12 @@ From the Command Line
 I usually use the following in ~/.bash_profile or ~/.bashrc in order to easily query the geoip database from the Unix command line::
 
     # geoip
-    function geoip_curl_xml {
-        curl -D - http://freegeoip.net/xml/$1
-    }
+    function geoip_curl_xml { curl -D - http://freegeoip.net/xml/$1 }
     alias geoip=geoip_curl_xml
+
+Testing
+-------
+Check out scripts/test.py.
 
 
 Credits
