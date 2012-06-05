@@ -17,9 +17,9 @@ class DatabaseMixin(object):
     def setup(self, settings):
         conf = settings.get("redis_settings")
         if conf:
-            DatabaseMixin.redis = cyclone.redis.lazyRedisConnectionPool(
+            DatabaseMixin.redis = cyclone.redis.lazyConnectionPool(
                             host=conf.host, port=conf.port,
-                            db=conf.dbid, pool_size=conf.poolsize)
+                            dbid=conf.dbid, poolsize=conf.poolsize)
         else:
             raise RuntimeError("Redis support is mandatory.")
 
