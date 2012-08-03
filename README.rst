@@ -43,6 +43,8 @@ For development::
 
 For production, check out the ``scripts`` directory. There are init scripts for debian - single instance, or multiple instances for multi-core systems. I recommend load balancing with Nginx.
 
+Depends on `redis <http://redis.io>`_.
+
 
 Requirements
 ------------
