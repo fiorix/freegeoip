@@ -1,7 +1,7 @@
 *.swp
 *.pyc
 dropin.cache
-database/ip_group_city.csv
-database/ipdb.sqlite
-database/tz.csv
+database/*.csv
+database/*.zip
+database/*.sqlite
 twistd.pid
