@@ -1,32 +1,34 @@
 #!/bin/sh
 
 ### BEGIN INIT INFO
-# Provides:          foobar
+# Provides:          freegeoip
 # Required-Start:    $all
 # Required-Stop:     $all
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Starts a service for the Twisted plugin 'foobar'
+# Short-Description: Starts a service on the cyclone web server
 # Description:       Foobar
 ### END INIT INFO
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/twistd
 
-SERVICE_DIR=/path/to/foobar
-SERVICE_NAME=foobar
+SERVICE_DIR=/path/to/freegeoip
+SERVICE_NAME=freegeoip
+
+PYTHONPATH=$SERVICE_DIR:$PYTHONPATH
+export PYTHONPATH
 
 PORT=8888
 LISTEN="127.0.0.1"
 CONFIG=$SERVICE_DIR/$SERVICE_NAME.conf
 PIDFILE=/var/run/$SERVICE_NAME.pid
 LOGFILE=/var/log/$SERVICE_NAME.log
+APP=${SERVICE_NAME}.web.Application
 
-DAEMON_OPTS="--pidfile=$PIDFILE --logfile=$LOGFILE $SERVICE_NAME -p $PORT -l $LISTEN -c $CONFIG"
-
-# Set python path so twistd can find the plugin
-# See: http://twistedmatrix.com/projects/core/documentation/howto/plugin.html
-export PYTHONPATH=$SERVICE_DIR
+USER=www-data
+GROUP=www-data
+DAEMON_OPTS="-u $USER -g $GROUP --pidfile=$PIDFILE --logfile=$LOGFILE cyclone --port $PORT --listen $LISTEN --app $APP -c $CONFIG"
 
 if [ ! -x $DAEMON ]; then
   echo "ERROR: Can't execute $DAEMON."
