@@ -4,11 +4,16 @@ freegeoip.net
 :Info: See `github <http://github.com/fiorix/freegeoip>`_ for the latest source.
 :Author: Alexandre Fiori <fiorix@gmail.com>
 
+
 About
 =====
 
-This is the software running behind the IP Geolocation Web Service at `freegeoip.net <http://freegeoip.net>`_.
-The database is not shipped with the package. However, there are instructions for downloading and generating a local version of the database, using the ``database/createdb.py`` python script.
+This is the software running behind the FREE IP Geolocation Web Service at
+`freegeoip.net <http://freegeoip.net>`_.
+
+The database is not shipped with the package, but there's a script under the
+*database* directory that can download and generate the database automatically.
+
 
 Using
 -----
@@ -26,40 +31,38 @@ The web service can deliver search results in three different formats: CSV, XML 
 
     curl http://freegeoip.net/xml/
 
-- For querying Timezone information (/tz/``country_code``/``region_code``)::
-
-    curl http://freegeoip.net/tz/xml/BR/27
-    curl http://freegeoip.net/tz/json/US/10
-    curl http://freegeoip.net/tz/json/CA/10?callback=doit
-
 
 Running
 =======
 
 For development::
 
-    export PYTHONPATH=`pwd`
-    twistd -n freegeoip
+    ./start.sh
 
-For production, check out the ``scripts`` directory. There are init scripts for debian - single instance, or multiple instances for multi-core systems. I recommend load balancing with Nginx.
+For production, check out the ``scripts`` directory. There are init scripts
+for debian - single instance, or multiple instances for multi-core systems. I
+recommend load balancing with Nginx.
 
 
 Requirements
 ------------
 
-- `cyclone <http://github.com/fiorix/cyclone/>`_
+- `cyclone <http://cyclone.io>`_
 - `Python <http://python.org/>`_ 2.5 or newer (but not 3.x)
 - `SQLite3 <http://www.sqlite.org/>`_ (usually ships with Python)
 - `Twisted <http://twistedmatrix.com/trac/>`_ 8.2 or newer
 
+
 From the Command Line
 ---------------------
 
-I usually use the following in ~/.bash_profile or ~/.bashrc in order to easily query the geoip database from the Unix command line::
+I usually use the following in ~/.bash_profile or ~/.bashrc in order to easily
+query the geoip database from the Unix command line::
 
     # geoip
     function geoip_curl_xml { curl -D - http://freegeoip.net/xml/$1 }
     alias geoip=geoip_curl_xml
+
 
 Testing
 -------

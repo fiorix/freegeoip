@@ -88,15 +88,16 @@
              and host names.</p>
           <p>The system has an internal database with geolocation information, which is queried via the
              web service. There's no magic or tricky calculations, it's just a database. And although
-             the database is very accurate, but don't expect it to be perfect.</p>
+             the database is very accurate, don't expect it to be perfect.</p>
           <p>This service includes GeoLite data created by MaxMind, available from
-             http://www.maxmind.com.</p>
+             <a href="http://www.maxmind.com">maxmind.com</a>.</p>
+	  <p><small>Last updated: February 2013</small></p>
         </div>
       </div>
 
       <div class="row-fluid marketing">
         <div class="span6">
-          <h4>Usage</h4>
+          <h4>Usage <small>(for developers)</small></h4>
           <p>Make HTTP GET requests to: <code>http://freegeoip.net/{format}/{ip_or_hostname}</code></p>
           <p>Supported formats are <code>csv</code>, <code>xml</code> or <code>json</code>.</p>
           <p>The <i>ip_or_hostname</i> part is optional, and your own IP is searched if one is not provided.</p>
@@ -252,7 +253,7 @@
         });
 
         // search your own ip on load
-        geoip('google.com', search_success, search_failure);
+        geoip(null, search_success, search_failure);
       });
     </script>
 
