@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Timezone>{{data["timezone"]}}</Timezone>
-    <Gmtoff>{{data["gmtoff"]}}</Gmtoff>
-    <Isdst>{{data["isdst"]}}</Isdst>
-</Response>
