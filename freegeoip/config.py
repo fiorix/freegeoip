@@ -1,59 +1,87 @@
 # coding: utf-8
+#
+# Copyright 2009-2013 Alexandre Fiori
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
 
-import ConfigParser
 import os
+import sys
+import ConfigParser
+
 from cyclone.util import ObjectDict
 
-def xget(func, section, option, default=None):
+
+def tryget(func, section, option, default=None):
     try:
         return func(section, option)
-    except:
+    except ConfigParser.NoOptionError:
         return default
 
 
-def parse_config(filename):
-    cfg = ConfigParser.RawConfigParser()
-    with open(filename) as fp:
-        cfg.readfp(fp)
+def my_parse_config(filename):
+    cp = ConfigParser.RawConfigParser()
+    cp.read([filename])
 
-    settings = {}
+    conf = dict(raw=cp, config_file=filename)
 
-    # web server settings
-    settings["debug"] = xget(cfg.getboolean, "server", "debug", False)
-    settings["xheaders"] = xget(cfg.getboolean, "server", "xheaders", False)
-    settings["xsrf_cookies"] = xget(cfg.getboolean, "server", "xsrf_cookies", False)
-    settings["cookie_secret"] = cfg.get("server", "cookie_secret")
+    # server settings
+    conf["debug"] = tryget(cp.getboolean, "server", "debug", False)
+    conf["xheaders"] = tryget(cp.getboolean, "server", "xheaders", False)
+    conf["cookie_secret"] = cp.get("server", "cookie_secret")
+    conf["xsrf_cookies"] = tryget(cp.getboolean,
+                                  "server", "xsrf_cookies", False)
 
-    # service limits
-    settings["expire"] = xget(cfg.getint, "limits", "expire", 3600)
-    settings["max_requests"] = xget(cfg.getint, "limits", "max_requests", 1000)
-
-    # get project's absolute path
+    # make relative path absolute to this file's parent directory
     root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    getpath = lambda k, v: os.path.join(root, xget(cfg.get, k, v))
+    getpath = lambda k, v: os.path.join(root, tryget(cp.get, k, v))
 
-    # locale, template and static directories' path
-    settings["static_path"] = getpath("frontend", "static_path")
-    settings["template_path"] = getpath("frontend", "template_path")
+    # locale, template and static directories
+    conf["locale_path"] = getpath("frontend", "locale_path")
+    conf["static_path"] = getpath("frontend", "static_path")
+    conf["template_path"] = getpath("frontend", "template_path")
 
     # sqlite support
-    if xget(cfg.getboolean, "sqlite", "enabled", False):
-        settings["sqlite_settings"] = ObjectDict(
-            database=getpath("sqlite", "database")
-        )
+    if tryget(cp.getboolean, "sqlite", "enabled", False) is True:
+        conf["sqlite_settings"] = \
+            ObjectDict(database=cp.get("sqlite", "database"))
+        conf["sqlite_autoreload"] = \
+            tryget(cp.getint, "sqlite", "autoreload_time", 60)
     else:
-        settings["sqlite_settings"] = None
+        raise ValueError("SQLite is mandatory, but is currently disabled "
+                            "in freegeoip.conf. Not running.")
 
     # redis support
-    if xget(cfg.getboolean, "redis", "enabled", False):
-        settings["redis_settings"] = ObjectDict(
-            host=cfg.get("redis", "host"),
-            port=cfg.getint("redis", "port"),
-            dbid=cfg.getint("redis", "dbid"),
-            poolsize=cfg.getint("redis", "poolsize"),
-        )
+    if tryget(cp.getboolean, "redis", "enabled", False) is True:
+        conf["redis_settings"] = ObjectDict(
+                    unixsocket=tryget(cp.get, "redis", "unixsocket", None),
+                    host=tryget(cp.get, "redis", "host", "127.0.0.1"),
+                    port=tryget(cp.getint, "redis", "port", 6379),
+                    dbid=tryget(cp.getint, "redis", "dbid", 0),
+                    poolsize=tryget(cp.getint, "redis", "poolsize", 10))
     else:
-        settings["redis_settings"] = None
+        raise ValueError("Redis is mandatory, but is currently disabled "
+                            "in freegeoip.conf. Not running.")
 
-    # it must always return a dict
-    return settings
+    # service limits
+    conf["expire"] = tryget(cp.getint, "limits", "expire", 3600)
+    conf["max_requests"] = tryget(cp.getint, "limits", "max_requests", 1000)
+
+    return conf
+
+
+def parse_config(filename):
+    try:
+        return my_parse_config(filename)
+    except Exception, e:
+        print("Error parsing %s: %s" % (filename, e))
+        sys.exit(1)
