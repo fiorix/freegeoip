@@ -1,12 +1,26 @@
 #!/usr/bin/env python
 # coding: utf-8
 #
+# Copyright 2009-2013 Alexandre Fiori
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
 # on osx:
 # launchctl limit maxfiles 10240 10240
 #
 # edit freegeoip.conf and increase max_requests
 # start freegeoip server:
-# $ twistd --reactor=cf -n freegeoip
+# $ ./start.sh
 #
 # start the test:
 # $ ./test -n 100000 -c 1000 -f xml
@@ -14,7 +28,6 @@
 #from twisted.internet import cfreactor
 #cfreactor.install()
 
-import json
 import random
 import sys
 import time
@@ -24,10 +37,12 @@ from twisted.internet import reactor
 from twisted.internet import task
 from twisted.python import usage
 
-humanreadable = lambda s:[(s%1024**i and "%.1f"%(s/1024.0**i) or \
-                          str(s/1024**i))+x.strip()+"B" \
-                          for i,x in enumerate(' KMGTPEZY') \
-                          if s<1024**(i+1) or i==8][0]
+
+humanreadable = lambda s: [(s % 1024 ** i and "%.1f" % (s / 1024.0 ** i) or
+                           str(s / 1024 ** i)) + x.strip() + "B"
+                           for i, x in enumerate(' KMGTPEZY')
+                           if s < 1024 ** (i + 1) or i == 8][0]
+
 
 class report(object):
     requests = 0
@@ -53,8 +68,8 @@ class report(object):
         if hasattr(response, "body"):
             bodylen = len(response.body)
             self.total_body += bodylen
-            headerslen = sum(map(lambda (k, v): len(k)+len(v)+4, # 4=: \r\n
-                             response.headers.items())) + 2 # \r\n
+            headerslen = sum(map(lambda (k, v): len(k) + len(v) + 4,  # \r\n
+                             response.headers.items())) + 2  # \r\n
             self.total_headers += headerslen
 
             reqlen = (bodylen + headerslen)
@@ -73,7 +88,7 @@ class report(object):
         if self.start is None:
             self.start = now
         if self.last < now:
-            pct = self.total_requests*100/self.requests
+            pct = self.total_requests * 100 / self.requests
             print "% 3s%% % 4d req/s @ % 8s/s" % \
                   (pct, self.rps, humanreadable(self.bps))
             if self.show_errmsg and self.last_err:
@@ -85,19 +100,19 @@ class report(object):
     @classmethod
     def summary(self):
         if self.rps:
-            pct = self.total_requests*100/self.requests
+            pct = self.total_requests * 100 / self.requests
             print "% 3s%% % 4d req/s @ % 8s/s" % \
                   (pct, self.rps, humanreadable(self.bps))
         print "--"
         if self.total_errors:
-            errpct = self.total_errors*100/self.total_requests
+            errpct = self.total_errors * 100 / self.total_requests
         else:
             errpct = 0
         print "%d requests, %d errors (%d%%)" % \
               (self.total_requests, self.total_errors, errpct)
 
-        hdrpct = self.total_headers*100/self.total_bytes
-        bdypct = self.total_body*100/self.total_bytes
+        hdrpct = self.total_headers * 100 / self.total_bytes
+        bdypct = self.total_body * 100 / self.total_bytes
         print "%s transferred: %s headers (%d%%), %s body (%d%%)" % \
               (humanreadable(self.total_bytes),
                humanreadable(self.total_headers), hdrpct,
@@ -113,10 +128,11 @@ class report(object):
 
 def randrequests(fmt, requests):
     for n in xrange(requests):
-        ip = ".".join(map(lambda n:str(random.randint(1,254)), xrange(4)))
+        ip = ".".join(map(lambda n: str(random.randint(1, 254)), xrange(4)))
         d = fetch("http://localhost:8888/%s/%s" % (fmt, ip))
         d.addBoth(report.update)
         yield d
+
 
 class Options(usage.Options):
     optFlags = [
@@ -128,6 +144,7 @@ class Options(usage.Options):
         ["concurrent", "c", 1, "Concurrent requests", int],
         ["format", "f", "json", "Set geoip's result format", str],
     ]
+
 
 def main():
     config = Options()
