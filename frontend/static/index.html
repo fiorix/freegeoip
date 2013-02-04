@@ -4,96 +4,150 @@
     <meta charset="utf-8">
     <title>freegeoip.net: FREE IP Geolocation Web Service</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
 
-    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!-- Le styles -->
+    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 10px;
+        padding-bottom: 40px;
+      }
+
+      /* Custom container */
+      .container-narrow {
+        margin: 0 auto;
+        max-width: 700px;
+      }
+      .container-narrow > hr {
+        margin: 30px 0;
+      }
+
+      /* Main marketing message and sign up button */
+      .jumbotron {
+        margin: 20px 0;
+        text-align: center;
+      }
+      .jumbotron h1 {
+        font-size: 72px;
+        line-height: 1;
+      }
+      .jumbotron .btn {
+        font-size: 21px;
+        padding: 14px 24px;
+      }
+
+      /* Supporting marketing content */
+      .marketing {
+        margin: 20px 0;
+      }
+      .marketing p + h4 {
+        margin-top: 28px;
+      }
+    </style>
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    <!-- Le styles -->
-    <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" rel="stylesheet">
-    <style>
-      body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
-      }
-      h1 {
-        color: #333;
-        font-size: 85px;
-        font-weight: bold;
-      }
-      h1 small {
-        color: #555;
-        font-size: 25px;
-        font-weight: bold;
-      }
-    </style>
-    <link href="http://twitter.github.com/bootstrap/assets/css/bootstrap-responsive.css" rel="stylesheet">
-
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+      <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+                    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">
+                                   <link rel="shortcut icon" href="../assets/ico/favicon.png">
   </head>
 
   <body>
 
-    <div class="container">
+    <div class="container-narrow">
+      <div class="masthead">
+        <h1 class="pull-left">freegeoip.net</h1>
+        <form class="form-search pull-right" style="margin-top:20px" id="ip_form">
+          <input type="text" class="focused" id="ip_addr" placeholder="IP or Hostname">
+          <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+      </div>
 
-      <h1>freegeoip.net <small>Web Service</small> <a class="pull-right" href="/static/dev.html"><img width="50" src="/static/skull-icon.png"></a></h1>
-      <br><br>
+      <div class="jumbotron">
+        <iframe id="map" width="99%" frameborder="0" scrolling="no"
+                marginwidth="0" marginheight="0" src=""></iframe>
+      </div>
 
-      <div class="row">
-        <div class="span4">
-          <form class="form-search" id="ip_form">
-            <center>
-            <input type="text" class="span2 focused" id="ip_addr" placeholder="IP or Hostname">
-            <button type="submit" class="btn btn-primary">Search</button>
-            </center>
-          </form>
-
+      <div class="row-fluid marketing">
+        <div class="span6">
           <div id="info"></div>
-        </div><!--/span4-->
-        <div class="span8">
-          <iframe id="map" width="99%" frameborder="0" scrolling="no"
-           marginwidth="0" marginheight="0" src=""></iframe>
-        </div><!--/span8-->
-      </div><!--/row-->
+        </div>
 
-      <br><br>
-      <div class="row">
-        <div class="span4">
-          <h2>Usage</h2>
-          <p>Querying the web service very is simple. Make HTTP GET requests to:</p><p><code>http://freegeoip.net/{format}/{ip_or_hostname}</code></p>
-          <p>Where <i>format</i> is one of the available formats (<a href="http://en.wikipedia.org/wiki/Comma-separated_values">csv</a>, <a href="http://en.wikipedia.org/wiki/XML">xml</a> or <a href="http://en.wikipedia.org/wiki/JSON">json</a> - lower case). <i>IP or host name</i> is optional. It will search <i>your</i> IP if one is not provided.</p>
-          <p>JSON callbacks are supported by adding the <i>callback</i> argument to the query string:</p><p><code>http://freegeoip.net/json/google.com?callback=show</code></p>
-          <p>Results in:</p>
-          <pre>show({"city": "Mountain View", "region_code": "CA", "region_name": "California", "metrocode": "807", "zipcode": "94043", "longitude": "-122.057", "country_name": "United States", "country_code": "US", "ip": "209.85.145.147", "latitude": "37.4192"});</pre>
-        </div><!--/span4-->
+        <div class="span6">
+          <h4>About</h4>
+          <p>This is a public web service for searching
+             <a href="http://en.wikipedia.org/wiki/Geolocation_software">geolocation</a> of IP addresses
+             and host names.</p>
+          <p>The system has an internal database with geolocation information, which is queried via the
+             web service. There's no magic or tricky calculations, it's just a database. And although
+             the database is very accurate, but don't expect it to be perfect.</p>
+          <p>This service includes GeoLite data created by MaxMind, available from
+             http://www.maxmind.com.</p>
+        </div>
+      </div>
 
-        <div class="span8">
-          <h2>About</h2>
-          <p>The <a href="http://freegeoip.net">freegeoip.net</a> offers a public <a href="http://en.wikipedia.org/wiki/Representational_state_transfer">RESTful Web Service</a> for searching <a href="http://en.wikipedia.org/wiki/Geolocation_software">geolocation</a> of IP addresses and host names.</p>
-          <p>This system has an internal database with geolocation information, which is queried via the web service. There's no magic or tricky calculations, it's a database. Thus, although it's very accurate, don't expect it to be perfect.</p>
-          <p>Originally, the database used by this system was provided by <a href="http://ipinfodb.com/">IPInfoDB</a>, as an improved version of the free database provided by <a href="http://www.maxmind.com/">MaxMind</a>. They are no longer distributing it for free.</a>
-          <p>The database was last updated in April 29, 2011</p>
+      <div class="row-fluid marketing">
+        <div class="span6">
+          <h4>Usage</h4>
+          <p>Make HTTP GET requests to: <code>http://freegeoip.net/{format}/{ip_or_hostname}</code></p>
+          <p>Supported formats are <code>csv</code>, <code>xml</code> or <code>json</code>.</p>
+          <p>The <i>ip_or_hostname</i> part is optional, and your own IP is searched if one is not provided.</p>
+        </div>
 
-          <h2>Limits</h2>
-          <p>Due to the high volume of queries, we're implementing a throttling mechanism which allows at most 1000 queries per hour. After reaching this hourly quota, all of your requests will result in HTTP 403 (Forbidden) until it clears up on the next roll over.</p>
-          <p>There's absolutely no plans of selling services here. If this limit is a problem for you, please consider running your very own instance of this system. It's open source and freely available at GitHub.</p>
-          <a class="btn btn-primary" href="http://github.com/fiorix/freegeoip">Check out the source code</a>
+        <div class="span6">
+          <h4>Limits</h4>
+          <p>Due to the high volume of queries we've implemented a throttling
+             mechanism, which allows at most 1000 queries per hour. After reaching
+             this hourly quota, all your requests result in HTTP 403 (Forbidden)
+             until it clears up on the next roll over.</p>
+        </div>
+      </div>
 
-          <br><br>
-          <h3>Contact</h3>
-          <p>Feel free to share comments, suggestions or any other feedback. <a href="https://github.com/fiorix/">I'm here.</a></p>
-        </div><!--/span8-->
+      <p>There's absolutely no plans of selling services here. If this limit
+         is a problem for you, please consider running your very own instance
+         of this system. It's open source and freely available at GitHub.</p>
+      <a href="http://github.com/fiorix/freegeoip">Check out the source code</a>
 
-      </div><!--/row-->
+      <h3>Contact</h3>
+      <p>Feel free to share comments, suggestions or any other feedback.
+         <a href="https://github.com/fiorix/">I'm here.</a></p>
+
+      <p>Contribute with code, pizza, gifts or donations.</p>
+      <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+      <input type="hidden" name="cmd" value="_s-xclick">
+      <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----
+">
+      <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+      <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+      </form>
+
+      <hr>
+
+      <footer>
+        <p><a href="http://freegeoip.net">Freegeoip.net</a> is available under the
+        <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache Licence, Version 2.0</a>.
+        This web site and all documentation is licensed under
+        <a href="http://creativecommons.org/licenses/by/3.0/">Creative Commons 3.0</a>.</p>
+      </footer>
 
     </div> <!-- /container -->
 
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
     <script>
       function geoip(ip, success_cb, failure_cb) {
-        $.getJSON("http://freegeoip.net/json/"+(ip!=null?ip:''),
+        $.getJSON("/json/"+(ip!=null?ip:''),
         function(rs){
           success_cb(rs, ip);
         })
@@ -103,14 +157,16 @@
       }
 
       var mapurl = "http://maps.google.com/maps?f=q&source=s_q&hl=en&geocode=&ie=UTF8&iwloc=A&output=embed&";
-      var err_403 = '<div class="alert alert-error">Over quota</div>'+
+      var err_403 = '<h4>Ooops!</h4>'+
+      	  '<div class="alert alert-error">Over quota</div>'+
           '<p>You are currently over quota due to the high '+
           'volume of requests.</p>'+
           '<p>This service is public and free with a hard limit '+
           'of 1000 requests per hour, and you\'ve reached your quota.</p>'+
           '<p>Check out the <i>Limits</i> section below for more information</p>';
 
-      var err_msg = '<div class="alert alert-warning">Service Unavailable</div>'+
+      var err_msg = '<h4>Ooops!</h4>'+
+          '<div class="alert alert-warning">Service Unavailable</div>'+
           '<p>The service is unavailable due to maintenance or '+
           'because the servers are overloaded.</p>'+
           '<p>We appologize for the inconvenience. Try again later.</p>';
@@ -118,11 +174,12 @@
       function no_results(addr)
       {
         addr = addr!=null?addr:'your IP address';
-        var msg = '<div class="alert alert-block">No results for <i>'+addr+'</i></div>'+
+        var msg = '<h4>Ooops!</h4>'+
+	    '<div class="alert alert-block">No results for <i>'+addr+'</i></div>'+
             '<p>Try one of the following:</p>'+
             '<ul>'+
             '<li>Make sure you enter a valid IP address, or</li>'+
-            '<li>A valid host name, or domain name (i.e.: google.com)</li>'+
+            '<li>A valid host name, or domain name (e.g: google.com)</li>'+
             '<ul>';
         return msg;
       }
@@ -153,7 +210,7 @@
             }
           }
 
-          var msg = '<h3>Estimated location:</h3>'+
+          var msg = '<h4>Estimated location:</h4>'+
             '<table class="table table-striped"><tbody>'+
             '<tr><td>Country</td><td>'+rs.country_name+(rs.country_code?'('+rs.country_code+')':'')+'</td></tr>'+
             '<tr><td>Region</td><td>'+rs.region_name+(rs.region_code?'('+rs.region_code+')':'')+'</td></tr>'+
@@ -195,7 +252,7 @@
         });
 
         // search your own ip on load
-        geoip(null, search_success, search_failure);
+        geoip('google.com', search_success, search_failure);
       });
     </script>
 
@@ -215,3 +272,4 @@
 
   </body>
 </html>
+
