@@ -31,7 +31,7 @@ class Application(cyclone.web.Application):
                                         dict(path=conf["static_path"])),
 
             # API
-            (r"/(csv|xml|json)/(.*)", API.IpLookupHandler),
+            (r"/(csv|xml|json)/?(.*)", API.IpLookupHandler),
         ]
 
         DatabaseMixin.setup(conf)

@@ -46,7 +46,6 @@ def my_parse_config(filename):
     getpath = lambda k, v: os.path.join(root, tryget(cp.get, k, v))
 
     # locale, template and static directories
-    conf["locale_path"] = getpath("frontend", "locale_path")
     conf["static_path"] = getpath("frontend", "static_path")
     conf["template_path"] = getpath("frontend", "template_path")
 
