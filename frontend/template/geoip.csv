@@ -1,1 +1,1 @@
-"{{data['ip']}}","{{data['country_code']}}","{{data['country_name']}}","{{data['region_code']}}","{{data['region_name']}}","{{data['city']}}","{{data['zipcode']}}","{{data['latitude']}}","{{data['longitude']}}","{{data['metrocode']}}"
+"{{data['ip']}}","{{data['country_code']}}","{{data['country_name']}}","{{data['region_code']}}","{{data['region_name']}}","{{data['city']}}","{{data['zipcode']}}","{{data['latitude']}}","{{data['longitude']}}","{{data['metrocode']}}","{{data['areacode']}}"

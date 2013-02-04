@@ -10,4 +10,5 @@
     <Latitude>{{data["latitude"]}}</Latitude>
     <Longitude>{{data["longitude"]}}</Longitude>
     <MetroCode>{{data["metrocode"]}}</MetroCode>
+    <AreaCode>{{data["metrocode"]}}</AreaCode>
 </Response>
