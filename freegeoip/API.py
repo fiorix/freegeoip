@@ -77,31 +77,51 @@ class IpLookupHandler(cyclone.web.RequestHandler, DatabaseMixin):
             else:
                 raise cyclone.web.HTTPError(404)
 
-        data = {
-            "ip": address,
-            "country_code": rs[0],
-            "country_name": rs[1],
-            "region_code": rs[2],
-            "region_name": rs[3],
-            "city": rs[4],
-            "zipcode": rs[5],
-            "latitude": rs[6],
-            "longitude": rs[7],
-            "metrocode": rs[8],
-            "areacode": rs[9]
-        }
-
         self.set_header("Access-Control-Allow-Origin", "*")
 
-        if fmt in ("csv", "xml"):
-            self.set_header("Content-Type", "text/%s" % fmt)
-            self.render("geoip.%s" % fmt, data=data)
-        else:
-            json_data = cyclone.escape.json_encode(data)
+        if fmt == "csv":
+            self.set_header("Content-Type", "text/csv")
+            rs = (address,) + rs
+            self.finish(",".join(map(lambda s: '"%s"' %
+                        unicode(s).encode("utf-8") if s else "", rs)) + "\n")
+
+        elif fmt == "xml":
+            self.set_header("Content-Type", "text/xml")
+            rs = (address,) + rs
+            self.finish("""<?xml version="1.0" encoding="UTF-8"?>\n"""
+                        "<Response>\n"
+                        "  <Ip>%s</Ip>\n"
+                        "  <CountryCode>%s</CountryCode>\n"
+                        "  <CountryName>%s</CountryName>\n"
+                        "  <RegionCode>%s</RegionCode>\n"
+                        "  <RegionName>%s</RegionName>\n"
+                        "  <City>%s</City>\n"
+                        "  <ZipCode>%s</ZipCode>\n"
+                        "  <Latitude>%s</Latitude>\n"
+                        "  <Longitude>%s</Longitude>\n"
+                        "  <MetroCode>%s</MetroCode>\n"
+                        "  <AreaCode>%s</AreaCode>\n"
+                        "</Response>\n" % rs)
+
+        elif fmt == "json":
+            json_data = cyclone.escape.json_encode({
+                "ip": address,
+                "country_code": rs[0],
+                "country_name": rs[1],
+                "region_code": rs[2],
+                "region_name": rs[3],
+                "city": rs[4],
+                "zipcode": rs[5],
+                "latitude": rs[6],
+                "longitude": rs[7],
+                "metrocode": rs[8],
+                "areacode": rs[9]
+            })
+
             callback = self.get_argument("callback", None)
             if callback:
                 self.set_header("Content-Type", "text/javascript")
-                self.finish("%s(%s);" % (callback, json_data))
+                self.finish("%s(%s);\n" % (callback, json_data))
             else:
                 self.set_header("Content-Type", "application/json")
-                self.finish(json_data)
+                self.finish(json_data + "\n")

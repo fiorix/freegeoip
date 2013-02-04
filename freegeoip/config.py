@@ -45,9 +45,8 @@ def my_parse_config(filename):
     root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     getpath = lambda k, v: os.path.join(root, tryget(cp.get, k, v))
 
-    # locale, template and static directories
+    # directory with static files
     conf["static_path"] = getpath("frontend", "static_path")
-    conf["template_path"] = getpath("frontend", "template_path")
 
     # sqlite support
     if tryget(cp.getboolean, "sqlite", "enabled", False) is True:
