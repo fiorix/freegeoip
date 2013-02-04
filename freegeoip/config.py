@@ -51,7 +51,7 @@ def my_parse_config(filename):
     # sqlite support
     if tryget(cp.getboolean, "sqlite", "enabled", False) is True:
         conf["sqlite_settings"] = \
-            ObjectDict(database=cp.get("sqlite", "database"))
+            ObjectDict(database=getpath("sqlite", "database"))
         conf["sqlite_autoreload"] = \
             tryget(cp.getint, "sqlite", "autoreload_time", 60)
     else:
