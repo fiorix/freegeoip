@@ -23,28 +23,7 @@ import sys
 import unicodedata
 import zipfile
 
-from HTMLParser import HTMLParser
-
 dbname = "ipdb.sqlite"
-
-
-class ParseFiles(HTMLParser):
-    def __init__(self):
-        HTMLParser.__init__(self)
-        self._parse = False
-        self.files = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag == "a":
-            self._parse = True
-
-    def handle_endtag(self, tag):
-        if self._parse is True:
-            self._parse = False
-
-    def handle_data(self, data):
-        if self._parse is True and data[-4:] == ".zip":
-            self.files.append(data)
 
 
 def download(url, filename=None):
@@ -155,30 +134,21 @@ if __name__ == "__main__":
 
     geolite = "http://geolite.maxmind.com/download/geoip/database/"
 
-    city_url = geolite + "GeoLiteCity_CSV/"
+    city_url = geolite + "GeoLiteCity_CSV/GeoLiteCity-latest.zip"
     city_files = ["GeoLiteCity-Blocks.csv", "GeoLiteCity-Location.csv"]
     if not all(map(os.path.exists, city_files)):
         print "Checking " + city_url
-        city_html = download(city_url)
-        parser = ParseFiles()
-        parser.feed(city_html)
-
-        if not len(parser.files):
-            print "Could not find any databases:\n" + city_html
-            sys.exit(1)
-
-        parser.files.sort(reverse=True)
-
         # Fetch the most recent city database
-        city_zip = os.path.basename(parser.files[0])  # hax0rs foff
+        city_zip = os.path.basename(city_url)
         if not os.path.exists(city_zip):
-            download(city_url + city_zip, city_zip)
+            download(city_url, city_zip)
 
         # Extract city csv files
         zipfd = zipfile.ZipFile(city_zip)
-        for filename in city_files:
-            if not os.path.exists(filename):
-                extract(zipfd, os.path.join(city_zip[:-4], filename), filename)
+        for filename in zipfd.namelist():
+            n = os.path.basename(filename)
+            if n in city_files and not os.path.exists(n):
+                extract(zipfd, filename, n)
         zipfd.close()
 
     # Fetch the country database
