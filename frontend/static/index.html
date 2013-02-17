@@ -211,6 +211,14 @@
             }
           }
 
+          if (!rs.metrocode) {
+            rs.metrocode = "-";
+          }
+
+          if (!rs.areacode) {
+            rs.areacode = "-";
+          }
+
           var msg = '<h4>Estimated location:</h4>'+
             '<table class="table table-striped"><tbody>'+
             '<tr><td>Country</td><td>'+rs.country_name+(rs.country_code?'('+rs.country_code+')':'')+'</td></tr>'+
@@ -218,7 +226,7 @@
             '<tr><td>City</td><td>'+rs.city+'</td></tr>'+
             '<tr><td>Zip code</td><td>'+rs.zipcode+'</td></tr>'+
             '<tr><td>Latitude, Longitude</td><td>'+rs.latitude+", "+rs.longitude+'</td></tr>'+
-            '<tr><td>Metro code</td><td>'+rs.metrocode+'</td></tr>'+
+            '<tr><td>Metro and Area codes</td><td>'+[rs.metrocode, rs.areacode].join(" ")+'</td></tr>'+
             '</tbody></table>';
           $("#info").html(msg);
         } else {
