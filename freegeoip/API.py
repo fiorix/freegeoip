@@ -18,7 +18,9 @@
 import cyclone.escape
 import cyclone.web
 import socket
+import types
 
+from xml.sax.saxutils import escape as xml_escape
 from twisted.internet import defer
 from twisted.internet import threads
 #from twisted.names.client import getHostByName
@@ -87,7 +89,9 @@ class IpLookupHandler(cyclone.web.RequestHandler, DatabaseMixin):
 
         elif fmt == "xml":
             self.set_header("Content-Type", "text/xml")
-            rs = (address,) + rs
+            rs = map(lambda s: xml_escape(s)
+                     if isinstance(s, types.StringTypes) else s,
+                     ((address,) + rs))
             self.finish("""<?xml version="1.0" encoding="UTF-8"?>\n"""
                         "<Response>\n"
                         "  <Ip>%s</Ip>\n"
@@ -101,7 +105,7 @@ class IpLookupHandler(cyclone.web.RequestHandler, DatabaseMixin):
                         "  <Longitude>%s</Longitude>\n"
                         "  <MetroCode>%s</MetroCode>\n"
                         "  <AreaCode>%s</AreaCode>\n"
-                        "</Response>\n" % rs)
+                        "</Response>\n" % tuple(rs))
 
         elif fmt == "json":
             json_data = cyclone.escape.json_encode({
