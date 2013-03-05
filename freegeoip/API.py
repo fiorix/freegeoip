@@ -71,7 +71,7 @@ class IpLookupHandler(cyclone.web.RequestHandler, DatabaseMixin):
                 "    city_location.country_code = region_names.country_code "
                 "    AND "
                 "    city_location.region_code = region_names.region_code "
-                "WHERE city_blocks.ip_start < ? "
+                "WHERE city_blocks.ip_start <= ? "
                 "ORDER BY city_blocks.ip_start DESC LIMIT 1", (ip,))
 
             if rs:
