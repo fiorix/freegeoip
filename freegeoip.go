@@ -140,7 +140,7 @@ func Lookup(req *web.RequestHandler, db *sql.DB) {
 	switch format[0] {
 	case 'c':
 		req.SetHeader("Content-Type", "application/csv")
-		req.Write(`"%s","%s","%s","%s","%s","%s"`+
+		req.Write(`"%s","%s","%s","%s","%s","%s",`+
 			  `"%s","%0.4f","%0.4f","%s","%s"`+"\r\n",
 			  geoip.Ip,
 			  geoip.CountryCode, geoip.CountryName,
