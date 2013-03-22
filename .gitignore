@@ -1,7 +1,3 @@
-*.swp
-*.pyc
-dropin.cache
-database/*.csv
-database/*.zip
-database/*.sqlite
-twistd.pid
+*.csv
+*.zip
+*.sqlite

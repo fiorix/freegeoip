@@ -7,8 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <!-- Le styles -->
-    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
+    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
     <style type="text/css">
       body {
         padding-top: 10px;
@@ -91,7 +90,7 @@
              the database is very accurate, don't expect it to be perfect.</p>
           <p>This service includes GeoLite data created by MaxMind, available from
              <a href="http://www.maxmind.com">maxmind.com</a>.</p>
-	  <p><small>Last updated: February 2013</small></p>
+             <p><small>Last updated: March 2013</small></p>
         </div>
       </div>
 
@@ -106,7 +105,7 @@
         <div class="span6">
           <h4>Limits</h4>
           <p>Due to the high volume of queries we've implemented a throttling
-             mechanism, which allows at most 1000 queries per hour. After reaching
+             mechanism, which allows at most <b>4000 queries per hour</b>. After reaching
              this hourly quota, all your requests result in HTTP 403 (Forbidden)
              until it clears up on the next roll over.</p>
         </div>
@@ -115,7 +114,7 @@
       <p>There's absolutely no plans of selling services here. If this limit
          is a problem for you, please consider running your very own instance
          of this system. It's open source and freely available at GitHub.</p>
-      <a href="http://github.com/fiorix/freegeoip">Check out the source code</a>
+      <a href="https://github.com/fiorix/go-web/tree/master/demos/freegeoip">Check out the source code</a>
 
       <h3>Contact</h3>
       <p>Feel free to share comments, suggestions or any other feedback.
@@ -133,9 +132,7 @@
       <hr>
 
       <footer>
-        <p><a href="http://freegeoip.net">Freegeoip.net</a> is available under the
-        <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache Licence, Version 2.0</a>.
-        This web site and all documentation is licensed under
+        <p>This web site and all documentation is licensed under
         <a href="http://creativecommons.org/licenses/by/3.0/">Creative Commons 3.0</a>.</p>
       </footer>
 
