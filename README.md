@@ -10,10 +10,7 @@ It is the result of a research project that started in 2009 using
 A year later it moved to its own server infrastructure, built on the
 [cyclone](http://cyclone.io) web framework and backed by pypy.
 
-It's been rewritten in Go using [go-web](https://github.com/fiorix/go-web),
-another experimental web anti-framework similar to web.py, tornado and
-cyclone. It's a tool to speed up the development and avoid repeating the same
-code over and over on web applications.
+It's been rewritten in Go using [go-web](https://github.com/fiorix/go-web).
 
 Database
 --------
