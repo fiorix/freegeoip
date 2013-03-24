@@ -98,7 +98,7 @@
         <div class="span6">
           <h4>Limits</h4>
           <p>Due to the high volume of queries we've implemented a throttling
-             mechanism, which allows at most <b>4000 queries per hour</b>. After reaching
+             mechanism, which allows at most <b>5000 queries per hour</b>. After reaching
              this hourly quota, all your requests result in HTTP 403 (Forbidden)
              until it clears up on the next roll over.</p>
         </div>
@@ -153,7 +153,7 @@
           '<p>You are currently over quota due to the high '+
           'volume of requests.</p>'+
           '<p>This service is public and free with a hard limit '+
-          'of 1000 requests per hour, and you\'ve reached your quota.</p>'+
+          'of 5000 requests per hour, and you\'ve reached your quota.</p>'+
           '<p>Check out the <i>Limits</i> section below for more information</p>';
 
       var err_msg = '<h4>Ooops!</h4>'+
