@@ -232,8 +232,12 @@ func StaticHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func logger(w http.ResponseWriter, req *http.Request) {
-	log.Printf("HTTP %d %s (%s) :: %s", w.Status(), req.URL.Path,
-		req.RemoteAddr, time.Since(req.Created))
+	log.Printf("HTTP %d %s %s (%s) :: %s",
+		w.Status(),
+		req.Method,
+		req.URL.Path,
+		req.RemoteAddr,
+		time.Since(req.Created))
 }
 
 func main() {
