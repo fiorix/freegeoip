@@ -25,7 +25,7 @@ import (
 
 const (
 	// API limits
-	maxRequestsPerIP = 5000
+	maxRequestsPerIP = 10000
 	expirySeconds    = 3600
 
 	// Server settings
@@ -191,8 +191,7 @@ func makeHandler() http.HandlerFunc {
 	mc := memcache.New(memcacheServer)
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		// IPv4 RemoteAddr without the port number.
-		// No IPv6 support, yet.
+		// IPv4 RemoteAddr without the port number. Breaks IPv6.
 		req.RemoteAddr = strings.Split(req.RemoteAddr, ":")[0]
 		// Check quota
 		el, err := mc.Get(req.RemoteAddr)
