@@ -49,8 +49,8 @@ type GeoIP struct {
 	Longitude   float32  `json:"longitude"`
 	MetroCode   string   `json:"metro_code"`
 	AreaCode    string   `json:"areacode"`
-	ASNID       string   `json:"asn_id"`
-	ASNName     string   `json:"asn_name"`
+	ASNID       string   `json:"asn_id,omitempty" xml:"asn_id,omitempty"`
+	ASNName     string   `json:"asn_name,omitempty" xml:"asn_name,omitempty"`
 }
 
 // http://en.wikipedia.org/wiki/Reserved_IP_addresses
@@ -94,6 +94,7 @@ func Lookup(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 			break
 		}
 	}
+	asn := req.FormValue("asn")
 	geoip := GeoIP{Ip: addr}
 	if reserved {
 		geoip.CountryCode = "RD"
@@ -104,19 +105,23 @@ func Lookup(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 			"  city_location.region_code, region_names.region_name, " +
 			"  city_location.city_name, city_location.postal_code, " +
 			"  city_location.latitude, city_location.longitude, " +
-			"  city_location.metro_code, city_location.area_code, " +
-			"  asn_blocks.asn_id, asn_blocks.asn_name " +
-			"FROM city_blocks " +
+			"  city_location.metro_code, city_location.area_code "
+		if asn != "" {
+			q = q + ",  asn_blocks.asn_id, asn_blocks.asn_name "
+		}
+		q = q + "FROM city_blocks " +
 			"  NATURAL JOIN city_location " +
 			"  INNER JOIN country_blocks ON " +
 			"    city_location.country_code = country_blocks.country_code " +
 			"  INNER JOIN region_names ON " +
 			"    city_location.country_code = region_names.country_code " +
 			"    AND " +
-			"    city_location.region_code = region_names.region_code " +
-			"  INNER JOIN asn_blocks ON " +
-			"    asn_blocks.ip_end >= ? " +
-			"WHERE city_blocks.ip_start <= ? " +
+			"    city_location.region_code = region_names.region_code "
+		if asn != "" {
+			q = q + "  INNER JOIN asn_blocks ON " +
+					"    asn_blocks.ip_end >= ? "
+		}
+		q = q + "WHERE city_blocks.ip_start <= ? " +
 			"ORDER BY city_blocks.ip_start DESC LIMIT 1"
 		stmt, err := db.Prepare(q)
 		if err != nil {
@@ -130,19 +135,33 @@ func Lookup(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		var uintIP uint32
 		b := bytes.NewBuffer(IP.To4())
 		binary.Read(b, binary.BigEndian, &uintIP)
-		err = stmt.QueryRow(uintIP,uintIP).Scan(
-			&geoip.CountryCode,
-			&geoip.CountryName,
-			&geoip.RegionCode,
-			&geoip.RegionName,
-			&geoip.CityName,
-			&geoip.ZipCode,
-			&geoip.Latitude,
-			&geoip.Longitude,
-			&geoip.MetroCode,
-			&geoip.AreaCode,
-			&geoip.ASNID,
-			&geoip.ASNName)
+		if asn != "" {
+			err = stmt.QueryRow(uintIP,uintIP).Scan(
+				&geoip.CountryCode,
+				&geoip.CountryName,
+				&geoip.RegionCode,
+				&geoip.RegionName,
+				&geoip.CityName,
+				&geoip.ZipCode,
+				&geoip.Latitude,
+				&geoip.Longitude,
+				&geoip.MetroCode,
+				&geoip.AreaCode,
+				&geoip.ASNID,
+				&geoip.ASNName)
+		} else {
+			err = stmt.QueryRow(uintIP).Scan(
+				&geoip.CountryCode,
+				&geoip.CountryName,
+				&geoip.RegionCode,
+				&geoip.RegionName,
+				&geoip.CityName,
+				&geoip.ZipCode,
+				&geoip.Latitude,
+				&geoip.Longitude,
+				&geoip.MetroCode,
+				&geoip.AreaCode)
+		}
 		if err != nil {
 			http.Error(w, http.StatusText(404), 404)
 			return
@@ -151,15 +170,26 @@ func Lookup(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	switch format[0] {
 	case 'c':
 		w.Header().Set("Content-Type", "application/csv")
-		fmt.Fprintf(w, `"%s","%s","%s","%s","%s","%s",`+
-			`"%s","%0.4f","%0.4f","%s","%s"`+"\r\n",
-			geoip.Ip,
-			geoip.CountryCode, geoip.CountryName,
-			geoip.RegionCode, geoip.RegionName,
-			geoip.CityName, geoip.ZipCode,
-			geoip.Latitude, geoip.Longitude,
-			geoip.MetroCode, geoip.AreaCode,
-			geoip.ASNID, geoip.ASNName)
+		if asn != "" {
+			fmt.Fprintf(w, `"%s","%s","%s","%s","%s","%s",`+
+				`"%s","%0.4f","%0.4f","%s","%s","%s","%s"`+"\r\n",
+				geoip.Ip,
+				geoip.CountryCode, geoip.CountryName,
+				geoip.RegionCode, geoip.RegionName,
+				geoip.CityName, geoip.ZipCode,
+				geoip.Latitude, geoip.Longitude,
+				geoip.MetroCode, geoip.AreaCode,
+				geoip.ASNID, geoip.ASNName)
+		} else {
+			fmt.Fprintf(w, `"%s","%s","%s","%s","%s","%s",`+
+				`"%s","%0.4f","%0.4f","%s","%s"`+"\r\n",
+				geoip.Ip,
+				geoip.CountryCode, geoip.CountryName,
+				geoip.RegionCode, geoip.RegionName,
+				geoip.CityName, geoip.ZipCode,
+				geoip.Latitude, geoip.Longitude,
+				geoip.MetroCode, geoip.AreaCode)
+		}
 	case 'j':
 		resp, err := json.Marshal(geoip)
 		if err != nil {
