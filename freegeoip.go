@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/fiorix/go-web/http"
-	"github.com/fiorix/go-web/mux"
+	"github.com/fiorix/go-web/remux"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net"
@@ -247,13 +247,13 @@ func logger(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	mux.HandleFunc("^/$", IndexHandler)
-	mux.HandleFunc("^/static/(.*)$", StaticHandler)
-	mux.HandleFunc("^/(crossdomain.xml)$", StaticHandler)
-	mux.HandleFunc("^/(csv|json|xml)/(.*)$", makeHandler())
+	remux.HandleFunc("^/$", IndexHandler)
+	remux.HandleFunc("^/static/(.*)$", StaticHandler)
+	remux.HandleFunc("^/(crossdomain.xml)$", StaticHandler)
+	remux.HandleFunc("^/(csv|json|xml)/(.*)$", makeHandler())
 	server := http.Server{
 		Addr:         listenOn,
-		Handler:      mux.DefaultServeMux,
+		Handler:      remux.DefaultServeMux,
 		Logger:       logger,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
