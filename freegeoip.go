@@ -49,8 +49,8 @@ type GeoIP struct {
 	Longitude   float32  `json:"longitude"`
 	MetroCode   string   `json:"metro_code"`
 	AreaCode    string   `json:"areacode"`
-	ASNID       string   `json:"asn_id,omitempty" xml:"asn_id,omitempty"`
-	ASNName     string   `json:"asn_name,omitempty" xml:"asn_name,omitempty"`
+	ASNID       string   `json:"asn_id,omitempty" xml:"ASNID,omitempty"`
+	ASNName     string   `json:"asn_name,omitempty" xml:"ASNName,omitempty"`
 }
 
 // http://en.wikipedia.org/wiki/Reserved_IP_addresses
