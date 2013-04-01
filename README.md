@@ -35,6 +35,9 @@ execute *updatedb* - it's a Python script. Should look like this:
 	Extracting GeoLiteCity_20130305/GeoLiteCity-Location.csv -> GeoLiteCity-Location.csv
 	Downloading http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip
 	Extracting GeoIPCountryWhois.csv -> GeoIPCountryWhois.csv
+	Downloading http://download.maxmind.com/download/geoip/database/asnum/GeoIPASNum2.zip
+	Extracting GeoIPASNum2.csv -> GeoIPASNum2.csv
+	Importing GeoIPASNum2.csv: .192038 records!
 	Importing GeoIPCountryWhois.csv: .178306 records!
 	Importing region.csv: 4053 records!
 	Importing GeoLiteCity-Blocks.csv: ......................2256115 records!
@@ -58,6 +61,8 @@ client making the request is used.
 If the server is listening on unix sockets, use *nc* to test:
 
 	echo -ne 'GET /json/ HTTP/1.0\r\nX-Real-IP: pwnz\r\n\r\n' | nc -U /tmp/freegeoip
+
+To receive asn information add ?asn=true to the url
 
 Command line
 ------------
