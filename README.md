@@ -62,7 +62,9 @@ If the server is listening on unix sockets, use *nc* to test:
 
 	echo -ne 'GET /json/ HTTP/1.0\r\nX-Real-IP: pwnz\r\n\r\n' | nc -U /tmp/freegeoip
 
-To receive asn information add ?asn=true to the url
+To receive asn information add ?asn=true to the query url, example:
+
+	$ curl http://localhost:8080/json/ip_or_hostname?asn=true
 
 Command line
 ------------
