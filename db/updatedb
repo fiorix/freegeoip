@@ -162,6 +162,17 @@ if __name__ == "__main__":
         with zipfile.ZipFile(country_zip) as zipfd:
             extract(zipfd, country_csv)
 
+    # Fetch the ASN database
+    asn_url = "http://download.maxmind.com/download/geoip/database/asnum/GeoIPASNum2.zip"
+    asn_zip = os.path.basename(asn_url)
+    if not os.path.exists(asn_zip):
+        download(asn_url, asn_zip)
+
+    asn_csv = "GeoIPASNum2.csv"
+    if not os.path.exists(asn_csv):
+        with zipfile.ZipFile(asn_zip) as zipfd:
+            extract(zipfd, asn_csv)
+
     # Create the IP database
     tmpdb = "_" + dbname + ".temp"
     if os.path.exists(tmpdb):
@@ -169,6 +180,18 @@ if __name__ == "__main__":
 
     conn = sqlite3.connect(tmpdb)
     curs = conn.cursor()
+
+    curs.execute("""\
+	create table asn_blocks (
+		ip_start int,
+		ip_end int,
+		asn_full text,
+		primary key(ip_end))""")
+    import_csv(curs, asn_csv, "asn_blocks")
+    curs.execute("ALTER TABLE asn_blocks ADD asn_name text;")
+    curs.execute("UPDATE asn_blocks SET asn_name = SUBSTR(LTRIM(asn_full,REPLACE(asn_full,' ','')),2);")
+    curs.execute("ALTER TABLE asn_blocks ADD asn_id text;")
+    curs.execute("UPDATE asn_blocks SET asn_id = REPLACE(asn_full,' ' || asn_name,'');")
 
     curs.execute("""\
     create table country_blocks (

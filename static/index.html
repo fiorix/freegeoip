@@ -81,7 +81,7 @@
           <p>The system has an internal database with geolocation information, which is queried via the
              web service. There's no magic or tricky calculations, it's just a database. And although
              the database is very accurate, don't expect it to be perfect.</p>
-          <p>This service includes GeoLite data created by MaxMind, available from
+          <p>This service includes GeoLite and ASN data created by MaxMind, available from
              <a href="http://www.maxmind.com">maxmind.com</a>.</p>
              <p><small>Last updated: March 2013</small></p>
         </div>
@@ -92,7 +92,8 @@
           <h4>Usage <small>(for developers)</small></h4>
           <p>Make HTTP GET requests to: <code>http://freegeoip.net/{format}/{ip_or_hostname}</code></p>
           <p>Supported formats are <code>csv</code>, <code>xml</code> or <code>json</code>.</p>
-          <p>The <i>ip_or_hostname</i> part is optional, and your own IP is searched if one is not provided.</p>
+		  <p>The <i>ip_or_hostname</i> part is optional, and your own IP is searched if one is not provided.</p>
+		  <p>To receive ASN information add asn=true as a GET parameter to the request url.</p>
         </div>
 
         <div class="span6">
@@ -138,7 +139,7 @@
     <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
     <script>
       function geoip(ip, success_cb, failure_cb) {
-        $.getJSON("/json/"+(ip!=null?ip:''),
+        $.getJSON("/json/"+(ip!=null?ip:'')+"?asn=true",
         function(rs){
           success_cb(rs, ip);
         })
@@ -216,7 +217,9 @@
             '<tr><td>City</td><td>'+rs.city+'</td></tr>'+
             '<tr><td>Zip code</td><td>'+rs.zipcode+'</td></tr>'+
             '<tr><td>Latitude, Longitude</td><td>'+rs.latitude+", "+rs.longitude+'</td></tr>'+
-            '<tr><td>Metro and Area codes</td><td>'+[rs.metrocode, rs.areacode].join(" ")+'</td></tr>'+
+			'<tr><td>Metro and Area codes</td><td>'+[rs.metrocode, rs.areacode].join(" ")+'</td></tr>'+
+			'<tr><td>ASN</td><td>'+rs.asn_id+'</td></td>'+
+			'<tr><td>ASN Name</td><td>'+rs.asn_name+'</td></td>'+
             '</tbody></table>';
           $("#info").html(msg);
         } else {
