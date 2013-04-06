@@ -53,9 +53,8 @@ type GeoIP struct {
 // http://en.wikipedia.org/wiki/Reserved_IP_addresses
 var reservedIPs = []net.IPNet{
 	{net.IPv4(0, 0, 0, 0), net.IPv4Mask(255, 0, 0, 0)},
-	{net.IPv4(0, 0, 0, 0), net.IPv4Mask(255, 0, 0, 0)},
-	{net.IPv4(10, 0, 0, 0), net.IPv4Mask(255, 192, 0, 0)},
-	{net.IPv4(100, 64, 0, 0), net.IPv4Mask(255, 0, 0, 0)},
+	{net.IPv4(10, 0, 0, 0), net.IPv4Mask(255, 0, 0, 0)},
+	{net.IPv4(100, 64, 0, 0), net.IPv4Mask(255, 192, 0, 0)},
 	{net.IPv4(127, 0, 0, 0), net.IPv4Mask(255, 0, 0, 0)},
 	{net.IPv4(169, 254, 0, 0), net.IPv4Mask(255, 255, 0, 0)},
 	{net.IPv4(172, 16, 0, 0), net.IPv4Mask(255, 240, 0, 0)},
