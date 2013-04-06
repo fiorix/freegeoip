@@ -37,6 +37,7 @@ if __name__ == "__main__":
 		ip int,
         latitude real,
         longitude real,
+		timestamp DATE DEFAULT (datetime('now','localtime')),
         primary key(ip))""")
 
     curs.close()
