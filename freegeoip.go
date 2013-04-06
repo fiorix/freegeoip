@@ -34,6 +34,7 @@ const (
 	memcacheServer = "127.0.0.1:11211"
 	staticPath     = "./static"
 	databaseFile   = "./db/ipdb.sqlite"
+	sdatabaseFile  = "./db/ipdb-submit.sqlite"
 )
 
 type GeoIP struct {
@@ -72,6 +73,35 @@ var reservedIPs = []net.IPNet{
 	{net.IPv4(224, 0, 0, 0), net.IPv4Mask(240, 0, 0, 0)},
 	{net.IPv4(240, 0, 0, 0), net.IPv4Mask(240, 0, 0, 0)},
 	{net.IPv4(255, 255, 255, 255), net.IPv4Mask(255, 255, 255, 255)},
+}
+
+func Submit(w http.ResponseWriter, req *http.Request, db *sql.DB) {
+	addr := req.RemoteAddr
+	IP := net.ParseIP(addr)
+	reserved := false
+	for _, net := range reservedIPs {
+		if net.Contains(IP) {
+			reserved = true
+			break
+		}
+	}
+	if (reserved) {
+		var uintIP uint32
+		lat := req.FormValue("latitude")
+		lng := req.FormValue("longitude")
+		b := bytes.NewBuffer(IP.To4())
+		binary.Read(b, binary.BigEndian, &uintIP)
+		q := "INSERT INTO client_location (ip,latitude,longitude) VALUES (?,?,?);"
+		_, err := db.Exec(q,uintIP,lat,lng)
+		if err != nil {
+			if debug {
+				log.Println("[debug] SQLite", err.Error())
+        	}
+        	http.Error(w, http.StatusText(500), 500)
+        	return
+    	}
+	}
+	return
 }
 
 func Lookup(w http.ResponseWriter, req *http.Request, db *sql.DB) {
@@ -221,6 +251,17 @@ func Lookup(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 	}
 }
 
+func submitHandler() http.HandlerFunc {
+	db, err := sql.Open("sqlite3", sdatabaseFile)
+	if err != nil {
+		panic(err)
+	}
+	return func(w http.ResponseWriter, req *http.Request) {
+		Submit(w, req, db)
+		return
+	}
+}
+
 func makeHandler() http.HandlerFunc {
 	db, err := sql.Open("sqlite3", databaseFile)
 	if err != nil {
@@ -280,6 +321,7 @@ func logger(w http.ResponseWriter, req *http.Request) {
 func main() {
 	mux.HandleFunc("^/$", IndexHandler)
 	mux.HandleFunc("^/static/(.*)$", StaticHandler)
+	mux.HandleFunc("^/submit$", submitHandler())
 	mux.HandleFunc("^/(crossdomain.xml)$", StaticHandler)
 	mux.HandleFunc("^/(csv|json|xml)/(.*)$", makeHandler())
 	server := http.Server{

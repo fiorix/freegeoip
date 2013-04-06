@@ -46,6 +46,7 @@
       }
     </style>
 
+	
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
@@ -136,7 +137,8 @@
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-    <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
+	<script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
+	<script src="/static/geosubmit.js"></script>
     <script>
       function geoip(ip, success_cb, failure_cb) {
         $.getJSON("/json/"+(ip!=null?ip:'')+"?asn=true",
@@ -254,7 +256,9 @@
         });
 
         // search your own ip on load
-        geoip(null, search_success, search_failure);
+		geoip(null, search_success, search_failure);
+		// get client location to improve database
+		ClientGetLocation();
       });
     </script>
 
