@@ -242,6 +242,10 @@ if __name__ == "__main__":
                     count += 1
 
     print "%d names updated." % count
+
+    # Fix db consistency. (patch from Alfredo Terrone)
+    regions.execute("INSERT INTO region_names "
+                    "SELECT DISTINCT country_code,'','' FROM region_names")
     regions.close()
     conn.commit()
     conn.close()

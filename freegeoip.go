@@ -11,15 +11,16 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/bradfitz/gomemcache/memcache"
-	"github.com/fiorix/go-web/http"
-	"github.com/fiorix/go-web/remux"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/bradfitz/gomemcache/memcache"
+	"github.com/fiorix/go-web/http"
+	"github.com/fiorix/go-web/remux"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
@@ -95,22 +96,22 @@ func Lookup(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 		geoip.CountryCode = "RD"
 		geoip.CountryName = "Reserved"
 	} else {
-		q := "SELECT " +
-			"  city_location.country_code, country_blocks.country_name, " +
-			"  city_location.region_code, region_names.region_name, " +
-			"  city_location.city_name, city_location.postal_code, " +
-			"  city_location.latitude, city_location.longitude, " +
-			"  city_location.metro_code, city_location.area_code " +
-			"FROM city_blocks " +
-			"  NATURAL JOIN city_location " +
-			"  INNER JOIN country_blocks ON " +
-			"    city_location.country_code = country_blocks.country_code " +
-			"  INNER JOIN region_names ON " +
-			"    city_location.country_code = region_names.country_code " +
-			"    AND " +
-			"    city_location.region_code = region_names.region_code " +
-			"WHERE city_blocks.ip_start <= ? " +
-			"ORDER BY city_blocks.ip_start DESC LIMIT 1"
+		q := `SELECT
+		  city_location.country_code, country_blocks.country_name,
+		  city_location.region_code, region_names.region_name,
+		  city_location.city_name, city_location.postal_code,
+		  city_location.latitude, city_location.longitude,
+		  city_location.metro_code, city_location.area_code
+		FROM city_blocks
+		  NATURAL JOIN city_location
+		  INNER JOIN country_blocks ON
+		    city_location.country_code = country_blocks.country_code
+		  LEFT OUTER JOIN region_names ON
+		    city_location.country_code = region_names.country_code
+		    AND
+		    city_location.region_code = region_names.region_code
+		WHERE city_blocks.ip_start <= ?
+		ORDER BY city_blocks.ip_start DESC LIMIT 1`
 		stmt, err := db.Prepare(q)
 		if err != nil {
 			if debug {
