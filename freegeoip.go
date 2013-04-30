@@ -197,14 +197,21 @@ func makeHandler() http.HandlerFunc {
 		panic(err)
 	}
 	mc := memcache.New(memcacheServer)
-	return func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		req.RemoteAddr = trimPort(req.RemoteAddr)
+		if r.Method == "OPTIONS" {
+			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("Access-Control-Allow-Methods", "GET")
+			w.Header().Set("Access-Control-Allow-Headers",
+				"X-Requested-With")
+			return
+		}
+		r.RemoteAddr = trimPort(r.RemoteAddr)
 		// Check quota
-		el, err := mc.Get(req.RemoteAddr)
+		el, err := mc.Get(r.RemoteAddr)
 		if err == memcache.ErrCacheMiss {
 			err = mc.Set(&memcache.Item{
-				Key: req.RemoteAddr, Value: []byte("1"),
+				Key: r.RemoteAddr, Value: []byte("1"),
 				Expiration: expirySeconds})
 		}
 		if err != nil {
@@ -218,14 +225,14 @@ func makeHandler() http.HandlerFunc {
 		if el != nil {
 			count, _ := strconv.Atoi(string(el.Value))
 			if count < maxRequestsPerIP {
-				mc.Increment(req.RemoteAddr, 1)
+				mc.Increment(r.RemoteAddr, 1)
 			} else {
 				// Out of quota
 				http.Error(w, http.StatusText(403), 403)
 				return
 			}
 		}
-		Lookup(w, req, db)
+		Lookup(w, r, db)
 	}
 }
 
