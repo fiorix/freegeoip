@@ -13,12 +13,13 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"path/filepath"
 	"strconv"
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
-	"github.com/fiorix/go-web/http"
+	"github.com/fiorix/go-web/httpxtra"
 	"github.com/fiorix/go-web/remux"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -71,10 +72,11 @@ var reservedIPs = []net.IPNet{
 	{net.IPv4(255, 255, 255, 255), net.IPv4Mask(255, 255, 255, 255)},
 }
 
-func Lookup(w http.ResponseWriter, req *http.Request, db *sql.DB) {
-	format, addr := req.Vars[0], req.Vars[1]
+func Lookup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	vars := remux.Vars(r)
+	format, addr := vars[0], vars[1]
 	if addr == "" {
-		addr = req.RemoteAddr // port number previously removed
+		addr = r.RemoteAddr // port number previously removed
 	} else {
 		addrs, err := net.LookupHost(addr)
 		if err != nil {
@@ -160,7 +162,7 @@ func Lookup(w http.ResponseWriter, req *http.Request, db *sql.DB) {
 			http.Error(w, http.StatusText(404), 404)
 			return
 		}
-		callback := req.FormValue("callback")
+		callback := r.FormValue("callback")
 		if callback != "" {
 			w.Header().Set("Content-Type", "text/javascript")
 			fmt.Fprintf(w, "%s(%s);\n", callback, resp)
@@ -236,21 +238,12 @@ func makeHandler() http.HandlerFunc {
 	}
 }
 
-func IndexHandler(w http.ResponseWriter, req *http.Request) {
-	http.ServeFile(w, req, filepath.Join(staticPath, "index.html"))
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(staticPath, "index.html"))
 }
 
-func StaticHandler(w http.ResponseWriter, req *http.Request) {
-	http.ServeFile(w, req, filepath.Join(staticPath, req.Vars[0]))
-}
-
-func logger(w http.ResponseWriter, req *http.Request) {
-	log.Printf("HTTP %d %s %s (%s) :: %s",
-		w.Status(),
-		req.Method,
-		req.URL.Path,
-		req.RemoteAddr,
-		time.Since(req.Created))
+func StaticHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(staticPath, remux.Vars(r)[0]))
 }
 
 func main() {
@@ -258,15 +251,27 @@ func main() {
 	remux.HandleFunc("^/static/(.*)$", StaticHandler)
 	remux.HandleFunc("^/(crossdomain.xml)$", StaticHandler)
 	remux.HandleFunc("^/(csv|json|xml)/(.*)$", makeHandler())
+	handler := httpxtra.Handler{
+		Logger:  logger,
+		Handler: remux.DefaultServeMux,
+	}
 	server := http.Server{
 		Addr:         listenOn,
-		Handler:      remux.DefaultServeMux,
-		Logger:       logger,
+		Handler:      handler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
 	log.Println("FreeGeoIP server starting")
-	if e := server.ListenAndServe(); e != nil {
+	if e := httpxtra.ListenAndServe(server); e != nil {
 		log.Println(e.Error())
 	}
+}
+
+func logger(r *http.Request, created time.Time, status, bytes int) {
+	log.Printf("HTTP %d %s %s (%s) :: %s",
+		status,
+		r.Method,
+		r.URL.Path,
+		r.RemoteAddr,
+		time.Since(created))
 }
