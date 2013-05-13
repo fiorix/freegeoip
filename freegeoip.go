@@ -126,6 +126,7 @@ func GeoipHandler() http.HandlerFunc {
 		geoip, err := GeoipLookup(db, ip)
 		if err != nil {
 			http.NotFound(w, r)
+			return
 		}
 		switch a[1] {
 		case "csv":
