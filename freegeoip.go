@@ -45,8 +45,8 @@ func main() {
 	server := http.Server{
 		Addr:         addr,
 		Handler:      httpxtra.Handler{Logger: logger},
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
 	}
 	log.Println("FreeGeoIP server starting")
 	if e := httpxtra.ListenAndServe(server); e != nil {
