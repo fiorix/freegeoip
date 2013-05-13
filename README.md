@@ -1,78 +1,110 @@
-freegeoip.net web server
-========================
+# freegeoip.net
 
-This is the current web server of freegeoip.net, a public HTTP API for
-searching [Geolocation](http://en.wikipedia.org/wiki/Geolocation) of IP
-addresses.
+freegeoip.net is a public web service for searching
+[geolocation](http://en.wikipedia.org/wiki/Geolocation) of IP addresses.
 
-It is the result of a research project that started in 2009 using
-[Google App Engine](http://en.wikipedia.org/wiki/Geolocation)'s Python API.
-A year later it moved to its own server infrastructure, built on the
-[cyclone](http://cyclone.io) web framework and backed by pypy.
+This is freegeoip.net's web server source code, and scripts for generating the
+database.
 
-It's been rewritten in Go using [go-web](https://github.com/fiorix/go-web).
+## Overview
 
-Database
---------
+freegeoip.net is the result of a web server research project that started in
+2009 hosted at Google's [App Engine](http://en.wikipedia.org/wiki/Geolocation),
+using the Python API.
+
+A year later it moved to its own server infrastructure built on the
+[Cyclone](http://cyclone.io) web framework, backed by
+[Twisted](http://twistedmatrix.com) and [PyPy](http://pypy.org).
+
+The current version is written in Go as the experiments progress with
+[go-web](https://github.com/fiorix/go-web) and
+[go-redis](https://github.com/fiorix/go-redis).
+
+### Prerequisites
+
+List of prerequisites for building and running the server:
+
+- Go compiler - for ``freegeoip.go``
+- libsqlite3-dev, gcc or llvm - for dependency ``go-sqlite3``
+- Python - for the ``updatedb`` script
+- Redis - for API usage quotas
+- The IP database
+
+### Building the database
 
 The database is composed of multiple files, from multiple sources. It's a
 combination of IP networks, country codes, city names, etc.
 
-There's a helper script under the _db_ directory that tries to download all
-files, process and combine them to build the database. It might eventually
-fail.
+There's a helper script under the ``db`` directory that automates the process
+of building the database, and can be used regularly to update it as well.
+Because it downloads multiple files and process them, it might eventually fail.
 
-Make sure the db exists before starting the server. In the _db_ directory,
-execute *updatedb* - it's a Python script. Should look like this:
+It's a Python script called ``updatedb`` that generates ``ipdb.sqlite``:
 
+	$ cd db
 	$ ./updatedb
-	Downloading http://dev.maxmind.com/static/csv/codes/maxmind/region.csv
-	Downloading http://musta.sh/files/all_cities_in_the_world.csv.zip
-	Extracting all_cities_in_the_world.csv -> all_cities_in_the_world.csv
-	Checking http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity-latest.zip
-	Downloading http://geolite.maxmind.com/download/geoip/database/GeoLiteCity_CSV/GeoLiteCity-latest.zip
-	Extracting GeoLiteCity_20130305/GeoLiteCity-Blocks.csv -> GeoLiteCity-Blocks.csv
-	Extracting GeoLiteCity_20130305/GeoLiteCity-Location.csv -> GeoLiteCity-Location.csv
-	Downloading http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip
-	Extracting GeoIPCountryWhois.csv -> GeoIPCountryWhois.csv
-	Importing GeoIPCountryWhois.csv: .178306 records!
-	Importing region.csv: 4053 records!
-	Importing GeoLiteCity-Blocks.csv: ......................2256115 records!
-	Importing GeoLiteCity-Location.csv: ....403753 records!
-	Updating region names: 322 names updated.
+	... will download files and process them to generate ipdb.sqlite
+	$ file ipdb.sqlite
+	ipdb.sqlite: SQLite 3.x database
 
 This service includes GeoLite data created by MaxMind, available from
 maxmind.com.
 
-Usage
------
+### Build and run
 
-Run the dev server with *go run freegeoip.go* and point your browser to it.
-Use curl to query the API, like this:
+Make sure the Go compiler is installed and $GOPATH is set. Install
+dependencies first:
 
-	$ curl http://localhost:8080/xml/ip_or_hostname
+	go get github.com/fiorix/go-redis/redis
+	go get github.com/fiorix/go-web/httpxtra
+	go get github.com/mattn/go-sqlite3
 
-It supports CSV, JSON and XML. If *ip_or_hostname* is omitted, the IP of the
-client making the request is used.
+Use either ``go run freegeoip.go`` or ``go build; ./freegeoip`` to compile and
+run the server, then point the browser to http://localhost:8080.
+
+There's no configuration file, all settings are in ``freegeoip.go``.
+
+We recommend [supervisor](http://supervisord.org) for running the server in
+production. It's just a matter of ``apt-get install supervisor`` and
+a simple config in ``/etc/supervisor/conf.d/freegeoip.conf``:
+
+	[program:freegeoip]
+	user=www-data
+	redirect_stderr=true
+	directory=/opt/freegeoip
+	command=/opt/freegeoip/freegeoip
+	stdout_logfile=/var/log/freegeoip.log
+	stdout_logfile_maxbytes=50MB
+	stdout_logfile_backups=20
+
+### Usage
+
+Point the browser to http://127.0.0.1:8080 and search for IPs or hostnames.
+
+Use curl from the command line to query the API:
+
+	$ curl -v http://localhost:8080/{format}/{ip_or_hostname}
+
+It supports csv, json and xml as the output format. JSON supports callbacks
+with the ``callback`` query argument. The client (self) IP is used if
+*ip_or_hostname* is omitted in the query.
+
+Examples:
+
+	$ curl -v http://localhost:8080/csv/
+	$ curl -v http://localhost:8080/xml/
+	$ curl -v http://localhost:8080/xml/freegeoip.net
+	$ curl -v http://localhost:8080/json/github.com?callback=foobar
 
 If the server is listening on unix sockets, use *nc* to test:
 
-	echo -ne 'GET /json/ HTTP/1.0\r\nX-Real-IP: pwnz\r\n\r\n' | nc -U /tmp/freegeoip
+	echo -ne 'GET /json/my-domain.abc HTTP/1.0\r\n\r\n' | nc -U /tmp/freegeoip.sock
 
-Command line
-------------
-
-To query the API from the command line, add this to *~/.bash_profile*:
-
-	function geoip_curl_xml { curl -D - http://freegeoip.net/xml/$1; }
-	alias geoip=geoip_curl_xml
-
-Credits
--------
+### Credits
 
 Thanks to (in no particular order):
 
-- google.com: Because it wouldn't look so good without the map
-- twitter.com: Bootstrap makes dirty programmers feel like artists
-- ipinfodb.com: For providing both GeoIP and Timezones database (2010 and 2011)
-- maxmind.com: For the current DB
+- google.com: The map, Go, angularjs
+- twitter.com: Bootstrap
+- ipinfodb.com: For both GeoIP and Timezones database (2010 and 2011)
+- maxmind.com: The current database
