@@ -99,11 +99,11 @@ func GeoipHandler() http.HandlerFunc {
 			http.Error(w, http.StatusText(503), 503) // redis down
 			return
 		} else if qcs == "" {
-			if err := rc.Set(r.RemoteAddr, "1"); err == nil {
-				rc.Expire(r.RemoteAddr, expire)
+			if err := rc.Set(ipkey, "1"); err == nil {
+				rc.Expire(ipkey, expire)
 			}
 		} else if qc, _ := strconv.Atoi(qcs); qc < maxrequests {
-			rc.Incr(r.RemoteAddr)
+			rc.Incr(ipkey)
 		} else {
 			// Out of quota, soz :(
 			http.Error(w, http.StatusText(403), 403)
