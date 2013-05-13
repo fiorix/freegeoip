@@ -2,7 +2,6 @@
 
 freegeoip.net is a public web service for searching
 [geolocation](http://en.wikipedia.org/wiki/Geolocation) of IP addresses.
-
 This is freegeoip.net's web server source code, and scripts for generating the
 database.
 
@@ -11,7 +10,6 @@ database.
 freegeoip.net is the result of a web server research project that started in
 2009 hosted at Google's [App Engine](http://en.wikipedia.org/wiki/Geolocation),
 using the Python API.
-
 A year later it moved to its own server infrastructure built on the
 [Cyclone](http://cyclone.io) web framework, backed by
 [Twisted](http://twistedmatrix.com) and [PyPy](http://pypy.org).
@@ -79,7 +77,7 @@ a simple config in ``/etc/supervisor/conf.d/freegeoip.conf``:
 
 ### Usage
 
-Point the browser to http://127.0.0.1:8080 and search for IPs or hostnames.
+Point the browser to http://localhost:8080 and search for IPs or hostnames.
 
 Use curl from the command line to query the API:
 
