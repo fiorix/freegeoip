@@ -21,7 +21,7 @@ function freegeoip($scope,$http){
         //$scope.q = rs.ip;
         if(!rs.metrocode) rs.metrocode = '-';
         if(!rs.areacode) rs.areacode = '-';
-        $scope.geoip = rs;
+        $scope.geoip = angular.copy(rs);
         var qs = "";
         var zoom = 2;
         if(rs.country_name&&rs.country_code!='RD'){
