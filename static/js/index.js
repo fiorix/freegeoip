@@ -34,13 +34,7 @@ function freegeoip($scope,$http){
               qs=rs.region_name+','+rs.country_name;
             }
           } else {
-            if ((rs.latitude != 0) && (rs.longitude != 0)) {
-              var lat = new Number(rs.latitude).toFixed(2);
-              var lon = new Number(rs.longitude).toFixed(2);
-              qs=lat+' '+lon;
-            } else {
               qs=rs.country_name;
-            }
           }
         } else {
           qs = "Africa";
