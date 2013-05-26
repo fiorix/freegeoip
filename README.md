@@ -60,11 +60,13 @@ dependencies first:
 Use either ``go run freegeoip.go`` or ``go build; ./freegeoip`` to compile and
 run the server, then point the browser to http://localhost:8080.
 
-There's no configuration file, all settings are in ``freegeoip.go``.
+The server requires ``freegeoip.conf`` to be in the current directory. If
+the database is not accessible or redis-server is unreachable, all queries
+will result in HTTP 503 (Service Unavailable).
 
 We recommend [supervisor](http://supervisord.org) for running the server in
-production. It's just a matter of ``apt-get install supervisor`` and
-a simple config in ``/etc/supervisor/conf.d/freegeoip.conf``:
+production. On Ubuntu, install it with ``apt-get install supervisor`` and drop
+this simple config in ``/etc/supervisor/conf.d/freegeoip.conf``:
 
 	[program:freegeoip]
 	user=www-data
@@ -74,6 +76,15 @@ a simple config in ``/etc/supervisor/conf.d/freegeoip.conf``:
 	stdout_logfile=/var/log/freegeoip.log
 	stdout_logfile_maxbytes=50MB
 	stdout_logfile_backups=20
+
+If the server is proxied by Nginx or another HTTP load balancer, edit the
+configuration file and set ``xheaders="true"`` and it'll use X-Real-IP or
+X-Forwarded-For HTTP headers as the client IP.
+
+For listening on low ports as non-root user (e.g. www-data) on linux, it's
+mandatory to set file capabilities like this:
+
+	/sbin/setcap 'cap_net_bind_service=+ep' /opt/freegeoip/freegeoip
 
 ### Usage
 
@@ -102,7 +113,8 @@ If the server is listening on unix sockets, use *nc* to test:
 
 Thanks to (in no particular order):
 
-- google.com: The map, Go, angularjs
-- twitter.com: Bootstrap
-- ipinfodb.com: For both GeoIP and Timezones database (2010 and 2011)
-- maxmind.com: The current database
+- [Gleicon](https://github.com/gleicon) for all the drama.
+- Google for the map, Go, and AngularJS.
+- Twitter for Bootstrap.
+- MaxMind for the current database.
+- ipinfodb.com for both the IP and timezones database back in 2010 and 2011.
