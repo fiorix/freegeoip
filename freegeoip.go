@@ -30,10 +30,13 @@ type Settings struct {
 	XHeaders     bool     `xml:"xheaders,attr"`
 	Addr         string   `xml:"addr,attr"`
 	DocumentRoot string
-	Database     string
-	Limit        struct {
-		MaxRequests int
-		Expire      int
+	IPDB         struct {
+		File      string `xml:",attr"`
+		CacheSize string `xml:",attr"`
+	}
+	Limit struct {
+		MaxRequests int `xml:",attr"`
+		Expire      int `xml:",attr"`
 	}
 	Redis []string `xml:"Redis>Addr"`
 }
@@ -78,7 +81,11 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 
 // GeoipHandler handles GET on /csv, /xml and /json.
 func GeoipHandler() http.HandlerFunc {
-	db, err := sql.Open("sqlite3", conf.Database)
+	db, err := sql.Open("sqlite3", conf.IPDB.File)
+	if err != nil {
+		panic(err)
+	}
+	_, err = db.Exec("PRAGMA cache_size=" + conf.IPDB.CacheSize)
 	if err != nil {
 		panic(err)
 	}
@@ -91,8 +98,7 @@ func GeoipHandler() http.HandlerFunc {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Content-Type", "text/plain")
 			w.Header().Set("Access-Control-Allow-Methods", "GET")
-			w.Header().Set("Access-Control-Allow-Headers",
-				"X-Requested-With")
+			w.Header().Set("Access-Control-Allow-Headers", "X-Requested-With")
 			return
 		default:
 			w.Header().Set("Allow", "GET, OPTIONS")
@@ -108,6 +114,9 @@ func GeoipHandler() http.HandlerFunc {
 			ipkey = ip
 		}
 		if qcs, err := rc.Get(ipkey); err != nil {
+			if conf.Debug {
+				log.Println("Redis error:", err.Error())
+			}
 			http.Error(w, http.StatusText(503), 503) // redis down
 			return
 		} else if qcs == "" {
@@ -183,23 +192,27 @@ func GeoipHandler() http.HandlerFunc {
 	}
 }
 
-const query = `
-	SELECT
-	  city_location.country_code, country_blocks.country_name,
-	  city_location.region_code, region_names.region_name,
-	  city_location.city_name, city_location.postal_code,
-	  city_location.latitude, city_location.longitude,
-	  city_location.metro_code, city_location.area_code
-	FROM city_blocks
-	  NATURAL JOIN city_location
-	  INNER JOIN country_blocks ON
-	    city_location.country_code = country_blocks.country_code
-	  LEFT OUTER JOIN region_names ON
-	    city_location.country_code = region_names.country_code
-	    AND
-	    city_location.region_code = region_names.region_code
-	WHERE city_blocks.ip_start <= ?
-	ORDER BY city_blocks.ip_start DESC LIMIT 1`
+const query = `SELECT
+  city_location.country_code,
+  country_blocks.country_name,
+  city_location.region_code,
+  region_names.region_name,
+  city_location.city_name,
+  city_location.postal_code,
+  city_location.latitude,
+  city_location.longitude,
+  city_location.metro_code,
+  city_location.area_code
+FROM city_blocks
+  NATURAL JOIN city_location
+  INNER JOIN country_blocks ON
+    city_location.country_code = country_blocks.country_code
+  LEFT OUTER JOIN region_names ON
+    city_location.country_code = region_names.country_code
+    AND
+    city_location.region_code = region_names.region_code
+WHERE city_blocks.ip_start <= ?
+ORDER BY city_blocks.ip_start DESC LIMIT 1`
 
 func GeoipLookup(db *sql.DB, ip string) (*GeoIP, error) {
 	IP := net.ParseIP(ip)
