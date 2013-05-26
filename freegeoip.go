@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -23,27 +24,38 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const (
-	// API limits
-	maxrequests = 10000
-	expire      = 3600
+type Settings struct {
+	XMLName      xml.Name `xml:"Server"`
+	Debug        bool     `xml:"debug,attr"`
+	XHeaders     bool     `xml:"xheaders,attr"`
+	Addr         string   `xml:"addr,attr"`
+	DocumentRoot string
+	Database     string
+	Limit        struct {
+		MaxRequests int
+		Expire      int
+	}
+	Redis []string `xml:"Redis>Addr"`
+}
 
-	// Server settings
-	debug      = true
-	addr       = ":8080"            // ip:port or /path/to/unix.sock
-	redisaddr  = "127.0.0.1:6379"   // redis server
-	staticpath = "./static"         // public website
-	ipdb       = "./db/ipdb.sqlite" // geoip database
-)
+var conf *Settings
 
 func main() {
-	http.Handle("/", http.FileServer(http.Dir(staticpath)))
+	if buf, err := ioutil.ReadFile("freegeoip.conf"); err != nil {
+		panic(err)
+	} else {
+		conf = &Settings{}
+		if err := xml.Unmarshal(buf, conf); err != nil {
+			panic(err)
+		}
+	}
+	http.Handle("/", http.FileServer(http.Dir(conf.DocumentRoot)))
 	h := GeoipHandler()
 	http.HandleFunc("/csv/", h)
 	http.HandleFunc("/xml/", h)
 	http.HandleFunc("/json/", h)
 	server := http.Server{
-		Addr:         addr,
+		Addr:         conf.Addr,
 		Handler:      httpxtra.Handler{Logger: logger},
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -66,11 +78,11 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 
 // GeoipHandler handles GET on /csv, /xml and /json.
 func GeoipHandler() http.HandlerFunc {
-	db, err := sql.Open("sqlite3", ipdb)
+	db, err := sql.Open("sqlite3", conf.Database)
 	if err != nil {
 		panic(err)
 	}
-	rc := redis.New(redisaddr)
+	rc := redis.New(conf.Redis...)
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
@@ -100,9 +112,9 @@ func GeoipHandler() http.HandlerFunc {
 			return
 		} else if qcs == "" {
 			if err := rc.Set(ipkey, "1"); err == nil {
-				rc.Expire(ipkey, expire)
+				rc.Expire(ipkey, conf.Limit.Expire)
 			}
-		} else if qc, _ := strconv.Atoi(qcs); qc < maxrequests {
+		} else if qc, _ := strconv.Atoi(qcs); qc < conf.Limit.MaxRequests {
 			rc.Incr(ipkey)
 		} else {
 			// Out of quota, soz :(
@@ -142,7 +154,7 @@ func GeoipHandler() http.HandlerFunc {
 		case 'j':
 			resp, err := json.Marshal(geoip)
 			if err != nil {
-				if debug {
+				if conf.Debug {
 					log.Println("JSON error:", err.Error())
 				}
 				http.NotFound(w, r)
@@ -160,7 +172,7 @@ func GeoipHandler() http.HandlerFunc {
 			w.Header().Set("Content-Type", "application/xml")
 			resp, err := xml.MarshalIndent(geoip, "", " ")
 			if err != nil {
-				if debug {
+				if conf.Debug {
 					log.Println("XML error:", err.Error())
 				}
 				http.Error(w, http.StatusText(500), 500)
@@ -170,6 +182,24 @@ func GeoipHandler() http.HandlerFunc {
 		}
 	}
 }
+
+const query = `
+	SELECT
+	  city_location.country_code, country_blocks.country_name,
+	  city_location.region_code, region_names.region_name,
+	  city_location.city_name, city_location.postal_code,
+	  city_location.latitude, city_location.longitude,
+	  city_location.metro_code, city_location.area_code
+	FROM city_blocks
+	  NATURAL JOIN city_location
+	  INNER JOIN country_blocks ON
+	    city_location.country_code = country_blocks.country_code
+	  LEFT OUTER JOIN region_names ON
+	    city_location.country_code = region_names.country_code
+	    AND
+	    city_location.region_code = region_names.region_code
+	WHERE city_blocks.ip_start <= ?
+	ORDER BY city_blocks.ip_start DESC LIMIT 1`
 
 func GeoipLookup(db *sql.DB, ip string) (*GeoIP, error) {
 	IP := net.ParseIP(ip)
@@ -185,25 +215,9 @@ func GeoipLookup(db *sql.DB, ip string) (*GeoIP, error) {
 		geoip.CountryCode = "RD"
 		geoip.CountryName = "Reserved"
 	} else {
-		q := `SELECT
-		  city_location.country_code, country_blocks.country_name,
-		  city_location.region_code, region_names.region_name,
-		  city_location.city_name, city_location.postal_code,
-		  city_location.latitude, city_location.longitude,
-		  city_location.metro_code, city_location.area_code
-		FROM city_blocks
-		  NATURAL JOIN city_location
-		  INNER JOIN country_blocks ON
-		    city_location.country_code = country_blocks.country_code
-		  LEFT OUTER JOIN region_names ON
-		    city_location.country_code = region_names.country_code
-		    AND
-		    city_location.region_code = region_names.region_code
-		WHERE city_blocks.ip_start <= ?
-		ORDER BY city_blocks.ip_start DESC LIMIT 1`
-		stmt, err := db.Prepare(q)
+		stmt, err := db.Prepare(query)
 		if err != nil {
-			if debug {
+			if conf.Debug {
 				log.Println("[debug] SQLite", err.Error())
 			}
 			return nil, err
