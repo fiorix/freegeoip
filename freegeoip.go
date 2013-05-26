@@ -58,8 +58,11 @@ func main() {
 	http.HandleFunc("/xml/", h)
 	http.HandleFunc("/json/", h)
 	server := http.Server{
-		Addr:         conf.Addr,
-		Handler:      httpxtra.Handler{Logger: logger},
+		Addr: conf.Addr,
+		Handler: httpxtra.Handler{
+			Logger:   logger,
+			XHeaders: conf.XHeaders,
+		},
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
