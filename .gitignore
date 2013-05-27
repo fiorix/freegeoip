@@ -1,4 +1,3 @@
 *.swp
-*.csv
-*.zip
-*.sqlite
+_site
+.DS_Store
