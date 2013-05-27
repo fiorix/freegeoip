@@ -70,40 +70,43 @@
       </div>
       <div class="span6">
         <h4>About</h4>
-	<p><a href="http://freegeoip.net">freegeoip.net</a> is a public web
-	   service for searching
+	<p><a href="http://freegeoip.net">freegeoip.net</a> is a public RESTful
+	   web service API for searching
            <a href="http://en.wikipedia.org/wiki/Geolocation_software">geolocation</a>
            of IP addresses and host names.</p>
-        <p>The system has an internal database with geolocation information,
+        <p>It has an internal database with geolocation information,
            which is queried via the web service. There's no magic or tricky
            calculations, it's just a database. And although the database is
            very accurate, don't expect it to be perfect.</p>
-        <p>This service includes GeoLite data created by MaxMind, available
-           from <a href="http://www.maxmind.com">maxmind.com</a>.</p>
       </div>
     </div>
+    <hr>
     <div class="row-fluid marketing">
       <div class="span6">
         <h4>Usage <small>for developers</small></h4>
-        <p>Make HTTP GET requests to <code>http://freegeoip.net/{format}/{ip_or_hostname}</code></p>
+	<p>Send HTTP GET requests to:</p>
+	<code>http://freegeoip.net/{format}/{ip_or_hostname}</code></p>
         <p>Supported formats are <code>csv</code>, <code>xml</code> or <code>json</code>.</p>
-        <p>The <i>ip_or_hostname</i> part is optional. Your own IP is searched if one is not provided.</p>
+        <p>The <code>ip_or_hostname</code> part is optional. Your own IP is searched if one is not provided.</p>
       </div>
       <div class="span6">
         <h4>Limits</h4>
-        <p>Due to the high volume of queries we've implemented a throttling
-           mechanism, which allows at most <b>10,000 queries per hour</b>.
-           After reaching this hourly quota, all your requests result in HTTP
-           403 (Forbidden) until it clears up on the next roll over.</p>
+        <p>API usage is limited to <b>10,000 queries per hour</b>. After
+           reaching this limit, all requests will result in HTTP 403
+           (Forbidden) until the roll over.</p>
+        <p>If the usage limit is a problem, please consider running your own
+           instance of this system. It's open source and freely available
+           at GitHub.</p>
       </div>
     </div>
-    <p>There's absolutely no plans of selling services here. If this limit
-       is a problem for you, please consider running your very own instance
-       of this system. It's open source and freely available at GitHub.</p>
-    <a href="https://github.com/fiorix/freegeoip">Check out the source code</a>
-    <h3>Contact</h3>
+    <ul>
+      <li>See the <a href="http://blog.freegeoip.net">freegeoip blog</a></li>
+      <li>Download the <a href="https://github.com/fiorix/freegeoip">source code</a></li>
+    </ul>
+    <hr>
+    <h4>Contact</h4>
     <p>Feel free to share comments, suggestions or any other feedback.
-       <a href="https://github.com/fiorix/">I'm here.</a></p>
+       <a href="https://github.com/fiorix/">I'm here</a>.</p>
     <p>Contribute with code, pizza, gifts or donations.</p>
     <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
     <input type="hidden" name="cmd" value="_s-xclick">
@@ -115,8 +118,10 @@
     <hr>
     <footer>
       <p><small>Last updated: May 2013</small></p>
-      <p>This web site and all documentation is licensed under
-      <a href="http://creativecommons.org/licenses/by/3.0/">Creative Commons 3.0</a>.</p>
+      <p><small>This web site and all documentation is licensed under
+        <a href="http://creativecommons.org/licenses/by/3.0/">Creative Commons 3.0</a>.
+        This service includes GeoLite data created by MaxMind, available
+        from <a href="http://www.maxmind.com">maxmind.com</a>.</small></p>
     </footer>
   </div> <!-- /container -->
   <script type="text/javascript">
