@@ -53,4 +53,6 @@ function freegeoip($scope,$http){
 }
 $(document).ready(function(){
   $("#map").height($("#map").width()/2);
+  $("#cb").tooltip();
+  $("#cb").click(function(el){el.preventDefault();});
 });

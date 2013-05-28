@@ -70,8 +70,8 @@
       </div>
       <div class="span6">
         <h4>About</h4>
-	<p><a href="http://freegeoip.net">freegeoip.net</a> is a public RESTful
-	   web service API for searching
+        <p><a href="http://freegeoip.net">freegeoip.net</a> is a public RESTful
+           web service API for searching
            <a href="http://en.wikipedia.org/wiki/Geolocation_software">geolocation</a>
            of IP addresses and host names.</p>
         <p>It has an internal database with geolocation information,
@@ -84,10 +84,14 @@
     <div class="row-fluid marketing">
       <div class="span6">
         <h4>Usage <small>for developers</small></h4>
-	<p>Send HTTP GET requests to:</p>
+        <p>Send HTTP GET requests to:
 	<code>http://freegeoip.net/{format}/{ip_or_hostname}</code></p>
-        <p>Supported formats are <code>csv</code>, <code>xml</code> or <code>json</code>.</p>
-        <p>The <code>ip_or_hostname</code> part is optional. Your own IP is searched if one is not provided.</p>
+        <p>Supported formats are <code>csv</code>, <code>xml</code> or <code>json</code>,
+        which also support the
+        <a id="cb" href="#" title="e.g. http://freegeoip.net/json/{ip}?callback=func">callback</a>
+        query argument.</p>
+        <p>The <code>ip_or_hostname</code> part is optional. Your own IP is
+        searched if one is not provided.</p>
       </div>
       <div class="span6">
         <h4>Limits</h4>

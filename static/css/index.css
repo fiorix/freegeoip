@@ -33,3 +33,6 @@ code {
 .justify {
   text-align: justify;
 }
+div[class="tooltip-inner"] {
+  max-width: 350px;
+}
