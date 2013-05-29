@@ -17,6 +17,5 @@ title: freegeoip blog
 <hr>
 <p>
 <a href="http://freegeoip.net">freegeoip.net</a> &middot;
-<a href="https://github.com/fiorix/freegeoip">source</a> &middot;
-<a href="https://github.com/fiorix/">me</a>
+<a href="https://github.com/fiorix/freegeoip">source</a>
 </p>

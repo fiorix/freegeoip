@@ -1,6 +1,7 @@
 ---
 layout: post
 title: New config file
+user: fiorix
 ---
 
 Since freegeoip was born back in 2008, one thing is intrinsic about it:

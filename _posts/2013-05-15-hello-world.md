@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Hello, world
+user: fiorix
 ---
 
 It's been a long time since I wanted to create a blog for the freegeoip.
