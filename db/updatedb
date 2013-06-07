@@ -34,8 +34,9 @@ def download(url, filename=None):
     req.close()
 
     if filename:
-        with open(filename, "wb") as fd:
-            fd.write(data)
+        fd = open(filename, "wb")
+        fd.write(data)
+        fd.close()
 
     return data
 
@@ -52,8 +53,9 @@ def extract(zipfd, zipname, filename=None):
         print "Could not extract %s from zip archive." % zipname
         sys.exit(1)
     else:
-        with open(filename, "w") as fd:
-            fd.write(data)
+        fd = open(filename, "w")
+        fd.write(data)
+        fd.close()
 
 
 def import_csv(cursor, csvfile, table, skip_lines=0):
@@ -82,6 +84,7 @@ def import_csv(cursor, csvfile, table, skip_lines=0):
 
     fd.close()
     print "%d records!" % n
+    os.unlink(csvfile)
 
 
 class world_regions(dict):
@@ -92,16 +95,19 @@ class world_regions(dict):
 
     Expected csv columns: country,region,city
     """
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, autorm=True):
         self.filename = filename
         if filename:
-            with open(filename) as fd:
-                for row in csv.reader(fd):
-                    v = map(lambda s: s.decode("utf-8"), row[:2])
-                    k = self.strip_accents(",".join(v))
+            fd = open(filename)
+            for row in csv.reader(fd):
+                v = map(lambda s: s.decode("utf-8"), row[:2])
+                k = self.strip_accents(",".join(v))
 
-                    if k != v:
-                        self[k] = v[1]
+                if k != v:
+                    self[k] = v[1]
+            fd.close()
+            if autorm is True:
+                os.unlink(filename)
 
     def strip_accents(self, s):
         return ''.join((c for c in unicodedata.normalize('NFD', s)
@@ -129,8 +135,10 @@ if __name__ == "__main__":
     if not os.path.exists(wr_csv):
         if not os.path.exists(wr_zip):
             download(wr_url, wr_zip)
-        with zipfile.ZipFile(wr_zip) as zipfd:
-            extract(zipfd, wr_csv, wr_csv)
+        zipfd = zipfile.ZipFile(wr_zip)
+        extract(zipfd, wr_csv, wr_csv)
+        zipfd.close()
+        os.unlink(wr_zip)
 
     geolite = "http://geolite.maxmind.com/download/geoip/database/"
 
@@ -150,6 +158,7 @@ if __name__ == "__main__":
             if n in city_files and not os.path.exists(n):
                 extract(zipfd, filename, n)
         zipfd.close()
+        os.unlink(city_zip)
 
     # Fetch the country database
     country_url = geolite + "GeoIPCountryCSV.zip"
@@ -159,8 +168,10 @@ if __name__ == "__main__":
 
     country_csv = "GeoIPCountryWhois.csv"
     if not os.path.exists(country_csv):
-        with zipfile.ZipFile(country_zip) as zipfd:
-            extract(zipfd, country_csv)
+        zipfd = zipfile.ZipFile(country_zip)
+        extract(zipfd, country_csv)
+        zipfd.close()
+        os.unlink(country_zip)
 
     # Create the IP database
     tmpdb = "_" + dbname + ".temp"
