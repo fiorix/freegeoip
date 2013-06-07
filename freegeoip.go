@@ -102,6 +102,7 @@ func GeoipHandler() http.HandlerFunc {
 			w.Header().Set("Content-Type", "text/plain")
 			w.Header().Set("Access-Control-Allow-Methods", "GET")
 			w.Header().Set("Access-Control-Allow-Headers", "X-Requested-With")
+			w.WriteHeader(200)
 			return
 		default:
 			w.Header().Set("Allow", "GET, OPTIONS")
