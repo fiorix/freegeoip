@@ -45,7 +45,7 @@ def extract(zipfd, zipname, filename=None):
     if filename is None:
         filename = zipname
 
-    print "Extracting " + zipname + " -> " + filename
+    print "Extracting " + filename
 
     try:
         data = zipfd.read(zipname)
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     if not os.path.exists(region_csv):
         download(region_url, region_csv)
 
-    wr_url = "http://musta.sh/files/all_cities_in_the_world.csv.zip"
+    wr_url = "http://blog.freegeoip.net/files/all_cities_in_the_world.csv.zip"
     wr_zip = os.path.basename(wr_url)
     wr_csv = wr_zip[:-4]
     if not os.path.exists(wr_csv):
