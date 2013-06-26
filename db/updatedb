@@ -16,7 +16,7 @@
 # under the License.
 
 import csv
-import urllib
+import urllib2
 import os
 import sqlite3
 import sys
@@ -29,7 +29,8 @@ dbname = "ipdb.sqlite"
 def download(url, filename=None):
     print "Downloading " + url
 
-    req = urllib.urlopen(url)
+    req = urllib2.Request(url, None, {"User-Agent": "Mozilla/5.0"})
+    req = urllib2.urlopen(req)
     data = req.read()
     req.close()
 
