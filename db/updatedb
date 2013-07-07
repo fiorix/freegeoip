@@ -81,7 +81,7 @@ def import_csv(cursor, csvfile, table, skip_lines=0):
             rows = []
 
     if rows:
-        curs.executemany(q, rows)
+        cursor.executemany(q, rows)
 
     fd.close()
     print "%d records!" % n
