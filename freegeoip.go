@@ -92,6 +92,11 @@ func GeoipHandler() http.HandlerFunc {
 	if err != nil {
 		panic(err)
 	}
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		panic(err)
+	}
+	//defer stmt.Close()
 	rc := redis.New(conf.Redis...)
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -148,7 +153,7 @@ func GeoipHandler() http.HandlerFunc {
 		} else {
 			ip = ipkey
 		}
-		geoip, err := GeoipLookup(db, ip)
+		geoip, err := GeoipLookup(stmt, ip)
 		if err != nil {
 			http.NotFound(w, r)
 			return
@@ -218,7 +223,7 @@ FROM city_blocks
 WHERE city_blocks.ip_start <= ?
 ORDER BY city_blocks.ip_start DESC LIMIT 1`
 
-func GeoipLookup(db *sql.DB, ip string) (*GeoIP, error) {
+func GeoipLookup(stmt *sql.Stmt, ip string) (*GeoIP, error) {
 	IP := net.ParseIP(ip)
 	reserved := false
 	for _, net := range reservedIPs {
@@ -232,18 +237,10 @@ func GeoipLookup(db *sql.DB, ip string) (*GeoIP, error) {
 		geoip.CountryCode = "RD"
 		geoip.CountryName = "Reserved"
 	} else {
-		stmt, err := db.Prepare(query)
-		if err != nil {
-			if conf.Debug {
-				log.Println("[debug] SQLite", err.Error())
-			}
-			return nil, err
-		}
-		defer stmt.Close()
 		var uintIP uint32
 		b := bytes.NewBuffer(IP.To4())
 		binary.Read(b, binary.BigEndian, &uintIP)
-		err = stmt.QueryRow(uintIP).Scan(
+		if err := stmt.QueryRow(uintIP).Scan(
 			&geoip.CountryCode,
 			&geoip.CountryName,
 			&geoip.RegionCode,
@@ -253,8 +250,9 @@ func GeoipLookup(db *sql.DB, ip string) (*GeoIP, error) {
 			&geoip.Latitude,
 			&geoip.Longitude,
 			&geoip.MetroCode,
-			&geoip.AreaCode)
-		if err != nil {
+			&geoip.AreaCode,
+		); err != nil {
+			fmt.Println("ERR:", err)
 			return nil, err
 		}
 	}
