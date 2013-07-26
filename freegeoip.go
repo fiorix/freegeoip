@@ -252,7 +252,6 @@ func GeoipLookup(stmt *sql.Stmt, ip string) (*GeoIP, error) {
 			&geoip.MetroCode,
 			&geoip.AreaCode,
 		); err != nil {
-			fmt.Println("ERR:", err)
 			return nil, err
 		}
 	}
