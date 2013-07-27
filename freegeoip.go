@@ -143,11 +143,10 @@ func GeoipHandler() http.HandlerFunc {
 			http.Error(w, http.StatusText(403), 403)
 			return
 		}
-		// Parse URL and build the query.
+		// Parse URL (e.g. /csv/ip, /xml/)
 		var ip string
 		a := strings.SplitN(r.URL.Path, "/", 3)
 		if len(a) == 3 && a[2] != "" {
-			// e.g. /csv/google.com
 			addrs, err := net.LookupHost(a[2])
 			if err != nil {
 				http.Error(w, http.StatusText(404), 404)
@@ -157,13 +156,14 @@ func GeoipHandler() http.HandlerFunc {
 		} else {
 			ip = ipkey
 		}
+		// Query the db
 		geoip, err := GeoipLookup(stmt, ip)
 		if err != nil {
 			http.NotFound(w, r)
 			return
 		}
 		switch a[1][0] {
-		case 'c':
+		case 'c': // csv
 			w.Header().Set("Content-Type", "application/csv")
 			fmt.Fprintf(w, `"%s","%s","%s","%s","%s","%s",`+
 				`"%s","%0.4f","%0.4f","%s","%s"`+"\r\n",
@@ -173,7 +173,7 @@ func GeoipHandler() http.HandlerFunc {
 				geoip.CityName, geoip.ZipCode,
 				geoip.Latitude, geoip.Longitude,
 				geoip.MetroCode, geoip.AreaCode)
-		case 'j':
+		case 'j': // json
 			resp, err := json.Marshal(geoip)
 			if err != nil {
 				if conf.Debug {
@@ -190,7 +190,7 @@ func GeoipHandler() http.HandlerFunc {
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintf(w, "%s", resp)
 			}
-		case 'x':
+		case 'x': // xml
 			w.Header().Set("Content-Type", "application/xml")
 			resp, err := xml.MarshalIndent(geoip, "", " ")
 			if err != nil {
