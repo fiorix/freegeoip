@@ -10,6 +10,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -44,12 +45,14 @@ type Settings struct {
 var conf *Settings
 
 func main() {
-	if buf, err := ioutil.ReadFile("freegeoip.conf"); err != nil {
-		panic(err)
+	cf := flag.String("config", "freegeoip.conf", "set config file")
+	flag.Parse()
+	if buf, err := ioutil.ReadFile(*cf); err != nil {
+		log.Fatal(err)
 	} else {
 		conf = &Settings{}
 		if err := xml.Unmarshal(buf, conf); err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}
 	http.Handle("/", http.FileServer(http.Dir(conf.DocumentRoot)))
@@ -66,7 +69,8 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
-	log.Println("FreeGeoIP server starting")
+	log.Printf("FreeGeoIP server starting on %s (xheaders=%t)",
+		conf.Addr, conf.XHeaders)
 	if e := httpxtra.ListenAndServe(server); e != nil {
 		log.Println(e.Error())
 	}
@@ -86,15 +90,15 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 func GeoipHandler() http.HandlerFunc {
 	db, err := sql.Open("sqlite3", conf.IPDB.File)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	_, err = db.Exec("PRAGMA cache_size=" + conf.IPDB.CacheSize)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	stmt, err := db.Prepare(query)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	//defer stmt.Close()
 	rc := redis.New(conf.Redis...)
