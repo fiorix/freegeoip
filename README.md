@@ -2,8 +2,8 @@
 
 freegeoip.net is a public web service for searching
 [geolocation](http://en.wikipedia.org/wiki/Geolocation) of IP addresses.
-This is freegeoip.net's web server source code, and scripts for generating the
-database.
+This is the source code of freegeoip.net's web server and script for building
+the IP database.
 
 ## Overview
 
@@ -28,20 +28,21 @@ List of prerequisites for building and running the server:
 - Redis - for API usage quotas
 - The IP database
 
-### Building the database
+Proceed to building the IP database and then compile and run the server.
 
-The database is composed of multiple files, from multiple sources. It's a
-combination of IP networks, country codes, city names, etc.
+### Building the IP database
+
+The IP database is composed of multiple files from multiple sources. It's a
+combination of IP subnets, country codes, city names, etc.
 
 There's a helper script under the ``db`` directory that automates the process
 of building the database, and can be used regularly to update it as well.
-Because it downloads multiple files and process them, it might eventually fail.
 
-It's a Python script called ``updatedb`` that generates ``ipdb.sqlite``:
+It's a Python script called ``updatedb`` that creates ``ipdb.sqlite``:
 
 	$ cd db
 	$ ./updatedb
-	... will download files and process them to generate ipdb.sqlite
+	... will download files and process them to create ipdb.sqlite
 	$ file ipdb.sqlite
 	ipdb.sqlite: SQLite 3.x database
 
@@ -60,13 +61,15 @@ dependencies first:
 Use either ``go run freegeoip.go`` or ``go build; ./freegeoip`` to compile and
 run the server, then point the browser to http://localhost:8080.
 
-The server requires ``freegeoip.conf`` to be in the current directory. If
-the database is not accessible or redis-server is unreachable, all queries
-will result in HTTP 503 (Service Unavailable).
+Server needs ``freegeoip.conf`` to be in the current directory but an alternate
+config can be specified using the ``-config`` command line option.
+If the database is not accessible (e.g. file does not exist, permissions) or
+redis-server is unreachable, all queries will result in HTTP 503
+(Service Unavailable).
 
 We recommend [supervisor](http://supervisord.org) for running the server in
-production. On Ubuntu, install it with ``apt-get install supervisor`` and drop
-this simple config in ``/etc/supervisor/conf.d/freegeoip.conf``:
+production. On Ubuntu, install ``apt-get install supervisor`` and drop the
+following config in ``/etc/supervisor/conf.d/freegeoip.conf``:
 
 	[program:freegeoip]
 	user=www-data
@@ -79,10 +82,10 @@ this simple config in ``/etc/supervisor/conf.d/freegeoip.conf``:
 
 If the server is proxied by Nginx or another HTTP load balancer, edit the
 configuration file and set ``xheaders="true"`` and it'll use X-Real-IP or
-X-Forwarded-For HTTP headers as the client IP.
+X-Forwarded-For HTTP headers when available, as the client IP.
 
-For listening on low ports as non-root user (e.g. www-data) on linux, it's
-mandatory to set file capabilities like this:
+For listening on low ports as non-root user (e.g. www-data) on linux, set
+file capabilities at least once before running it:
 
 	/sbin/setcap 'cap_net_bind_service=+ep' /opt/freegeoip/freegeoip
 
@@ -96,7 +99,7 @@ Use curl from the command line to query the API:
 
 It supports csv, json and xml as the output format. JSON supports callbacks
 with the ``callback`` query argument. The client (self) IP is used if
-*ip_or_hostname* is omitted in the query.
+**ip_or_hostname** is omitted in the query.
 
 Examples:
 
@@ -105,7 +108,7 @@ Examples:
 	$ curl -v http://localhost:8080/xml/freegeoip.net
 	$ curl -v http://localhost:8080/json/github.com?callback=foobar
 
-If the server is listening on unix sockets, use *nc* to test:
+If the server is listening on unix sockets, use ``nc`` to test:
 
 	echo -ne 'GET /json/my-domain.abc HTTP/1.0\r\n\r\n' | nc -U /tmp/freegeoip.sock
 
