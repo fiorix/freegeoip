@@ -118,37 +118,36 @@ func GeoipHandler() http.HandlerFunc {
 			http.Error(w, http.StatusText(405), 405)
 			return
 		}
-		// GET
-		// Check quota
-		var ipkey string
-		if ip, _, err := net.SplitHostPort(r.RemoteAddr); err != nil {
-			ipkey = r.RemoteAddr // support for XHeaders
+		// GET continuing...
+		var (
+			ip, ipkey string
+			err       error
+			ok        bool
+		)
+		if ip, _, err = net.SplitHostPort(r.RemoteAddr); err != nil {
+			ipkey = r.RemoteAddr // Support for XHeaders
 		} else {
 			ipkey = ip
 		}
-		if qcs, err := rc.Get(ipkey); err != nil {
+		// Check quota
+		if ok, err = HasQuota(r, rc, &ipkey); err != nil {
+			// Redis down?
 			if conf.Debug {
 				log.Println("Redis error:", err.Error())
 			}
-			http.Error(w, http.StatusText(503), 503) // redis down
+			http.Error(w, http.StatusText(503), 503)
 			return
-		} else if qcs == "" {
-			if err := rc.Set(ipkey, "1"); err == nil {
-				rc.Expire(ipkey, conf.Limit.Expire)
-			}
-		} else if qc, _ := strconv.Atoi(qcs); qc < conf.Limit.MaxRequests {
-			rc.Incr(ipkey)
-		} else {
-			// Out of quota, soz :(
+		} else if !ok {
+			// Over quota, soz :(
 			http.Error(w, http.StatusText(403), 403)
 			return
 		}
 		// Parse URL (e.g. /csv/ip, /xml/)
-		var ip string
 		a := strings.SplitN(r.URL.Path, "/", 3)
 		if len(a) == 3 && a[2] != "" {
 			addrs, err := net.LookupHost(a[2])
 			if err != nil {
+				// DNS lookup failed, assume host not found.
 				http.Error(w, http.StatusText(404), 404)
 				return
 			}
@@ -203,6 +202,22 @@ func GeoipHandler() http.HandlerFunc {
 			fmt.Fprintf(w, xml.Header+"%s\n", resp)
 		}
 	}
+}
+
+func HasQuota(r *http.Request, rc *redis.Client, ipkey *string) (bool, error) {
+	if ns, err := rc.Get(*ipkey); err != nil {
+		return false, err
+	} else if ns == "" {
+		if err := rc.Set(*ipkey, "1"); err != nil {
+			return false, err
+		}
+		rc.Expire(*ipkey, conf.Limit.Expire)
+	} else if n, _ := strconv.Atoi(ns); n < conf.Limit.MaxRequests {
+		rc.Incr(*ipkey)
+	} else {
+		return false, nil
+	}
+	return true, nil
 }
 
 const query = `SELECT
