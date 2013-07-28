@@ -130,7 +130,7 @@ func GeoipHandler() http.HandlerFunc {
 			ipkey = ip
 		}
 		// Check quota
-		if ok, err = HasQuota(r, rc, &ipkey); err != nil {
+		if ok, err = HasQuota(rc, &ipkey); err != nil {
 			// Redis down?
 			if conf.Debug {
 				log.Println("Redis error:", err.Error())
@@ -204,7 +204,7 @@ func GeoipHandler() http.HandlerFunc {
 	}
 }
 
-func HasQuota(r *http.Request, rc *redis.Client, ipkey *string) (bool, error) {
+func HasQuota(rc *redis.Client, ipkey *string) (bool, error) {
 	if ns, err := rc.Get(*ipkey); err != nil {
 		return false, err
 	} else if ns == "" {
