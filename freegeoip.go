@@ -12,7 +12,6 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"log"
 	"net"
@@ -44,7 +43,6 @@ type Settings struct {
 }
 
 var conf *Settings
-var templates *template.Template
 
 
 func main() {
@@ -58,13 +56,11 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	templates = template.Must(template.ParseGlob(fmt.Sprintf("%s/template/*.html", conf.DocumentRoot)))
 	http.Handle("/", http.FileServer(http.Dir(conf.DocumentRoot)))
 	h := GeoipHandler()
 	http.HandleFunc("/csv/", h)
 	http.HandleFunc("/xml/", h)
 	http.HandleFunc("/json/", h)
-	http.HandleFunc("/map/", h)
 	server := http.Server{
 		Addr: conf.Addr,
 		Handler: httpxtra.Handler{
@@ -205,9 +201,6 @@ func GeoipHandler() http.HandlerFunc {
 				return
 			}
 			fmt.Fprintf(w, xml.Header+"%s\n", resp)
-		case 'm': // map. has to render a html template
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			templates.ExecuteTemplate(w, "map.html", geoip)
 		}
 	}
 }
