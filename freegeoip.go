@@ -179,13 +179,12 @@ func GeoipHandler() http.HandlerFunc {
 				http.NotFound(w, r)
 				return
 			}
-			callback := r.FormValue("callback")
-			if callback != "" {
+			if cb := r.FormValue("callback"); cb != "" {
 				w.Header().Set("Content-Type", "text/javascript")
-				fmt.Fprintf(w, "%s(%s);", callback, resp)
+				fmt.Fprintf(w, "%s(%s);", cb, resp)
 			} else {
 				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintf(w, "%s", resp)
+				w.Write(resp)
 			}
 		case 'x': // xml
 			w.Header().Set("Content-Type", "application/xml")
