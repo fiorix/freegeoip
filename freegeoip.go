@@ -44,7 +44,6 @@ type Settings struct {
 
 var conf *Settings
 
-
 func main() {
 	cf := flag.String("config", "freegeoip.conf", "set config file")
 	flag.Parse()
@@ -72,9 +71,7 @@ func main() {
 	}
 	log.Printf("FreeGeoIP server starting on %s (xheaders=%t)",
 		conf.Addr, conf.XHeaders)
-	if e := httpxtra.ListenAndServe(server); e != nil {
-		log.Println(e.Error())
-	}
+	log.Fatal(httpxtra.ListenAndServe(server))
 }
 
 func logger(r *http.Request, created time.Time, status, bytes int) {
@@ -245,7 +242,7 @@ ORDER BY city_blocks.ip_start DESC LIMIT 1`
 
 func GeoipLookup(stmt *sql.Stmt, ip string) (*GeoIP, error) {
 	IP := net.ParseIP(ip)
-	reserved := false
+	var reserved bool
 	for _, net := range reservedIPs {
 		if net.Contains(IP) {
 			reserved = true
@@ -258,8 +255,8 @@ func GeoipLookup(stmt *sql.Stmt, ip string) (*GeoIP, error) {
 		geoip.CountryName = "Reserved"
 	} else {
 		var uintIP uint32
-		b := bytes.NewBuffer(IP.To4())
-		binary.Read(b, binary.BigEndian, &uintIP)
+		binary.Read(bytes.NewBuffer(IP.To4()),
+			binary.BigEndian, &uintIP)
 		if err := stmt.QueryRow(uintIP).Scan(
 			&geoip.CountryCode,
 			&geoip.CountryName,
