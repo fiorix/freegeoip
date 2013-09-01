@@ -25,7 +25,7 @@ cried loud becoming a bottleneck for the service.
 
 For the past 6 months [freegeoip](http://freegeoip.net) has been serving
 an average of 70 million queries per day. In just two weeks it went from that
-to 220 million per day! Good thing is that I was contacted by Arnan, the
+to 300 million per day! Good thing is that I was contacted by Arnan, the
 author of [AdRotate](http://www.adrotateplugin.com) plugin before the change
 so I could keep an eye on it. I'd be very puzzled otherwise.
 
