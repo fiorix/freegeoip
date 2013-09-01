@@ -18,7 +18,7 @@ The current version is written in Go as the experiments progress with
 [go-web](https://github.com/fiorix/go-web) and
 [go-redis](https://github.com/fiorix/go-redis).
 
-### Prerequisites
+### Install
 
 List of prerequisites for building and running the server:
 
@@ -28,7 +28,19 @@ List of prerequisites for building and running the server:
 - Redis - for API usage quotas
 - The IP database
 
-Proceed to building the IP database and then compile and run the server.
+The following instructions are for Debian and Ubuntu servers.
+
+Make sure Go is installed and both $GOROOT and $GOPATH are set, then run:
+
+	apt-get install build-essential libsqlite3-dev pkg-config
+	go get github.com/fiorix/freegeoip
+	cd $GOPATH/src/github.com/fiorix/freegeoip
+	go build
+
+On recent OSX you might have to set the CC=clang before ``go build`` if
+the sqlite3 package fails to compile.
+
+Proceed to building the IP database before starting the server.
 
 ### Building the IP database
 
@@ -49,20 +61,14 @@ It's a Python script called ``updatedb`` that creates ``ipdb.sqlite``:
 This service includes GeoLite data created by MaxMind, available from
 maxmind.com.
 
-### Build and run
-
-Make sure the Go compiler is installed and $GOPATH is set. Install
-dependencies first:
-
-	go get github.com/fiorix/go-redis/redis
-	go get github.com/fiorix/go-web/httpxtra
-	go get github.com/mattn/go-sqlite3
+### Running
 
 Use either ``go run freegeoip.go`` or ``go build; ./freegeoip`` to compile and
 run the server, then point the browser to http://localhost:8080.
 
 Server needs ``freegeoip.conf`` to be in the current directory but an alternate
 config can be specified using the ``-config`` command line option.
+
 If the database is not accessible (e.g. file does not exist, permissions) or
 redis-server is unreachable, all queries will result in HTTP 503
 (Service Unavailable).
