@@ -27,6 +27,7 @@ import (
 
 type Settings struct {
 	XMLName      xml.Name `xml:"Server"`
+	Log          bool     `xml:"log,attr"`
 	Debug        bool     `xml:"debug,attr"`
 	XHeaders     bool     `xml:"xheaders,attr"`
 	Addr         string   `xml:"addr,attr"`
@@ -60,17 +61,19 @@ func main() {
 	http.HandleFunc("/csv/", h)
 	http.HandleFunc("/xml/", h)
 	http.HandleFunc("/json/", h)
+	handler := httpxtra.Handler{XHeaders: conf.XHeaders}
+	if conf.Log {
+		handler.Logger = logger
+	}
 	server := http.Server{
-		Addr: conf.Addr,
-		Handler: httpxtra.Handler{
-			Logger:   logger,
-			XHeaders: conf.XHeaders,
-		},
+		Addr:         conf.Addr,
+		Handler:      handler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
-	log.Printf("FreeGeoIP server starting on %s (xheaders=%t)",
-		conf.Addr, conf.XHeaders)
+	log.Printf("FreeGeoIP server starting on %s "+
+		"(log=%t,debug=%t,xheaders=%t)",
+		conf.Addr, conf.Log, conf.Debug, conf.XHeaders)
 	log.Fatal(httpxtra.ListenAndServe(server))
 }
 
