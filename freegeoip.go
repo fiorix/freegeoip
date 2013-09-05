@@ -168,9 +168,8 @@ func GeoipHandler() http.HandlerFunc {
 		}
 		// Check quota
 		if ok, err = HasQuota(rc, &ipkey); err != nil {
-			// Redis down?
 			if conf.Debug {
-				log.Println("Redis error:", err.Error())
+				log.Println(err) // redis error
 			}
 			http.Error(w, http.StatusText(503), 503)
 			return
