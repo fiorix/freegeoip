@@ -16,6 +16,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -61,6 +62,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	log.Printf("FreeGeoIP server starting. debug=%t", conf.Debug)
 	http.Handle("/", http.FileServer(http.Dir(conf.DocumentRoot)))
 	h := GeoipHandler()
@@ -139,6 +141,7 @@ func GeoipHandler() http.HandlerFunc {
 	}
 	//defer stmt.Close()
 	rc := redis.New(conf.Redis...)
+	rc.Timeout = time.Duration(800) * time.Millisecond
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
