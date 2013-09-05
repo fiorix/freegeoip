@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// Web server of freegeoip.net
+
 package main
 
 import (
@@ -86,14 +88,14 @@ func main() {
 			WriteTimeout: 15 * time.Second,
 		}
 		if l.KeyFile == "" {
-			log.Printf("Listening HTTP on %s  "+
+			log.Printf("Listening HTTP on %s "+
 				"log=%t xheaders=%t",
 				l.Addr, l.Log, l.XHeaders)
 			go func() {
 				log.Fatal(httpxtra.ListenAndServe(s))
 			}()
 		} else {
-			log.Printf("Listening HTTPS on %s  "+
+			log.Printf("Listening HTTPS on %s "+
 				"log=%t xheaders=%t cert=%s key=%s",
 				l.Addr, l.Log, l.XHeaders,
 				l.CertFile, l.KeyFile)
@@ -140,8 +142,16 @@ func GeoipHandler() http.HandlerFunc {
 		log.Fatal(err)
 	}
 	//defer stmt.Close()
-	rc := redis.New(conf.Redis...)
-	rc.Timeout = time.Duration(800) * time.Millisecond
+	var quota Quota
+	if len(conf.Redis) == 0 {
+		quota = new(MapQuota)
+		quota.Setup()
+		log.Printf("Using internal map to manage quota.")
+	} else {
+		quota = new(RedisQuota)
+		quota.Setup(conf.Redis...)
+		log.Printf("Using redis to manage quota: %s", conf.Redis)
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
@@ -162,24 +172,26 @@ func GeoipHandler() http.HandlerFunc {
 		var (
 			ip, ipkey string
 			err       error
-			ok        bool
 		)
 		if ip, _, err = net.SplitHostPort(r.RemoteAddr); err != nil {
 			ipkey = r.RemoteAddr // Support for XHeaders
 		} else {
 			ipkey = ip
 		}
-		// Check quota
-		if ok, err = HasQuota(rc, &ipkey); err != nil {
-			if conf.Debug {
-				log.Println(err) // redis error
+		// Check quota.
+		if conf.Limit.MaxRequests > 0 {
+			var ok bool
+			if ok, err = quota.Ok(ipkey); err != nil {
+				if conf.Debug {
+					log.Println(err) // redis error
+				}
+				http.Error(w, http.StatusText(503), 503)
+				return
+			} else if !ok {
+				// Over quota, soz :(
+				http.Error(w, http.StatusText(403), 403)
+				return
 			}
-			http.Error(w, http.StatusText(503), 503)
-			return
-		} else if !ok {
-			// Over quota, soz :(
-			http.Error(w, http.StatusText(403), 403)
-			return
 		}
 		// Parse URL (e.g. /csv/ip, /xml/)
 		a := strings.SplitN(r.URL.Path, "/", 3)
@@ -194,7 +206,7 @@ func GeoipHandler() http.HandlerFunc {
 		} else {
 			ip = ipkey
 		}
-		// Query the db
+		// Query the db.
 		geoip, err := GeoipLookup(stmt, ip)
 		if err != nil {
 			http.NotFound(w, r)
@@ -240,22 +252,6 @@ func GeoipHandler() http.HandlerFunc {
 			fmt.Fprintf(w, xml.Header+"%s\n", resp)
 		}
 	}
-}
-
-func HasQuota(rc *redis.Client, ipkey *string) (bool, error) {
-	if ns, err := rc.Get(*ipkey); err != nil {
-		return false, err
-	} else if ns == "" {
-		if err := rc.Set(*ipkey, "1"); err != nil {
-			return false, err
-		}
-		rc.Expire(*ipkey, conf.Limit.Expire)
-	} else if n, _ := strconv.Atoi(ns); n < conf.Limit.MaxRequests {
-		rc.Incr(*ipkey)
-	} else {
-		return false, nil
-	}
-	return true, nil
 }
 
 const query = `SELECT
@@ -348,4 +344,66 @@ var reservedIPs = []net.IPNet{
 	{net.IPv4(224, 0, 0, 0), net.IPv4Mask(240, 0, 0, 0)},
 	{net.IPv4(240, 0, 0, 0), net.IPv4Mask(240, 0, 0, 0)},
 	{net.IPv4(255, 255, 255, 255), net.IPv4Mask(255, 255, 255, 255)},
+}
+
+// Quota interface for limiting access to the API.
+type Quota interface {
+	Setup(args ...string)          // Initialize quota backend
+	Ok(ipkey string) (bool, error) // Returns true if under quota
+}
+
+// MapQuota implements the Quota interface using a map as the backend.
+type MapQuota struct {
+	mu sync.Mutex
+	m  map[string]int
+}
+
+func (q *MapQuota) Setup(args ...string) {
+	q.m = make(map[string]int)
+}
+
+func (q *MapQuota) Ok(ipkey string) (bool, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	if n, ok := q.m[ipkey]; ok {
+		if n < conf.Limit.MaxRequests {
+			q.m[ipkey]++
+			return true, nil
+		}
+		return false, nil
+	}
+	q.m[ipkey] = 1
+	go func() {
+		time.Sleep(time.Duration(conf.Limit.Expire) * time.Second)
+		q.mu.Lock()
+		defer q.mu.Unlock()
+		delete(q.m, ipkey)
+	}()
+	return true, nil
+}
+
+// RedisQuota implements the Quota interface using Redis as the backend.
+type RedisQuota struct {
+	c *redis.Client
+}
+
+func (q *RedisQuota) Setup(args ...string) {
+	q.c = redis.New(args...)
+	q.c.Timeout = time.Duration(800) * time.Millisecond
+}
+
+func (q *RedisQuota) Ok(ipkey string) (bool, error) {
+	if ns, err := q.c.Get(ipkey); err != nil {
+		return false, fmt.Errorf("redis: %s", err.Error())
+	} else if ns == "" {
+		if err := q.c.Set(ipkey, "1"); err != nil {
+			return false, fmt.Errorf("redis: %s", err.Error())
+		}
+		q.c.Expire(ipkey, conf.Limit.Expire) // what if..
+	} else if n, _ := strconv.Atoi(ns); n < conf.Limit.MaxRequests {
+		q.c.Incr(ipkey)
+	} else {
+		return false, nil
+	}
+	return true, nil
 }
