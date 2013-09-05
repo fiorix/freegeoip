@@ -25,7 +25,7 @@ List of prerequisites for building and running the server:
 - Go compiler - for ``freegeoip.go``
 - libsqlite3-dev, gcc or llvm - for dependency ``go-sqlite3``
 - Python - for the ``updatedb`` script
-- Redis - for API usage quotas
+- Redis - (optional) for API usage quotas
 - The IP database
 
 The following instructions are for Debian and Ubuntu servers.
@@ -63,19 +63,22 @@ maxmind.com.
 
 ### Running
 
-Use either ``go run freegeoip.go`` or ``go build; ./freegeoip`` to compile and
-run the server, then point the browser to http://localhost:8080.
+The server looks for ``freegeoip.conf`` in the current directory, but an
+alternative config can be specified using the ``-config`` command line option.
 
-Server needs ``freegeoip.conf`` to be in the current directory but an alternate
-config can be specified using the ``-config`` command line option.
+If the server is proxied by Nginx or another HTTP load balancer, edit the
+configuration file and set ``xheaders="true"`` and it'll use X-Real-IP or
+X-Forwarded-For HTTP headers (when available) as the client IP.
 
-If the database is not accessible (e.g. file does not exist, permissions) or
-redis-server is unreachable, all queries will result in HTTP 503
-(Service Unavailable).
+Run the server:
 
-For SSL, use the following command to generate self-signed certificates:
+	./freegeoip [-config /path/to/freegeoip.conf]
 
-	go run $GOROOT/src/pkg/crypto/tls/generate_cert.go --host localhost
+Then point the browser to http://localhost:8080.
+
+If the IP database is unavailable (e.g. file does not exist, bad permissions)
+or redis is unreachable (if using redis as the quota backend), all queries
+will result in HTTP 503 (Service Unavailable).
 
 We recommend [supervisor](http://supervisord.org) for running the server in
 production. On Ubuntu, install ``apt-get install supervisor`` and drop the
@@ -89,10 +92,6 @@ following config in ``/etc/supervisor/conf.d/freegeoip.conf``:
 	stdout_logfile=/var/log/freegeoip.log
 	stdout_logfile_maxbytes=50MB
 	stdout_logfile_backups=20
-
-If the server is proxied by Nginx or another HTTP load balancer, edit the
-configuration file and set ``xheaders="true"`` and it'll use X-Real-IP or
-X-Forwarded-For HTTP headers when available, as the client IP.
 
 For listening on low ports as non-root user (e.g. www-data) on linux, set
 file capabilities at least once before running it:
