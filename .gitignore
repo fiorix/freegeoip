@@ -1,3 +1,7 @@
+db/
+*.pem
+*.rdb
 *.swp
 _site
+freegeoip
 .DS_Store
