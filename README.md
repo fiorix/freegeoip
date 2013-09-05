@@ -73,6 +73,10 @@ If the database is not accessible (e.g. file does not exist, permissions) or
 redis-server is unreachable, all queries will result in HTTP 503
 (Service Unavailable).
 
+For SSL, use the following command to generate self-signed certificates:
+
+	go run $GOROOT/src/pkg/crypto/tls/generate_cert.go --host localhost
+
 We recommend [supervisor](http://supervisord.org) for running the server in
 production. On Ubuntu, install ``apt-get install supervisor`` and drop the
 following config in ``/etc/supervisor/conf.d/freegeoip.conf``:

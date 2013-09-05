@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fiorix/go-redis/redis"
@@ -26,11 +27,15 @@ import (
 )
 
 type Settings struct {
-	XMLName      xml.Name `xml:"Server"`
-	Log          bool     `xml:"log,attr"`
-	Debug        bool     `xml:"debug,attr"`
-	XHeaders     bool     `xml:"xheaders,attr"`
-	Addr         string   `xml:"addr,attr"`
+	Debug   bool     `xml:"debug,attr"`
+	XMLName xml.Name `xml:"Server"`
+	Listen  []*struct {
+		Log      bool   `xml:"log,attr"`
+		XHeaders bool   `xml:"xheaders,attr"`
+		Addr     string `xml:"addr,attr"`
+		CertFile string
+		KeyFile  string
+	}
 	DocumentRoot string
 	IPDB         struct {
 		File      string `xml:",attr"`
@@ -56,30 +61,61 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	log.Printf("FreeGeoIP server starting. debug=%t", conf.Debug)
 	http.Handle("/", http.FileServer(http.Dir(conf.DocumentRoot)))
 	h := GeoipHandler()
 	http.HandleFunc("/csv/", h)
 	http.HandleFunc("/xml/", h)
 	http.HandleFunc("/json/", h)
-	handler := httpxtra.Handler{XHeaders: conf.XHeaders}
-	if conf.Log {
-		handler.Logger = logger
+	wg := new(sync.WaitGroup)
+	for _, l := range conf.Listen {
+		if l.Addr == "" {
+			continue
+		}
+		wg.Add(1)
+		h := httpxtra.Handler{XHeaders: l.XHeaders}
+		if l.Log {
+			h.Logger = logger
+		}
+		s := http.Server{
+			Addr:         l.Addr,
+			Handler:      h,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+		}
+		if l.KeyFile == "" {
+			log.Printf("Listening HTTP on %s  "+
+				"log=%t xheaders=%t",
+				l.Addr, l.Log, l.XHeaders)
+			go func() {
+				log.Fatal(httpxtra.ListenAndServe(s))
+			}()
+		} else {
+			log.Printf("Listening HTTPS on %s  "+
+				"log=%t xheaders=%t cert=%s key=%s",
+				l.Addr, l.Log, l.XHeaders,
+				l.CertFile, l.KeyFile)
+			go func() {
+				log.Fatal(s.ListenAndServeTLS(
+					l.CertFile,
+					l.KeyFile,
+				))
+			}()
+		}
 	}
-	server := http.Server{
-		Addr:         conf.Addr,
-		Handler:      handler,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-	}
-	log.Printf("FreeGeoIP server starting on %s "+
-		"(log=%t,debug=%t,xheaders=%t)",
-		conf.Addr, conf.Log, conf.Debug, conf.XHeaders)
-	log.Fatal(httpxtra.ListenAndServe(server))
+	wg.Wait()
 }
 
 func logger(r *http.Request, created time.Time, status, bytes int) {
 	//fmt.Println(httpxtra.ApacheCommonLog(r, created, status, bytes))
-	log.Printf("HTTP %d %s %s (%s) :: %s",
+	var s string
+	if r.TLS == nil {
+		s = "HTTP"
+	} else {
+		s = "HTTPS"
+	}
+	log.Printf("%s %d %s %s (%s) :: %s",
+		s,
 		status,
 		r.Method,
 		r.URL.Path,

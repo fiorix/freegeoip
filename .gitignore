@@ -1,3 +1,5 @@
+*.pem
+*.rdb
 *.swp
 *.csv
 *.zip

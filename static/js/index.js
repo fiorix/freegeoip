@@ -39,14 +39,14 @@ function freegeoip($scope,$http){
         } else {
           qs = "Africa";
         }
-        $("#map").attr("src", "http://maps.google.com/maps?f=q&source=s_q&hl=en&geocode=&ie=UTF8&iwloc=A&output=embed&"+"z="+zoom+"&q="+qs);
+        $("#map").attr("src", "//maps.google.com/maps?f=q&source=s_q&hl=en&geocode=&ie=UTF8&iwloc=A&output=embed&"+"z="+zoom+"&q="+qs);
         $scope.searching = false;
       }).
       error(function(data,status){
         $scope.errorq = q;
         $scope.error = status;
         $scope.searching = false;
-        $("#map").attr("src", "http://maps.google.com/maps?f=q&source=s_q&hl=en&geocode=&ie=UTF8&iwloc=A&output=embed&zoom=2&q=africa");
+        $("#map").attr("src", "//maps.google.com/maps?f=q&source=s_q&hl=en&geocode=&ie=UTF8&iwloc=A&output=embed&zoom=2&q=africa");
       });
   }
   $scope.search('');
