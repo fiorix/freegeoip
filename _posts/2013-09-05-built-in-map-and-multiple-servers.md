@@ -10,13 +10,15 @@ that uses the source IP of the connection as the key, and its value is the
 number of hits on the API.
 
 The map implementation has reduced request processing times from an average
-of 800μs down to 300μs in production.
+of 800μs down to 300μs in production. However, there's the disadvantage of
+resetting all quotas to zero when the server is restarted.
 
-There's one more optimization that I'd like to implement, which is what was
-used in one of the latest Python versions of freegeoip: convert the IP
+<del>There's one more optimization that I'd like to implement, which is what
+was used in one of the latest Python versions of freegeoip: convert the IP
 to int32 and use that as the map key to save some memory. The IP is being
 converted already for the SQLite query anyway, and is just a matter of
-reorganizing the code.
+reorganizing the code.</del>
+Edit: [Done](https://github.com/fiorix/freegeoip/commit/2ebbdc97f7a3df4404c98ee71bf0a9a316892c39).
 
 For now, redis is optional and can be enabled or disabled any time in the
 configuration file.
