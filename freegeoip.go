@@ -112,18 +112,24 @@ func main() {
 
 func logger(r *http.Request, created time.Time, status, bytes int) {
 	//fmt.Println(httpxtra.ApacheCommonLog(r, created, status, bytes))
-	var s string
+	var (
+		s, ip string
+		err   error
+	)
 	if r.TLS == nil {
 		s = "HTTP"
 	} else {
 		s = "HTTPS"
+	}
+	if ip, _, err = net.SplitHostPort(r.RemoteAddr); err != nil {
+		ip = r.RemoteAddr
 	}
 	log.Printf("%s %d %s %s (%s) :: %s",
 		s,
 		status,
 		r.Method,
 		r.URL.Path,
-		r.RemoteAddr,
+		ip,
 		time.Since(created))
 }
 
