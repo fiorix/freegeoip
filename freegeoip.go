@@ -247,13 +247,14 @@ func GeoipHandler() http.HandlerFunc {
 		case 'c': // csv
 			w.Header().Set("Content-Type", "application/csv")
 			fmt.Fprintf(w, `"%s","%s","%s","%s","%s","%s",`+
-				`"%s","%0.4f","%0.4f","%s","%s"`+"\r\n",
+				`"%s","%0.4f","%0.4f","%s","%s", "%s"`+"\r\n",
 				geoip.Ip,
 				geoip.CountryCode, geoip.CountryName,
 				geoip.RegionCode, geoip.RegionName,
 				geoip.CityName, geoip.ZipCode,
 				geoip.Latitude, geoip.Longitude,
-				geoip.MetroCode, geoip.AreaCode)
+				geoip.MetroCode, geoip.AreaCode,
+				geoip.Timezone)
 		case 'j': // json
 			resp, err := json.Marshal(geoip)
 			if err != nil {
@@ -325,6 +326,7 @@ func lookup(stmt *sql.Stmt, IP net.IP, nIP uint32) (*GeoIP, error) {
 			&geoip.Longitude,
 			&geoip.MetroCode,
 			&geoip.AreaCode,
+			&geoip.Timezone,
 		); err != nil {
 			return nil, err
 		}
@@ -345,6 +347,7 @@ type GeoIP struct {
 	Longitude   float32  `json:"longitude"`
 	MetroCode   string   `json:"metro_code"`
 	AreaCode    string   `json:"areacode"`
+	Timezone    string   `json:"timezone"`
 }
 
 // http://en.wikipedia.org/wiki/Reserved_IP_addresses
@@ -378,7 +381,8 @@ const query = `SELECT
   city_location.latitude,
   city_location.longitude,
   city_location.metro_code,
-  city_location.area_code
+  city_location.area_code,
+  COALESCE(tz2.timezone, tz.timezone)
 FROM city_blocks
   NATURAL JOIN city_location
   INNER JOIN country_blocks ON
@@ -387,6 +391,12 @@ FROM city_blocks
     city_location.country_code = region_names.country_code
     AND
     city_location.region_code = region_names.region_code
+  LEFT OUTER JOIN timezones tz ON
+    city_location.country_code = tz.country_code
+  LEFT OUTER JOIN timezones tz2 ON
+    city_location.country_code = tz2.country_code
+    AND
+    city_location.region_code = tz2.region_code
 WHERE city_blocks.ip_start <= ?
 ORDER BY city_blocks.ip_start DESC LIMIT 1`
 
