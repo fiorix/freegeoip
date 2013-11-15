@@ -109,6 +109,7 @@ to start and stop the server:
 		/sbin/setcap 'cap_net_bind_service=+ep' /opt/freegeoip/freegeoip
 	end script
 
+	limit nofile 4096 4096
 	exec /usr/bin/god -f -n -l /var/log/freegeoip.log -p /var/run/freegeoip.pid -r /opt/freegeoip -u www-data -g www-data ./freegeoip
 
 Then use `start freegeoip` and `stop freegeoip` to start and stop the server.
