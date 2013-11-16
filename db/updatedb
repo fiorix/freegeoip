@@ -161,6 +161,12 @@ if __name__ == "__main__":
         zipfd.close()
         os.unlink(city_zip)
 
+    # Fetch timezone database
+    tz_url = "https://gist.github.com/x2q/6729229/raw/timezone.csv"
+    tz_csv = os.path.basename(tz_url)
+    if not os.path.exists(tz_csv):
+        download(tz_url, tz_csv)
+
     # Fetch the country database
     country_url = geolite + "GeoIPCountryCSV.zip"
     country_zip = os.path.basename(country_url)
@@ -223,6 +229,13 @@ if __name__ == "__main__":
         area_code text,
         primary key(loc_id))""")
     import_csv(curs, city_files[1], "city_location", skip_lines=2)
+
+    curs.execute("""\
+    create table timezones (
+        country_code text,
+        region_code text,
+        timezone text)""")
+    import_csv(curs, tz_csv, "timezones", skip_lines=1)
 
     curs.close()
     conn.commit()
