@@ -124,7 +124,7 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 	if ip, _, err = net.SplitHostPort(r.RemoteAddr); err != nil {
 		ip = r.RemoteAddr
 	}
-	log.Printf("%s %d %s %s (%s) :: %s",
+	log.Printf("%s %d %s %q (%s) :: %s",
 		s,
 		status,
 		r.Method,

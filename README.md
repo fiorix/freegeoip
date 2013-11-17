@@ -126,7 +126,7 @@ log rotation:
 		delaycompress
 		compress
 		postrotate
-			reload freegeoip >/dev/null 2>&1 || true
+			reload freegeoip > /dev/null 2>&1
 		endscript
 	}
 
