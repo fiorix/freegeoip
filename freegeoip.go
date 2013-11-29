@@ -31,9 +31,10 @@ import (
 )
 
 type Settings struct {
-	Debug   bool     `xml:"debug,attr"`
-	XMLName xml.Name `xml:"Server"`
-	Listen  []*struct {
+	Debug    bool     `xml:"debug,attr"`
+	DebugSrv string   `xml:"debugsrv,attr"`
+	XMLName  xml.Name `xml:"Server"`
+	Listen   []*struct {
 		Log      bool   `xml:"log,attr"`
 		XHeaders bool   `xml:"xheaders,attr"`
 		Addr     string `xml:"addr,attr"`
@@ -54,8 +55,9 @@ type Settings struct {
 
 var (
 	conf        *Settings
-	protoCount  = expvar.NewMap("Protocol")
-	methodCount = expvar.NewMap("Method")
+	protoCount  = expvar.NewMap("Protocol") // HTTP or HTTPS
+	outFmtCount = expvar.NewMap("OutFmt")   // json, xml, csv or other
+	statusCount = expvar.NewMap("Status")   // 200, 403, 404, etc
 )
 
 func main() {
@@ -71,18 +73,26 @@ func main() {
 	}
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	log.Printf("FreeGeoIP server starting. debug=%t", conf.Debug)
-	http.Handle("/", http.FileServer(http.Dir(conf.DocumentRoot)))
+	if conf.Debug && len(conf.DebugSrv) > 0 {
+		go func() {
+			// server for expvar's /debug/vars only
+			log.Printf("DEBUG server on %s", conf.DebugSrv)
+			log.Fatal(http.ListenAndServe(conf.DebugSrv, nil))
+		}()
+	}
+	mux := http.NewServeMux()
+	mux.Handle("/", http.FileServer(http.Dir(conf.DocumentRoot)))
 	h := LookupHandler()
-	http.HandleFunc("/csv/", h)
-	http.HandleFunc("/xml/", h)
-	http.HandleFunc("/json/", h)
+	mux.HandleFunc("/csv/", h)
+	mux.HandleFunc("/xml/", h)
+	mux.HandleFunc("/json/", h)
 	wg := new(sync.WaitGroup)
 	for _, l := range conf.Listen {
 		if l.Addr == "" {
 			continue
 		}
 		wg.Add(1)
-		h := httpxtra.Handler{XHeaders: l.XHeaders}
+		h := httpxtra.Handler{Handler: mux, XHeaders: l.XHeaders}
 		if l.Log {
 			h.Logger = logger
 		}
@@ -126,8 +136,6 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 	} else {
 		s = "HTTPS"
 	}
-	protoCount.Add(s, 1)
-	methodCount.Add(r.Method, 1)
 	if ip, _, err = net.SplitHostPort(r.RemoteAddr); err != nil {
 		ip = r.RemoteAddr
 	}
@@ -137,7 +145,22 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 		r.Method,
 		r.URL.Path,
 		ip,
-		time.Since(created))
+		time.Since(created),
+	)
+	if conf.Debug {
+		protoCount.Add(s, 1)
+		statusCount.Add(fmt.Sprintf("%d", status), 1)
+		switch strings.SplitN(r.URL.Path, "/", 2)[1] {
+		case "json/":
+			outFmtCount.Add("json", 1)
+		case "xml/":
+			outFmtCount.Add("xml", 1)
+		case "csv/":
+			outFmtCount.Add("csv", 1)
+		default:
+			outFmtCount.Add("other", 1)
+		}
+	}
 }
 
 // LookupHandler handles GET on /csv, /xml and /json.
@@ -181,7 +204,7 @@ func LookupHandler() http.HandlerFunc {
 			http.Error(w, http.StatusText(405), 405)
 			return
 		}
-		// GET continuing...
+		// GET continues...
 		var srcIP net.IP
 		if ip, _, err := net.SplitHostPort(r.RemoteAddr); err != nil {
 			srcIP = net.ParseIP(r.RemoteAddr) // Use X-Real-IP
@@ -251,23 +274,13 @@ func LookupHandler() http.HandlerFunc {
 			return
 		}
 		switch a[1][0] {
-		case 'c': // csv
-			w.Header().Set("Content-Type", "application/csv")
-			fmt.Fprintf(w, `"%s","%s","%s","%s","%s","%s",`+
-				`"%s","%0.4f","%0.4f","%s","%s"`+"\r\n",
-				geoip.Ip,
-				geoip.CountryCode, geoip.CountryName,
-				geoip.RegionCode, geoip.RegionName,
-				geoip.CityName, geoip.ZipCode,
-				geoip.Latitude, geoip.Longitude,
-				geoip.MetroCode, geoip.AreaCode)
 		case 'j': // json
 			resp, err := json.Marshal(geoip)
 			if err != nil {
 				if conf.Debug {
 					log.Println("JSON error:", err.Error())
 				}
-				http.NotFound(w, r)
+				http.Error(w, http.StatusText(500), 500)
 				return
 			}
 			if cb := r.FormValue("callback"); cb != "" {
@@ -288,6 +301,16 @@ func LookupHandler() http.HandlerFunc {
 				return
 			}
 			fmt.Fprintf(w, xml.Header+"%s\n", resp)
+		case 'c': // csv
+			w.Header().Set("Content-Type", "application/csv")
+			fmt.Fprintf(w, `"%s","%s","%s","%s","%s","%s",`+
+				`"%s","%0.4f","%0.4f","%s","%s"`+"\r\n",
+				geoip.Ip,
+				geoip.CountryCode, geoip.CountryName,
+				geoip.RegionCode, geoip.RegionName,
+				geoip.CityName, geoip.ZipCode,
+				geoip.Latitude, geoip.Longitude,
+				geoip.MetroCode, geoip.AreaCode)
 		}
 	}
 }
