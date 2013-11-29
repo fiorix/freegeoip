@@ -56,7 +56,7 @@ type Settings struct {
 var (
 	conf        *Settings
 	protoCount  = expvar.NewMap("Protocol") // HTTP or HTTPS
-	outFmtCount = expvar.NewMap("OutFmt")   // json, xml, csv or other
+	outputCount = expvar.NewMap("Output")   // json, xml, csv or other
 	statusCount = expvar.NewMap("Status")   // 200, 403, 404, etc
 )
 
@@ -152,13 +152,13 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 		statusCount.Add(fmt.Sprintf("%d", status), 1)
 		switch strings.SplitN(r.URL.Path, "/", 2)[1] {
 		case "json/":
-			outFmtCount.Add("json", 1)
+			outputCount.Add("json", 1)
 		case "xml/":
-			outFmtCount.Add("xml", 1)
+			outputCount.Add("xml", 1)
 		case "csv/":
-			outFmtCount.Add("csv", 1)
+			outputCount.Add("csv", 1)
 		default:
-			outFmtCount.Add("other", 1)
+			outputCount.Add("other", 1)
 		}
 	}
 }
