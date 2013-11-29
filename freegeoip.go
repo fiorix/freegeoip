@@ -12,6 +12,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
+	"expvar"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -24,9 +25,9 @@ import (
 	"sync"
 	"time"
 
+	_ "code.google.com/p/gosqlite/sqlite3"
 	"github.com/fiorix/go-redis/redis"
 	"github.com/fiorix/go-web/httpxtra"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type Settings struct {
@@ -51,7 +52,11 @@ type Settings struct {
 	Redis []string `xml:"Redis>Addr"`
 }
 
-var conf *Settings
+var (
+	conf        *Settings
+	protoCount  = expvar.NewMap("Protocol")
+	methodCount = expvar.NewMap("Method")
+)
 
 func main() {
 	cf := flag.String("config", "freegeoip.conf", "set config file")
@@ -67,7 +72,7 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	log.Printf("FreeGeoIP server starting. debug=%t", conf.Debug)
 	http.Handle("/", http.FileServer(http.Dir(conf.DocumentRoot)))
-	h := GeoipHandler()
+	h := LookupHandler()
 	http.HandleFunc("/csv/", h)
 	http.HandleFunc("/xml/", h)
 	http.HandleFunc("/json/", h)
@@ -121,6 +126,8 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 	} else {
 		s = "HTTPS"
 	}
+	protoCount.Add(s, 1)
+	methodCount.Add(r.Method, 1)
 	if ip, _, err = net.SplitHostPort(r.RemoteAddr); err != nil {
 		ip = r.RemoteAddr
 	}
@@ -133,8 +140,8 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 		time.Since(created))
 }
 
-// GeoipHandler handles GET on /csv, /xml and /json.
-func GeoipHandler() http.HandlerFunc {
+// LookupHandler handles GET on /csv, /xml and /json.
+func LookupHandler() http.HandlerFunc {
 	db, err := sql.Open("sqlite3", conf.IPDB.File)
 	if err != nil {
 		log.Fatal(err)
