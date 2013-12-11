@@ -469,14 +469,15 @@ func (q *RedisQuota) Setup(args ...string) {
 func (q *RedisQuota) Ok(ipkey uint32) (bool, error) {
 	k := fmt.Sprintf("%d", ipkey) // "numeric" key
 	if ns, err := q.c.Get(k); err != nil {
-		return false, fmt.Errorf("redis: %s", err.Error())
+		return false, fmt.Errorf("redis get: %s", err.Error())
 	} else if ns == "" {
-		if err := q.c.Set(k, "1"); err != nil {
-			return false, fmt.Errorf("redis: %s", err.Error())
+		if err = q.c.SetEx(k, conf.Limit.Expire, "1"); err != nil {
+			return false, fmt.Errorf("redis setex: %s", err.Error())
 		}
-		q.c.Expire(k, conf.Limit.Expire) // what if..
 	} else if n, _ := strconv.Atoi(ns); n < conf.Limit.MaxRequests {
-		q.c.Incr(k)
+		if _, err = q.c.Incr(k); err != nil {
+			return false, fmt.Errorf("redis incr: %s", err.Error())
+		}
 	} else {
 		return false, nil
 	}
