@@ -475,8 +475,10 @@ func (q *RedisQuota) Ok(ipkey uint32) (bool, error) {
 			return false, fmt.Errorf("redis setex: %s", err.Error())
 		}
 	} else if n, _ := strconv.Atoi(ns); n < conf.Limit.MaxRequests {
-		if _, err = q.c.Incr(k); err != nil {
+		if n, err = q.c.Incr(k); err != nil {
 			return false, fmt.Errorf("redis incr: %s", err.Error())
+		} else if n == 1 {
+			q.c.Expire(k, conf.Limit.Expire)
 		}
 	} else {
 		return false, nil
