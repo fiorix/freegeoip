@@ -1,146 +1,147 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en" ng-app="freegeoip">
-<head>
-  <meta charset="utf-8">
-  <title>freegeoip.net: FREE IP Geolocation Web Service</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="author" content="Alexandre Fiori">
-  <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
-  <link href="css/index.min.css" rel="stylesheet">
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.6/angular.min.js"></script>
-  <script src="js/index.min.js"></script>
-  <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-  <!--[if lt IE 9]>
-    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-  <![endif]-->
-</head>
-<body ng-controller="freegeoip">
-  <div class="container-narrow">
-    <div class="masthead">
-      <h1 class="pull-left">freegeoip.net</h1>
-      <form class="form-search pull-right" style="margin-top:20px">
-        <input type="text" placeholder="IP or hostname" autofocus ng-model="q">
-        <button class="btn btn-primary" data-loading-text="Searching..." btn-submit="searching" ng-click="search(q)">Search</button>
-      </form>
-    </div>
-    <div class="jumbotron">
-      <iframe id="map" width="99%" frameborder="0" scrolling="no"
-              marginwidth="0" marginheight="0" src=""></iframe>
-    </div>
-    <div class="row-fluid marketing">
-      <div class="span6">
-        <div ng-show="error=='403'">
-          <h4>Oooops!</h4>
-          <div class="alert alert-error">Over quota</div>
-          <p>This service is public and free with a hard limit
-             of 10.000 requests per hour, and you've reached your quota.</p>
-          <p>Check out the <i>Limits</i> section below for more information.</p>
-        </div>
-        <div ng-show="error=='404'">
-          <h4>Oooops!</h4>
-          <div class="alert alert-block">No results for <span ng-bind="errorq||'Your IP'"></span></div>
-          <p>Try one of the following:</p>
-          <ul>
-            <li>Make sure you enter a valid IP address, or</li>
-            <li>A valid host, or domain name (e.g. google.com)</li>
-          </ul>
-        </div>
-        <div ng-show="error=='503'">
-          <h4>Oooops!</h4>
-          <div class="alert alert-warning">Service Unavailable</div>
-          <p>The service is unavailable due to maintenance or high load.</p>
-          <p>We appologize for the inconvenience. Please try again later.</p>
-        </div>
-        <div ng-hide="error">
-          <h4>Estimated location:</h4>
-          <table class="table table-striped">
-            <tbody>
-              <tr><td>IP</td><td><span ng-bind="geoip.ip"></span></td></tr>
-              <tr><td>Country</td><td><span ng-bind="geoip.country_name"></span></td></tr>
-              <tr><td>Region</td><td><span ng-bind="geoip.region_name"></span></td></tr>
-              <tr><td>City</td><td><span ng-bind="geoip.city"></span></td></tr>
-              <tr><td>Zip code</td><td><span ng-bind="geoip.zipcode"></span></td></tr>
-              <tr><td>Latitude and Longitude</td><td><span ng-bind="geoip.latitude"></span> <span ng-bind="geoip.longitude"></span></td></tr>
-              <tr><td>Area and Metro codes</td><td><span ng-bind="geoip.areacode"></span> <span ng-bind="geoip.metrocode"></span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="span6">
-        <h4>About</h4>
-        <p><a href="http://freegeoip.net">freegeoip.net</a> is a public RESTful
-           web service API for searching
-           <a href="http://en.wikipedia.org/wiki/Geolocation_software">geolocation</a>
-           of IP addresses and host names.</p>
-        <p>It has an internal database with geolocation information,
-           which is queried via the web service. There's no magic or tricky
-           calculations, it's just a database. And although the database is
-           very accurate, don't expect it to be perfect.</p>
-        <p>See the <a href="http://blog.freegeoip.net">freegeoip blog</a>.</p>
-      </div>
-    </div>
-    <hr>
-    <div class="row-fluid marketing">
-      <div class="span6">
-        <h4>Usage <small>for developers</small></h4>
-        <p>Send HTTP GET requests to:
-	<code>freegeoip.net/{format}/{ip_or_hostname}</code></p>
-	<p>The API supports both HTTP and HTTPS.</p>
-	<p>Supported formats are <code>csv</code>, <code>xml</code> or <code>json</code>,
-        which also support the
-        <a id="cb" href="#" title="e.g. http://freegeoip.net/json/{ip}?callback=func">callback</a>
-	query argument for <a href="http://en.wikipedia.org/wiki/JSONP">JSONP</a>.</p>
-        <p>The <code>ip_or_hostname</code> part is optional. Your own IP is
-        searched if one is not provided.</p>
-      </div>
-      <div class="span6">
-        <h4>Limits</h4>
-        <p>API usage is limited to <b>10,000 queries per hour</b>. After
-           reaching this limit, all requests will result in HTTP 403
-           (Forbidden) until the roll over.</p>
-        <p>If the usage limit is a problem, please consider running your own
-           instance of this system. It's open source and freely available
-           at GitHub.</p>
-        <p>Download the <a href="https://github.com/fiorix/freegeoip">source code</a>.</p>
-      </div>
-    </div>
-    <hr>
-    <h4>Support</h4>
-    <p><a href="http://freegeoip.net">freegeoip.net</a> is community funded,
-    therefore please consider donating if you like and use this service.</p>
+	<head>
+		<meta charset="utf-8">
+		<title>freegeoip.net: FREE IP Geolocation Web Service</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="author" content="Alexandre Fiori">
+		<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+		<link href="css/index.min.css" rel="stylesheet">
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.4/angular.min.js"></script>
+		<script src="js/index.min.js"></script>
+		<!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+		<!--[if lt IE 9]>
+		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+	</head>
+	<body ng-controller="freegeoip">
+		<div class="container-narrow">
+			<div class="row">
+				<div class="col-md-6">
+					<h1 class="pull-left">freegeoip.net</h1>
+				</div>
+				<div class="col-md-6">
+					<form class="navbar-form navbar-right" role="form" style="margin-top:25px">
+						<div class="form-group">
+							<input type="text" class="form-control" placeholder="IP or hostname" autofocus autocorrect="off" autocapitalize="off" ng-model="q">
+						</div>
+						<div class="form-group">
+							<button class="btn btn-default" data-loading-text="Searching..." btn-submit="searching" ng-click="search(q)">Search</button>
+						</div>
+					</form>
+				</div>
+			</div>
+			<hr ng-hide="map">
+			<iframe id="map" width="100%" frameborder="0" scrolling="no" marginwidth="0" marginheight="0" src="" ng-show="map"></iframe>
+			<div class="row">
+				<div class="col-md-6">
+					<div ng-show="error=='403'">
+						<h4>Oooops!</h4>
+						<div class="alert alert-error">Over quota</div>
+						<p>This service is public and free with a hard limit
+						of 10.000 requests per hour, and you've reached your quota.</p>
+						<p>Check out the <i>Limits</i> section below for more information.</p>
+					</div>
+					<div ng-show="error=='404'">
+						<h4>Oooops!</h4>
+						<div class="alert alert-block">No results for <span ng-bind="errorq||'your IP'"></span></div>
+						<p>Try one of the following:</p>
+						<ul>
+							<li>Make sure you enter a valid IP address, or</li>
+							<li>A valid host, or domain name (e.g. google.com)</li>
+						</ul>
+					</div>
+					<div ng-show="error=='503'">
+						<h4>Oooops!</h4>
+						<div class="alert alert-warning">Service Unavailable</div>
+						<p>The service is unavailable due to maintenance or high load.</p>
+						<p>We apologize for the inconvenience. Please try again later.</p>
+					</div>
+					<div ng-hide="error">
+						<h4>Estimated location:</h4>
+						<table class="table table-striped">
+							<tbody>
+								<tr><td>IP</td><td><span ng-bind="geoip.ip"></span></td></tr>
+								<tr><td>Country</td><td><span ng-bind="geoip.country_name"></span></td></tr>
+								<tr><td>Region</td><td><span ng-bind="geoip.region_name"></span></td></tr>
+								<tr><td>City</td><td><span ng-bind="geoip.city"></span></td></tr>
+								<tr><td>Zip code</td><td><span ng-bind="geoip.zipcode"></span></td></tr>
+								<tr><td>Latitude and Longitude</td><td><span ng-bind="geoip.latitude"></span> <span ng-bind="geoip.longitude"></span></td></tr>
+								<tr><td>Area and Metro codes</td><td><span ng-bind="geoip.areacode"></span> <span ng-bind="geoip.metrocode"></span></td></tr>
+							</tbody>
+						</table>
+						<a href="/?q={{q}}&map=1" ng-hide="map">Show map</a>
+						<a href="/?q={{q}}" ng-show="map">Hide map</a>
+					</div>
+				</div>
+				<div class="col-md-6">
+					<h4>About</h4>
+					<p><a href="http://freegeoip.net">freegeoip.net</a> is a public REST API for searching <a href="http://en.wikipedia.org/wiki/Geolocation_software">geolocation</a> of IP addresses and host names.</p>
+					<p>It has an internal database with geolocation information, which is queried via the API. There's no sorcery, it's just a database. And although the database is very accurate, don't expect it to be perfect.</p>
+					<p>See the <a href="http://blog.freegeoip.net">freegeoip blog</a>.</p>
+				</div>
+			</div>
+			<hr>
+			<div class="row">
+				<div class="col-md-6">
+					<h4>Usage <small>for developers</small></h4>
+					<p>Send HTTP GET requests to:
+					<code>freegeoip.net/{format}/{ip_or_hostname}</code></p>
+					<p>The API supports both HTTP and HTTPS.</p>
+					<p>Supported formats are <code>csv</code>, <code>xml</code> or <code>json</code>,
+					which also support the
+					<a id="cb" href="#" title="e.g. http://freegeoip.net/json/{ip}?callback=func">callback</a>
+					query argument for <a href="http://en.wikipedia.org/wiki/JSONP">JSONP</a>.</p>
+					<p>The <code>ip_or_hostname</code> part is optional. Your own IP is
+					searched if one is not provided.</p>
+				</div>
+				<div class="col-md-6">
+					<h4>Limits</h4>
+					<p>API usage is limited to <b>10,000 queries per hour</b>. After
+					reaching this limit, all requests will result in HTTP 403
+					(Forbidden) until the roll over.</p>
+					<p>If the usage limit is a problem, please consider running your own
+					instance of this system. It's open source and freely available
+					at GitHub.</p>
+					<p>Download the <a href="https://github.com/fiorix/freegeoip">source code</a>.</p>
+				</div>
+			</div>
+			<hr>
+			<h4>Support</h4>
+			<p><a href="http://freegeoip.net">freegeoip.net</a> is community funded,
+			therefore please consider donating if you like and use this service.</p>
 
-    <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-    <input type="hidden" name="cmd" value="_s-xclick">
-    <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----
-">
-    <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-    <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
-    </form>
+			<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+				<input type="hidden" name="cmd" value="_s-xclick">
+				<input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----">
+				<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+				<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+			</form>
 
-    <p>For any other inquiries or feedback,
-       <a href="https://github.com/fiorix/">contact me</a> directly.</p>
+			<p>For any other inquiries or feedback,
+			<a href="https://github.com/fiorix/">contact me</a> directly.</p>
 
-    <hr>
-    <footer>
-      <!-- <p><small>Last updated: September 2013</small></p> -->
-      <p><small>This web site and all documentation is licensed under
-        <a href="http://creativecommons.org/licenses/by/3.0/">Creative Commons 3.0</a>.
-        This service includes GeoLite data created by MaxMind, available
-        from <a href="http://www.maxmind.com">maxmind.com</a>.</small></p>
-    </footer>
-  </div> <!-- /container -->
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-10475047-1']);
-    _gaq.push(['_trackPageview']);
+			<hr>
+			<footer>
+			<!-- <p><small>Last updated: September 2013</small></p> -->
+			<p><small>This web site and all documentation is licensed under
+				<a href="http://creativecommons.org/licenses/by/3.0/">Creative Commons 3.0</a>.
+				This service includes GeoLite data created by MaxMind, available
+				from <a href="http://www.maxmind.com">maxmind.com</a>.</small></p>
+			</footer>
+		</div> <!-- /container -->
+		<script type="text/javascript">
+			var _gaq = _gaq || [];
+			_gaq.push(['_setAccount', 'UA-10475047-1']);
+			_gaq.push(['_trackPageview']);
 
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
-</body>
+			(function() {
+			 var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			 ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			 var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+			 })();
+		</script>
+	</body>
 </html>
