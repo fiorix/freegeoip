@@ -211,6 +211,9 @@ func LookupHandler() http.HandlerFunc {
 		} else {
 			srcIP = net.ParseIP(ip)
 		}
+		if r.Header.Get("X-Forwarded-For") != "" {
+                        srcIP = net.ParseIP(r.Header.Get("X-Forwarded-For"))
+                }
 		if srcIP == nil {
 			http.Error(w, http.StatusText(400), 400)
 			return
