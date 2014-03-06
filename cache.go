@@ -17,7 +17,7 @@ type Cache struct {
 
 type RegionKey struct {
 	CountryCode,
-	RegionCode *string
+	RegionCode string
 }
 
 type Location struct {
@@ -89,7 +89,7 @@ func NewCache(db *sql.DB) *Cache {
 			log.Fatal("Failed to load region from db:", err)
 		}
 
-		cache.Region[RegionKey{&country_code, &region_code}] = name
+		cache.Region[RegionKey{country_code, region_code}] = name
 	}
 
 	row.Close()
@@ -133,15 +133,19 @@ func (cache *Cache) Update(geoip *GeoIP, locId int) {
 		return
 	}
 
+	geoip.CountryCode = city.CountryCode
 	geoip.CountryName = cache.Country[city.CountryCode]
+
+	geoip.RegionCode = city.RegionCode
 	geoip.RegionName = cache.Region[RegionKey{
-		&city.CountryCode,
-		&city.RegionCode,
+		city.CountryCode,
+		city.RegionCode,
 	}]
-	geoip.CityName = &city.CityName
-	geoip.ZipCode = &city.ZipCode
-	geoip.Latitude = &city.Latitude
-	geoip.Longitude = &city.Longitude
-	geoip.MetroCode = &city.MetroCode
-	geoip.AreaCode = &city.AreaCode
+
+	geoip.CityName = city.CityName
+	geoip.ZipCode = city.ZipCode
+	geoip.Latitude = city.Latitude
+	geoip.Longitude = city.Longitude
+	geoip.MetroCode = city.MetroCode
+	geoip.AreaCode = city.AreaCode
 }

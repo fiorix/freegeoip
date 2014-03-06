@@ -21,7 +21,7 @@ func ipdb_lookup(stmt *sql.Stmt, cache *Cache, IP net.IP, nIP uint32) (*GeoIP, e
 
 	geoip := &GeoIP{Ip: IP.String()}
 	if reserved {
-		geoip.CountryCode = &reservedCountryCode
+		geoip.CountryCode = "RD"
 		geoip.CountryName = "Reserved"
 	} else {
 		var locId int
@@ -38,20 +38,19 @@ func ipdb_lookup(stmt *sql.Stmt, cache *Cache, IP net.IP, nIP uint32) (*GeoIP, e
 type GeoIP struct {
 	XMLName     xml.Name `json:"-" xml:"Response"`
 	Ip          string   `json:"ip"`
-	CountryCode *string  `json:"country_code"`
+	CountryCode string   `json:"country_code"`
 	CountryName string   `json:"country_name"`
-	RegionCode  *string  `json:"region_code"`
+	RegionCode  string   `json:"region_code"`
 	RegionName  string   `json:"region_name"`
-	CityName    *string  `json:"city" xml:"City"`
-	ZipCode     *string  `json:"zipcode"`
-	Latitude    *float32 `json:"latitude"`
-	Longitude   *float32 `json:"longitude"`
-	MetroCode   *string  `json:"metro_code"`
-	AreaCode    *string  `json:"areacode"`
+	CityName    string   `json:"city" xml:"City"`
+	ZipCode     string   `json:"zipcode"`
+	Latitude    float32  `json:"latitude"`
+	Longitude   float32  `json:"longitude"`
+	MetroCode   string   `json:"metro_code"`
+	AreaCode    string   `json:"areacode"`
 }
 
 // http://en.wikipedia.org/wiki/Reserved_IP_addresses
-var reservedCountryCode = "RD"
 var reservedIPs = []net.IPNet{
 	{net.IPv4(0, 0, 0, 0), net.IPv4Mask(255, 0, 0, 0)},
 	{net.IPv4(10, 0, 0, 0), net.IPv4Mask(255, 0, 0, 0)},
