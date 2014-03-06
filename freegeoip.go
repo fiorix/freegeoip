@@ -168,6 +168,13 @@ func LookupHandler() http.HandlerFunc {
 
 		// GET continues...
 		var srcIP net.IP
+
+		// If xheaders is enabled, RemoteAddr might be a copy of
+		// the X-Real-IP or X-Forwarded-For HTTP headers, which
+		// can be a comma separated list of IPs. In this case,
+		// only the first IP in the list is used.
+		r.RemoteAddr = strings.SplitN(r.RemoteAddr, ",", 2)[0]
+
 		if ip, _, err := net.SplitHostPort(r.RemoteAddr); err != nil {
 			srcIP = net.ParseIP(r.RemoteAddr) // Use X-Real-IP
 		} else {
