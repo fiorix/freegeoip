@@ -128,10 +128,13 @@ func LookupHandler() http.HandlerFunc {
 		log.Fatal(err)
 	}
 
-	stmt, err := db.Prepare(query)
+	stmt, err := db.Prepare(ipdb_query)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Println("Caching database, please wait...")
+	cache := NewCache(db)
 
 	//defer stmt.Close()
 
@@ -236,7 +239,7 @@ func LookupHandler() http.HandlerFunc {
 		}
 
 		// Query the db.
-		geoip, err := lookup(stmt, queryIP, nqueryIP)
+		geoip, err := ipdb_lookup(stmt, cache, queryIP, nqueryIP)
 		if err != nil {
 			http.NotFound(w, r)
 			return
@@ -345,21 +348,6 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 			outputCount.Add("other", 1)
 		}
 	}
-}
-
-type GeoIP struct {
-	XMLName     xml.Name `json:"-" xml:"Response"`
-	Ip          string   `json:"ip"`
-	CountryCode string   `json:"country_code"`
-	CountryName string   `json:"country_name"`
-	RegionCode  string   `json:"region_code"`
-	RegionName  string   `json:"region_name"`
-	CityName    string   `json:"city" xml:"City"`
-	ZipCode     string   `json:"zipcode"`
-	Latitude    float32  `json:"latitude"`
-	Longitude   float32  `json:"longitude"`
-	MetroCode   string   `json:"metro_code"`
-	AreaCode    string   `json:"areacode"`
 }
 
 type ConfigFile struct {

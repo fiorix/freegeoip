@@ -6,10 +6,11 @@ package main
 
 import (
 	"database/sql"
+	"encoding/xml"
 	"net"
 )
 
-func lookup(stmt *sql.Stmt, IP net.IP, nIP uint32) (*GeoIP, error) {
+func ipdb_lookup(stmt *sql.Stmt, cache *Cache, IP net.IP, nIP uint32) (*GeoIP, error) {
 	var reserved bool
 	for _, net := range reservedIPs {
 		if net.Contains(IP) {
@@ -17,30 +18,40 @@ func lookup(stmt *sql.Stmt, IP net.IP, nIP uint32) (*GeoIP, error) {
 			break
 		}
 	}
-	geoip := GeoIP{Ip: IP.String()}
+
+	geoip := &GeoIP{Ip: IP.String()}
 	if reserved {
-		geoip.CountryCode = "RD"
+		geoip.CountryCode = &reservedCountryCode
 		geoip.CountryName = "Reserved"
 	} else {
-		if err := stmt.QueryRow(nIP).Scan(
-			&geoip.CountryCode,
-			&geoip.CountryName,
-			&geoip.RegionCode,
-			&geoip.RegionName,
-			&geoip.CityName,
-			&geoip.ZipCode,
-			&geoip.Latitude,
-			&geoip.Longitude,
-			&geoip.MetroCode,
-			&geoip.AreaCode,
-		); err != nil {
+		var locId int
+		if err := stmt.QueryRow(nIP).Scan(&locId); err != nil {
 			return nil, err
 		}
+
+		cache.Update(geoip, locId)
 	}
-	return &geoip, nil
+
+	return geoip, nil
+}
+
+type GeoIP struct {
+	XMLName     xml.Name `json:"-" xml:"Response"`
+	Ip          string   `json:"ip"`
+	CountryCode *string  `json:"country_code"`
+	CountryName string   `json:"country_name"`
+	RegionCode  *string  `json:"region_code"`
+	RegionName  string   `json:"region_name"`
+	CityName    *string  `json:"city" xml:"City"`
+	ZipCode     *string  `json:"zipcode"`
+	Latitude    *float32 `json:"latitude"`
+	Longitude   *float32 `json:"longitude"`
+	MetroCode   *string  `json:"metro_code"`
+	AreaCode    *string  `json:"areacode"`
 }
 
 // http://en.wikipedia.org/wiki/Reserved_IP_addresses
+var reservedCountryCode = "RD"
 var reservedIPs = []net.IPNet{
 	{net.IPv4(0, 0, 0, 0), net.IPv4Mask(255, 0, 0, 0)},
 	{net.IPv4(10, 0, 0, 0), net.IPv4Mask(255, 0, 0, 0)},
@@ -61,24 +72,14 @@ var reservedIPs = []net.IPNet{
 }
 
 // SQLite query.
-const query = `SELECT
-  city_location.country_code,
-  country_blocks.country_name,
-  city_location.region_code,
-  region_names.region_name,
-  city_location.city_name,
-  city_location.postal_code,
-  city_location.latitude,
-  city_location.longitude,
-  city_location.metro_code,
-  city_location.area_code
-FROM city_blocks
-  NATURAL JOIN city_location
-  INNER JOIN country_blocks ON
-    city_location.country_code = country_blocks.country_code
-  LEFT OUTER JOIN region_names ON
-    city_location.country_code = region_names.country_code
-    AND
-    city_location.region_code = region_names.region_code
-WHERE city_blocks.ip_start <= ?
-ORDER BY city_blocks.ip_start DESC LIMIT 1`
+const ipdb_query = `
+	SELECT
+		loc_id
+	FROM
+		city_blocks
+	WHERE
+		ip_start <= ?
+	ORDER BY
+		ip_start DESC
+	LIMIT 1
+`
