@@ -26,8 +26,10 @@ import (
 	"sync"
 	"time"
 
-	_ "code.google.com/p/gosqlite/sqlite3"
 	"github.com/fiorix/go-web/httpxtra"
+
+	_ "github.com/mattn/go-sqlite3"
+	//_ "code.google.com/p/gosqlite/sqlite3"
 )
 
 var (
