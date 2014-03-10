@@ -254,8 +254,6 @@ func LookupHandler() http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(200)
-
 		switch a[1][0] {
 		case 'j': // json
 			enc := json.NewEncoder(w)
