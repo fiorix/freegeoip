@@ -47,7 +47,7 @@ type GeoIP struct {
 	Latitude    float32  `json:"latitude"`
 	Longitude   float32  `json:"longitude"`
 	MetroCode   string   `json:"metro_code"`
-	AreaCode    string   `json:"areacode"`
+	AreaCode    string   `json:"area_code"`
 }
 
 // http://en.wikipedia.org/wiki/Reserved_IP_addresses
