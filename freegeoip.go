@@ -14,7 +14,6 @@ import (
 	"expvar"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -33,7 +32,7 @@ import (
 )
 
 var (
-	conf        *ConfigFile
+	conf        = ConfigFile{}
 	protoCount  = expvar.NewMap("Protocol") // HTTP or HTTPS
 	outputCount = expvar.NewMap("Output")   // json, xml, csv or other
 	statusCount = expvar.NewMap("Status")   // 200, 403, 404, etc
@@ -44,13 +43,13 @@ func main() {
 	prof := flag.Bool("profile", false, "run cpu and mem profiling")
 	flag.Parse()
 
-	if buf, err := ioutil.ReadFile(*cf); err != nil {
+	if fd, err := os.Open(*cf); err != nil {
 		log.Fatal(err)
 	} else {
-		conf = &ConfigFile{}
-		if err := xml.Unmarshal(buf, conf); err != nil {
+		if err = xml.NewDecoder(fd).Decode(&conf); err != nil {
 			log.Fatal(err)
 		}
+		fd.Close()
 	}
 
 	if *prof {
