@@ -135,8 +135,9 @@ func LookupHandler() http.HandlerFunc {
 		log.Fatal(err)
 	}
 
-	log.Println("Caching database, please wait...")
+	st := time.Now()
 	cache := NewCache(db)
+	log.Println("IPDB cached in", time.Since(st))
 
 	//defer stmt.Close()
 
@@ -241,7 +242,6 @@ func LookupHandler() http.HandlerFunc {
 				http.Error(w, http.StatusText(400), 400)
 				return
 			}
-
 		} else {
 			queryIP = srcIP
 			nqueryIP = nsrcIP
@@ -333,27 +333,30 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 	if ip, _, err = net.SplitHostPort(r.RemoteAddr); err != nil {
 		ip = r.RemoteAddr
 	}
-	log.Printf("%s %d %s %q (%s) :: %s",
+	log.Printf("%s %d %s %q (%s) :: %d bytes in %s",
 		s,
 		status,
 		r.Method,
 		r.URL.Path,
 		ip,
+		bytes,
 		time.Since(created),
 	)
 	if conf.Debug {
-		protoCount.Add(s, 1)
-		statusCount.Add(fmt.Sprintf("%d", status), 1)
-		switch strings.SplitN(r.URL.Path, "/", 2)[1] {
-		case "json/":
-			outputCount.Add("json", 1)
-		case "xml/":
-			outputCount.Add("xml", 1)
-		case "csv/":
-			outputCount.Add("csv", 1)
-		default:
-			outputCount.Add("other", 1)
-		}
+		go func() {
+			protoCount.Add(s, 1)
+			statusCount.Add(fmt.Sprintf("%d", status), 1)
+			switch strings.SplitN(r.URL.Path, "/", 3)[1] {
+			case "json":
+				outputCount.Add("json", 1)
+			case "xml":
+				outputCount.Add("xml", 1)
+			case "csv":
+				outputCount.Add("csv", 1)
+			default:
+				outputCount.Add("other", 1)
+			}
+		}()
 	}
 }
 
