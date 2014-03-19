@@ -75,7 +75,7 @@ func main() {
 	mux.HandleFunc("/xml/", h)
 	mux.HandleFunc("/json/", h)
 
-	wg := new(sync.WaitGroup)
+	wg := sync.WaitGroup{}
 	for _, l := range conf.Listen {
 		if l.Addr == "" {
 			continue
@@ -113,7 +113,6 @@ func main() {
 			}()
 		}
 	}
-
 	wg.Wait()
 }
 
