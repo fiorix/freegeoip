@@ -7,6 +7,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"sync"
 )
 
 type Cache struct {
@@ -38,92 +39,107 @@ func NewCache(db *sql.DB) *Cache {
 		City:    make(map[int]Location),
 	}
 
-	var (
-		row *sql.Rows
-		err error
-	)
+	var wg sync.WaitGroup
 
-	// Load list of countries.
-	if row, err = db.Query(`
+	go func() {
+		wg.Add(1)
+
+		// Load list of countries.
+		row, err := db.Query(`
 		SELECT
 			country_code,
 			country_name
 		FROM
 			country_blocks
-	`); err != nil {
-		log.Fatal("Failed to load countries from db:", err)
-	}
-
-	var country_code, region_code, name string
-	for row.Next() {
-		if err = row.Scan(
-			&country_code,
-			&name,
-		); err != nil {
-			log.Fatal("Failed to load country from db:", err)
+		`)
+		if err != nil {
+			log.Fatal("Failed to load countries from db:", err)
 		}
 
-		cache.Country[country_code] = name
-	}
+		var country_code, name string
+		for row.Next() {
+			if err = row.Scan(
+				&country_code,
+				&name,
+			); err != nil {
+				log.Fatal("Failed to load country from db:", err)
+			}
 
-	row.Close()
+			cache.Country[country_code] = name
+		}
 
-	// Load list of regions.
-	if row, err = db.Query(`
+		row.Close()
+		wg.Done()
+	}()
+
+	go func() {
+		wg.Add(1)
+		// Load list of regions.
+		row, err := db.Query(`
 		SELECT
 			country_code,
 			region_code,
 			region_name
 		FROM
 			region_names
-	`); err != nil {
-		log.Fatal("Failed to load regions from db:", err)
-	}
-
-	for row.Next() {
-		if err = row.Scan(
-			&country_code,
-			&region_code,
-			&name,
-		); err != nil {
-			log.Fatal("Failed to load region from db:", err)
+		`)
+		if err != nil {
+			log.Fatal("Failed to load regions from db:", err)
 		}
 
-		cache.Region[RegionKey{country_code, region_code}] = name
-	}
+		var country_code, region_code, name string
+		for row.Next() {
+			if err = row.Scan(
+				&country_code,
+				&region_code,
+				&name,
+			); err != nil {
+				log.Fatal("Failed to load region from db:", err)
+			}
 
-	row.Close()
-
-	// Load list of city locations.
-	if row, err = db.Query("SELECT * FROM city_location"); err != nil {
-		log.Fatal("Failed to load cities from db:", err)
-	}
-
-	var (
-		locId int
-		loc   Location
-	)
-
-	for row.Next() {
-		if err = row.Scan(
-			&locId,
-			&loc.CountryCode,
-			&loc.RegionCode,
-			&loc.CityName,
-			&loc.ZipCode,
-			&loc.Latitude,
-			&loc.Longitude,
-			&loc.MetroCode,
-			&loc.AreaCode,
-		); err != nil {
-			log.Fatal("Failed to load city from db:", err)
+			cache.Region[RegionKey{country_code, region_code}] = name
 		}
 
-		cache.City[locId] = loc
-	}
+		row.Close()
+		wg.Done()
+	}()
 
-	row.Close()
+	go func() {
+		wg.Add(1)
+		// Load list of city locations.
+		row, err := db.Query("SELECT * FROM city_location")
+		if err != nil {
+			log.Fatal("Failed to load cities from db:", err)
+		}
 
+		var (
+			locId int
+			loc   Location
+		)
+
+		for row.Next() {
+			if err = row.Scan(
+				&locId,
+				&loc.CountryCode,
+				&loc.RegionCode,
+				&loc.CityName,
+				&loc.ZipCode,
+				&loc.Latitude,
+				&loc.Longitude,
+				&loc.MetroCode,
+				&loc.AreaCode,
+			); err != nil {
+				log.Fatal("Failed to load city from db:", err)
+			}
+
+			cache.City[locId] = loc
+		}
+
+		row.Close()
+		wg.Done()
+	}()
+
+	wg.Wait()
 	return cache
 }
 
