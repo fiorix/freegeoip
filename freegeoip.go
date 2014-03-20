@@ -341,20 +341,22 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 		time.Since(created),
 	)
 	if conf.Debug {
-		go func() {
-			protoCount.Add(s, 1)
-			statusCount.Add(fmt.Sprintf("%d", status), 1)
-			switch strings.SplitN(r.URL.Path, "/", 3)[1] {
-			case "json":
-				outputCount.Add("json", 1)
-			case "xml":
-				outputCount.Add("xml", 1)
-			case "csv":
-				outputCount.Add("csv", 1)
-			default:
-				outputCount.Add("other", 1)
-			}
-		}()
+		protoCount.Add(s, 1)
+		statusCount.Add(fmt.Sprintf("%d", status), 1)
+		switch strings.SplitN(r.URL.Path, "/", 3)[1] {
+		case "json":
+			log.Println("json+1")
+			outputCount.Add("json", 1)
+		case "xml":
+			log.Println("xml+1")
+			outputCount.Add("xml", 1)
+		case "csv":
+			log.Println("csv+1")
+			outputCount.Add("csv", 1)
+		default:
+			log.Println("other+1")
+			outputCount.Add("other", 1)
+		}
 	}
 }
 
