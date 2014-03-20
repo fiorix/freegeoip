@@ -345,16 +345,12 @@ func logger(r *http.Request, created time.Time, status, bytes int) {
 		statusCount.Add(fmt.Sprintf("%d", status), 1)
 		switch strings.SplitN(r.URL.Path, "/", 3)[1] {
 		case "json":
-			log.Println("json+1")
 			outputCount.Add("json", 1)
 		case "xml":
-			log.Println("xml+1")
 			outputCount.Add("xml", 1)
 		case "csv":
-			log.Println("csv+1")
 			outputCount.Add("csv", 1)
 		default:
-			log.Println("other+1")
 			outputCount.Add("other", 1)
 		}
 	}
