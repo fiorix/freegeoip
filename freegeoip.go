@@ -39,7 +39,7 @@ import (
 
 var (
 	collectStats  bool
-	outputCount   = expvar.NewMap("Output")   // json, xml, csv or other
+	outputCount   = expvar.NewMap("Output")   // json, xml or csv
 	statusCount   = expvar.NewMap("Status")   // 200, 403, 404, etc
 	protocolCount = expvar.NewMap("Protocol") // HTTP or HTTPS
 )
@@ -75,15 +75,12 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir(cf.DocumentRoot)))
 
-	h := lookupHandler(cf)
-	mux.HandleFunc("/csv/", h)
-	mux.HandleFunc("/xml/", h)
-	mux.HandleFunc("/json/", h)
+	lh := lookupHandler(cf)
+	mux.HandleFunc("/csv/", lh)
+	mux.HandleFunc("/xml/", lh)
+	mux.HandleFunc("/json/", lh)
 
 	for _, c := range cf.Listen {
-		if c.Addr == "" {
-			continue
-		}
 		go runServer(mux, c)
 	}
 
@@ -149,14 +146,6 @@ func handleRequest(
 		return
 	}
 
-	// Figure out the query: /fmt/{query} or /fmt/{nil}
-	// In case of {nil} we query the remote IP.
-	path := strings.SplitN(r.URL.Path, "/", 3)
-	if len(path) != 3 {
-		// This handler is for /fmt/ where fmt is json, xml or csv.
-		log.Fatal("Unexpected URL:", r.URL.Path)
-	}
-
 	// Convert remote IP to integer to check quota.
 	// IPv6 is not supported yet. See issue #21 for details.
 	nIP, err := ip2int(ip)
@@ -180,7 +169,15 @@ func handleRequest(
 		}
 	}
 
-	// Process the query, if there's one. Otherwise we query the remote IP.
+	// Figure out the query: /fmt/{query} or /fmt/{nil}
+	// In case of {nil} we query the remote IP.
+	path := strings.SplitN(r.URL.Path, "/", 3)
+	if len(path) != 3 {
+		// This handler is for /fmt/ where fmt is json, xml or csv.
+		log.Fatal("Unexpected URL:", r.URL.Path)
+	}
+
+	// Process the query, if there's one.
 	if path[2] != "" {
 		// Allow to query by IP or hostname.
 		addrs, err := net.LookupHost(path[2])
@@ -205,12 +202,13 @@ func handleRequest(
 	}
 
 	// Query the db.
-	record, err := db.Lookup(ip, nIP)
-	if err != nil {
+	var record *geoipRecord
+	if record, err = db.Lookup(ip, nIP); err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
+	// Write response.
 	switch path[1][0] {
 	case 'j':
 		if cb := r.FormValue("callback"); cb != "" {
@@ -227,19 +225,6 @@ func handleRequest(
 		w.Header().Set("Content-Type", "application/csv")
 		record.CSV(w)
 	}
-}
-
-func loadConfig(filename string) *configFile {
-	var cf configFile
-	if fd, err := os.Open(filename); err != nil {
-		log.Fatal(err)
-	} else {
-		if err = xml.NewDecoder(fd).Decode(&cf); err != nil {
-			log.Fatal(err)
-		}
-		fd.Close()
-	}
-	return &cf
 }
 
 func runServer(mux *http.ServeMux, c *serverConfig) {
@@ -288,6 +273,22 @@ type DB struct {
 	country map[string]string
 	region  map[regionKey]string
 	city    map[int]locationData
+}
+
+type regionKey struct {
+	CountryCode,
+	RegionCode string
+}
+
+type locationData struct {
+	CountryCode,
+	RegionCode,
+	CityName,
+	ZipCode string
+	Latitude,
+	Longitude float32
+	MetroCode,
+	AreaCode string
 }
 
 func openDB(cf *configFile) *DB {
@@ -674,22 +675,6 @@ func httpLog(r *http.Request, created time.Time, status, bytes int) {
 	}
 }
 
-type regionKey struct {
-	CountryCode,
-	RegionCode string
-}
-
-type locationData struct {
-	CountryCode,
-	RegionCode,
-	CityName,
-	ZipCode string
-	Latitude,
-	Longitude float32
-	MetroCode,
-	AreaCode string
-}
-
 type serverConfig struct {
 	Log      bool   `xml:"log,attr"`
 	XHeaders bool   `xml:"xheaders,attr"`
@@ -717,6 +702,19 @@ type configFile struct {
 	}
 
 	Redis []string `xml:"Redis>Addr"`
+}
+
+func loadConfig(filename string) *configFile {
+	var cf configFile
+	if fd, err := os.Open(filename); err != nil {
+		log.Fatal(err)
+	} else {
+		if err = xml.NewDecoder(fd).Decode(&cf); err != nil {
+			log.Fatal(err)
+		}
+		fd.Close()
+	}
+	return &cf
 }
 
 // http://en.wikipedia.org/wiki/Reserved_IP_addresses
