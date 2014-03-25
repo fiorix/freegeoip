@@ -718,6 +718,7 @@ func loadConfig(filename string) *configFile {
 	// Make files' path relative to the config file's directory.
 	basedir := filepath.Dir(filename)
 	relativePath(basedir, &cf.IPDB.File)
+	relativePath(basedir, &cf.DocumentRoot)
 	for _, l := range cf.Listen {
 		relativePath(basedir, &l.CertFile)
 		relativePath(basedir, &l.KeyFile)
