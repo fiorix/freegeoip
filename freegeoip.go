@@ -91,14 +91,16 @@ func main() {
 func lookupHandler(cf *configFile) http.HandlerFunc {
 	db := openDB(cf)
 	var rl rateLimiter
-	if len(cf.Redis) > 0 {
-		rl = new(redisQuota)
-		log.Printf("Using redis to manage quota: %s", cf.Redis)
-	} else {
-		rl = new(mapQuota)
-		log.Printf("Using internal map to manage quota.")
+	if cf.Limit.MaxRequests > 0 {
+		if len(cf.Redis) > 0 {
+			rl = new(redisQuota)
+			log.Printf("Using redis to manage quota: %s", cf.Redis)
+		} else {
+			rl = new(mapQuota)
+			log.Printf("Using internal map to manage quota.")
+		}
+		rl.Setup(cf)
 	}
-	rl.Setup(cf)
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
@@ -157,7 +159,7 @@ func handleRequest(
 	}
 
 	// Check quota.
-	if cf.Limit.MaxRequests > 0 {
+	if rl != nil {
 		var ok bool
 		if ok, err = rl.Ok(nIP); err != nil {
 			context.Set(r, "msg", err.Error()) // redis err
