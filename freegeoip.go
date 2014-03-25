@@ -561,6 +561,7 @@ type redisQuota struct {
 
 func (q *redisQuota) Setup(cf *configFile) {
 	redis.MaxIdleConnsPerAddr = 5000
+	q.cf = cf
 	q.rc = redis.New(cf.Redis...)
 	q.rc.Timeout = time.Duration(1500) * time.Millisecond
 }
