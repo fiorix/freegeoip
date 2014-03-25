@@ -71,7 +71,7 @@ The server looks for `freegeoip.conf` in the current directory, but an
 alternative config can be specified using the `-c` command line option.
 
 By default it logs to the stderr, but log file can be specified using
-the '-l' command line option. Log files are cycled on SIGHUP.
+the `-l` command line option. Log files are cycled on SIGHUP.
 
 If the server is proxied by Nginx or another HTTP load balancer, edit the
 configuration file and set `xheaders="true"` and it'll use X-Real-IP or
