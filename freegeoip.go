@@ -435,6 +435,7 @@ func (db *DB) newRecord(ip *net.IP, locId int) *geoipRecord {
 		return &geoipRecord{Ip: ip.String()}
 	}
 	return &geoipRecord{
+		Ip:          ip.String(),
 		CountryCode: city.CountryCode,
 		CountryName: db.country[city.CountryCode],
 		RegionCode:  city.RegionCode,
