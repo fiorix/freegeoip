@@ -143,7 +143,7 @@ func handleRequest(
 	if ip == nil {
 		// This could be a misconfigured unix socket server.
 		context.Set(r, "msg", "Invalid source IP: "+r.RemoteAddr)
-		http.Error(w, http.StatusText(400), 400)
+		http.Error(w, http.StatusText(500), 500)
 		return
 	}
 
@@ -660,6 +660,7 @@ func httpLog(r *http.Request, created time.Time, status, bytes int) {
 	}
 	if tmp := context.Get(r, "msg"); tmp != nil {
 		msg = fmt.Sprintf(" (%s)", tmp)
+		context.Clear(r)
 	}
 	log.Printf("%s %d %s %q (%s) :: %d bytes in %s%s",
 		s,
