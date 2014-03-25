@@ -108,7 +108,7 @@ to start and stop the server:
 	limit nofile 20000 20000
 	setuid www-data
 	setgid www-data
-	exec /opt/freegeoip/freegeoip -config /opt/freegeoip.conf -log /var/log/freegeoip/freegeoip.log
+	exec /opt/freegeoip/freegeoip -c /opt/freegeoip.conf -l /var/log/freegeoip/freegeoip.log
 
 Then use `start freegeoip` and `stop freegeoip` to start and stop the server.
 
