@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"runtime/pprof"
 	"strconv"
@@ -714,7 +715,20 @@ func loadConfig(filename string) *configFile {
 		}
 		fd.Close()
 	}
+	// Make files' path relative to the config file's directory.
+	basedir := filepath.Dir(filename)
+	relativePath(basedir, &cf.IPDB.File)
+	for _, l := range cf.Listen {
+		relativePath(basedir, &l.CertFile)
+		relativePath(basedir, &l.KeyFile)
+	}
 	return &cf
+}
+
+func relativePath(basedir string, filename *string) {
+	if *filename != "" && (*filename)[0] != '/' {
+		*filename = filepath.Join(basedir, *filename)
+	}
 }
 
 // http://en.wikipedia.org/wiki/Reserved_IP_addresses
