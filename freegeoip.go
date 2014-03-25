@@ -639,7 +639,7 @@ func openLog(filename string) *os.File {
 	f, err := os.OpenFile(
 		filename,
 		os.O_WRONLY|os.O_CREATE|os.O_APPEND,
-		0666,
+		0644,
 	)
 	if err != nil {
 		log.SetOutput(os.Stderr)
