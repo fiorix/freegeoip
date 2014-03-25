@@ -144,7 +144,7 @@ func handleRequest(
 
 	if ip == nil {
 		// This could be a misconfigured unix socket server.
-		context.Set(r, "msg", "Invalid source IP: "+r.RemoteAddr)
+		context.Set(r, "log", "Invalid source IP: "+r.RemoteAddr)
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
@@ -153,7 +153,7 @@ func handleRequest(
 	// IPv6 is not supported yet. See issue #21 for details.
 	nIP, err := ip2int(ip)
 	if err != nil {
-		context.Set(r, "msg", err.Error())
+		context.Set(r, "log", err.Error())
 		http.Error(w, "IPv6 is not supported.", 501)
 		return
 	}
@@ -162,7 +162,7 @@ func handleRequest(
 	if rl != nil {
 		var ok bool
 		if ok, err = rl.Ok(nIP); err != nil {
-			context.Set(r, "msg", err.Error()) // redis err
+			context.Set(r, "log", err.Error()) // redis err
 			http.Error(w, http.StatusText(503), 503)
 			return
 		} else if !ok {
@@ -197,7 +197,7 @@ func handleRequest(
 		// Hostnames that resolve to IPv6 will fail here.
 		nIP, err = ip2int(net.ParseIP(addrs[0]))
 		if err != nil {
-			context.Set(r, "msg", err.Error())
+			context.Set(r, "log", err.Error())
 			http.Error(w, http.StatusText(404), 404)
 			return
 		}
@@ -236,7 +236,7 @@ func runServer(mux *http.ServeMux, c *serverConfig) {
 		XHeaders: c.XHeaders,
 	}
 	if c.Log {
-		h.Logger = httpLog
+		h.Logger = httpLogger
 	}
 	s := http.Server{
 		Addr:         c.Addr,
@@ -646,7 +646,7 @@ func openLog(filename string) *os.File {
 	return f
 }
 
-func httpLog(r *http.Request, created time.Time, status, bytes int) {
+func httpLogger(r *http.Request, created time.Time, status, bytes int) {
 	//fmt.Println(httpxtra.ApacheCommonLog(r, created, status, bytes))
 	var (
 		s, ip, msg string
@@ -660,7 +660,7 @@ func httpLog(r *http.Request, created time.Time, status, bytes int) {
 	if ip, _, err = net.SplitHostPort(r.RemoteAddr); err != nil {
 		ip = r.RemoteAddr
 	}
-	if tmp := context.Get(r, "msg"); tmp != nil {
+	if tmp := context.Get(r, "log"); tmp != nil {
 		msg = fmt.Sprintf(" (%s)", tmp)
 		context.Clear(r)
 	}
