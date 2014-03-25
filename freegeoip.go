@@ -518,7 +518,7 @@ type rateLimiter interface {
 	Ok(ipkey uint32) (bool, error) // Returns true if under quota
 }
 
-// MapQuota implements the rateLimiter interface using a map as the backend.
+// mapQuota implements the rateLimiter interface using a map as the backend.
 type mapQuota struct {
 	cf *configFile
 	mu sync.Mutex
