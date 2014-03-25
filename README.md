@@ -91,9 +91,6 @@ file capabilities at least once before running it:
 
 ### Running with upstart
 
-This method requires [go-daemon](https://github.com/fiorix/go-daemon) for
-changing runtime permissions and managing pid and log files.
-
 On Ubuntu, use the following upstart script in `/etc/init/freegeoip.conf`
 to start and stop the server:
 
@@ -105,19 +102,17 @@ to start and stop the server:
 	start on runlevel [2345]
 	stop on runlevel [!2345]
 
-	pre-start script
-		/sbin/setcap 'cap_net_bind_service=+ep' /opt/freegeoip/freegeoip
-	end script
-
-	limit nofile 4096 4096
-	exec /usr/bin/god -f -n -l /var/log/freegeoip.log -p /var/run/freegeoip.pid -r /opt/freegeoip -u www-data -g www-data ./freegeoip
+	limit nofile 20000 20000
+	setuid www-data
+	setgid www-data
+	exec /opt/freegeoip/freegeoip -config /opt/freegeoip.conf -log /var/log/freegeoip/freegeoip.log
 
 Then use `start freegeoip` and `stop freegeoip` to start and stop the server.
 
 Also, use the following configuration file in `/etc/logrotate.d/freegeoip` for
 log rotation:
 
-	/var/log/freegeoip.log
+	/var/log/freegeoip/freegeoip.log
 	{
 		rotate 7
 		daily
@@ -140,7 +135,7 @@ Use [supervisor](http://supervisord.org) with the following config in
 	redirect_stderr=true
 	directory=/opt/freegeoip
 	command=/opt/freegeoip/freegeoip
-	stdout_logfile=/var/log/freegeoip.log
+	stdout_logfile=/var/log/freegeoip/freegeoip.log
 	stdout_logfile_maxbytes=50MB
 	stdout_logfile_backups=20
 
