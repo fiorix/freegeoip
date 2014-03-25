@@ -48,7 +48,7 @@ var (
 func main() {
 	flLog := flag.String("log", "", "log to file instead of stderr")
 	flConfig := flag.String("config", "freegeoip.conf", "set config file")
-	flProfile := flag.Bool("profile", false, "run cpu and mem profiling")
+	flProfile := flag.Bool("profile", false, "run cpu and mem profiler")
 	flag.Parse()
 
 	if *flProfile {
@@ -251,19 +251,16 @@ func runServer(mux *http.ServeMux, c *serverConfig) {
 			c.CertFile,
 			c.KeyFile,
 		)
-		log.Fatal(s.ListenAndServeTLS(
-			c.CertFile,
-			c.KeyFile,
-		))
-		return
+		log.Fatal(s.ListenAndServeTLS(c.CertFile, c.KeyFile))
+	} else {
+		log.Printf("Starting HTTP server on tcp/%s "+
+			"log=%t xheaders=%t",
+			c.Addr,
+			c.Log,
+			c.XHeaders,
+		)
+		log.Fatal(httpxtra.ListenAndServe(s))
 	}
-	log.Printf("Starting HTTP server on tcp/%s "+
-		"log=%t xheaders=%t",
-		c.Addr,
-		c.Log,
-		c.XHeaders,
-	)
-	log.Fatal(httpxtra.ListenAndServe(s))
 }
 
 type DB struct {
@@ -567,16 +564,16 @@ func (q *redisQuota) Setup(cf *configFile) {
 }
 
 func (q *redisQuota) Ok(ipkey uint32) (bool, error) {
-	k := fmt.Sprintf("%d", ipkey) // "numeric" key
+	k := strconv.Itoa(int(ipkey)) // "numeric" key
 	if ns, err := q.rc.Get(k); err != nil {
-		return false, fmt.Errorf("redis get: %s", err.Error())
+		return false, fmt.Errorf("redis get: %s", err)
 	} else if ns == "" {
 		if err = q.rc.SetEx(k, q.cf.Limit.Expire, "1"); err != nil {
-			return false, fmt.Errorf("redis setex: %s", err.Error())
+			return false, fmt.Errorf("redis setex: %s", err)
 		}
 	} else if n, _ := strconv.Atoi(ns); n < q.cf.Limit.MaxRequests {
 		if n, err = q.rc.Incr(k); err != nil {
-			return false, fmt.Errorf("redis incr: %s", err.Error())
+			return false, fmt.Errorf("redis incr: %s", err)
 		} else if n == 1 {
 			q.rc.Expire(k, q.cf.Limit.Expire)
 		}
@@ -624,10 +621,12 @@ func setLog(filename string) {
 	signal.Notify(sigc, syscall.SIGHUP)
 	go func() {
 		// Recycle log file on SIGHUP.
-		<-sigc
-		f.Close()
-		f = openLog(filename)
-		log.SetOutput(f)
+		for {
+			<-sigc
+			f.Close()
+			f = openLog(filename)
+			log.SetOutput(f)
+		}
 	}()
 }
 
