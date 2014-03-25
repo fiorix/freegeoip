@@ -68,7 +68,10 @@ maxmind.com.
 ## Running
 
 The server looks for `freegeoip.conf` in the current directory, but an
-alternative config can be specified using the `-config` command line option.
+alternative config can be specified using the `-c` command line option.
+
+By default it logs to the stderr, but log file can be specified using
+the '-l' command line option. Log files are cycled on SIGHUP.
 
 If the server is proxied by Nginx or another HTTP load balancer, edit the
 configuration file and set `xheaders="true"` and it'll use X-Real-IP or
@@ -76,7 +79,7 @@ X-Forwarded-For HTTP headers (when available) as the client IP.
 
 Run the server:
 
-	./freegeoip [-config /path/to/freegeoip.conf]
+	./freegeoip [-c freegeoip.conf] [-l freegeoip.log]
 
 Then point the browser to http://localhost:8080.
 
