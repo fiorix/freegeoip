@@ -46,8 +46,8 @@ var (
 )
 
 func main() {
-	flLog := flag.String("log", "", "log to file instead of stderr")
-	flConfig := flag.String("config", "freegeoip.conf", "set config file")
+	flLog := flag.String("l", "", "log to file instead of stderr")
+	flConfig := flag.String("c", "freegeoip.conf", "set config file")
 	flProfile := flag.Bool("profile", false, "run cpu and mem profiler")
 	flag.Parse()
 
