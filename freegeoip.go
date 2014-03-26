@@ -34,8 +34,8 @@ import (
 	"github.com/gorilla/context"
 
 	// SQLite driver.
-	_ "github.com/mattn/go-sqlite3"
-	//_ "code.google.com/p/gosqlite/sqlite3"
+	// _ "github.com/mattn/go-sqlite3"
+	_ "code.google.com/p/gosqlite/sqlite3"
 )
 
 var (
