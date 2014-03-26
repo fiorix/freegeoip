@@ -26,10 +26,15 @@ clean it up, and the outcome was impressive.
 
 Now, not only the server is about 2 to 3 times faster using the same
 computational resources, but also the source code is smaller and fits
-in a single file again. The major reorganization happened in
+in a [single file](https://github.com/fiorix/freegeoip/blob/master/freegeoip.go)
+again. The major reorganization happened in
 [this](https://github.com/fiorix/freegeoip/commit/78eacdf8e4dd5568e963ccd52acaa246ad16e23b)
 commit, which was followed by a number of minor subsequent commits with
 fixes and improvements.
+
+Updates on the [go-redis](https://github.com/fiorix/go-redis/) driver have
+also reflected in better performance of the freegeoip server when Redis is
+used for usage limits.
 
 Another notable change is how the server is run. A while ago I ended up
 writing a wrapper to daemonize Go programs,
@@ -52,7 +57,7 @@ have been replaced by brand new ones from [startssl.com](https://startssl.com).
 </div>
 <br>
 
-I'm very hapy with the growth of the freegeoip community as more and more
+I'm very happy with the growth of the freegeoip community as more and more
 users are following and starring the [repository](https://github.com/fiorix/freegeoip).
 
 Last but not least, I feel like I'm becoming a more seasoned Go programmer
