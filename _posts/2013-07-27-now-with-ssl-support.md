@@ -10,6 +10,6 @@ both HTTP and HTTPS.
 
 <div class="row-fluid">
   <div class="span12 pagination-centered">
-    <img src="/img/freegeoip_certificate.png" alt="">
+    <img src="/img/comodo_ssl.png" alt="">
   </div>
 </div>

@@ -12,7 +12,7 @@ recent change _on the Internet_.
 
 <div class="row-fluid">
   <div class="span12 pagination-centered">
-    <img src="/img/traffic_monitor.jpg" alt="">
+    <img src="/img/dc1.jpg" alt="">
   </div>
 </div>
 <br>
