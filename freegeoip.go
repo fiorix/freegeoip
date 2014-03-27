@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -43,6 +44,8 @@ var (
 	outputCount   = expvar.NewMap("Output")   // json, xml or csv
 	statusCount   = expvar.NewMap("Status")   // 200, 403, 404, etc
 	protocolCount = expvar.NewMap("Protocol") // HTTP or HTTPS
+
+	dns *dnsHandler
 )
 
 func main() {
@@ -55,8 +58,23 @@ func main() {
 		runProfile()
 	}
 
-	cf := loadConfig(*flConfig)
+	cf, err := loadConfig(*flConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	collectStats = cf.Debug
+
+	if cf.DNS.Enabled {
+		t, err := time.ParseDuration(cf.DNS.Timeout)
+		if err != nil {
+			log.Fatal("Invalid DNS timeout:", err)
+		}
+		dns = &dnsHandler{
+			Timeout:       t,
+			MaxConcurrent: cf.DNS.MaxConcurrent,
+		}
+	}
 
 	if *flLog != "" {
 		setLog(*flLog)
@@ -183,25 +201,25 @@ func handleRequest(
 	// Process the query, if there's one.
 	if path[2] != "" {
 		// Allow to query by IP or hostname.
-		addrs, err := net.LookupHost(path[2])
-		if err != nil {
-			// DNS lookup failed, assume host not found.
-			http.Error(w, http.StatusText(404), 404)
-			return
-		}
-		if ip = net.ParseIP(addrs[0]); ip == nil {
-			http.Error(w, http.StatusText(404), 404)
-			return
+		if ip = net.ParseIP(path[2]); ip == nil {
+			if dns == nil {
+				// DNS lookups not allowed.
+				http.Error(w, http.StatusText(404), 404)
+				return
+			}
+			if ip = dns.LookupHost(path[2]); ip == nil {
+				// DNS lookup failed, assume host not found.
+				http.Error(w, http.StatusText(404), 404)
+				return
+			}
 		}
 
-		// Hostnames that resolve to IPv6 will fail here.
-		nIP, err = ip2int(net.ParseIP(addrs[0]))
+		nIP, err = ip2int(ip) // IPv6 fails here.
 		if err != nil {
 			context.Set(r, "log", err.Error())
 			http.Error(w, http.StatusText(404), 404)
 			return
 		}
-
 	}
 
 	// Query the db.
@@ -263,6 +281,43 @@ func runServer(mux *http.ServeMux, c *serverConfig) {
 		)
 		log.Fatal(httpxtra.ListenAndServe(s))
 	}
+}
+
+type dnsHandler struct {
+	Timeout       time.Duration
+	MaxConcurrent int
+
+	mu    sync.Mutex
+	count int
+}
+
+func (dh *dnsHandler) LookupHost(name string) (ip net.IP) {
+	c := make(chan net.IP, 1)
+	dh.mu.Lock()
+	if dh.count == dh.MaxConcurrent {
+		dh.mu.Unlock()
+		return
+	}
+	dh.count++
+	dh.mu.Unlock()
+	go func() {
+		addrs, err := net.LookupHost(name)
+		if err != nil {
+			c <- nil
+		} else if len(addrs) == 1 {
+			c <- net.ParseIP(addrs[0])
+		} else {
+			c <- net.ParseIP(addrs[rand.Intn(len(addrs)-1)])
+		}
+	}()
+	select {
+	case ip = <-c:
+	case <-time.After(dh.Timeout):
+	}
+	dh.mu.Lock()
+	defer dh.mu.Unlock()
+	dh.count--
+	return
 }
 
 type DB struct {
@@ -698,6 +753,12 @@ type configFile struct {
 
 	Listen []*serverConfig
 
+	DNS struct {
+		Enabled       bool   `xml:",attr"`
+		Timeout       string `xml:",attr"`
+		MaxConcurrent int    `xml:",attr"`
+	}
+
 	IPDB struct {
 		File      string `xml:",attr"`
 		CacheSize string `xml:",attr"`
@@ -711,13 +772,13 @@ type configFile struct {
 	Redis []string `xml:"Redis>Addr"`
 }
 
-func loadConfig(filename string) *configFile {
+func loadConfig(filename string) (*configFile, error) {
 	var cf configFile
 	if fd, err := os.Open(filename); err != nil {
-		log.Fatal(err)
+		return nil, err
 	} else {
 		if err = xml.NewDecoder(fd).Decode(&cf); err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		fd.Close()
 	}
@@ -729,7 +790,7 @@ func loadConfig(filename string) *configFile {
 		relativePath(basedir, &l.CertFile)
 		relativePath(basedir, &l.KeyFile)
 	}
-	return &cf
+	return &cf, nil
 }
 
 func relativePath(basedir string, filename *string) {
