@@ -94,7 +94,14 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir(cf.DocumentRoot)))
 
-	lh := lookupHandler(cf)
+	st := time.Now()
+	db, err := openDB(cf)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("IPDB cached in", time.Since(st))
+
+	lh := lookupHandler(cf, db)
 	mux.HandleFunc("/csv/", lh)
 	mux.HandleFunc("/xml/", lh)
 	mux.HandleFunc("/json/", lh)
@@ -106,8 +113,7 @@ func main() {
 	select {}
 }
 
-func lookupHandler(cf *configFile) http.HandlerFunc {
-	db := openDB(cf)
+func lookupHandler(cf *configFile, db *DB) http.HandlerFunc {
 	var rl rateLimiter
 	if cf.Limit.MaxRequests > 0 {
 		if len(cf.Redis) > 0 {
@@ -346,16 +352,16 @@ type locationData struct {
 	AreaCode string
 }
 
-func openDB(cf *configFile) *DB {
+func openDB(cf *configFile) (*DB, error) {
 	var (
 		db  DB
 		err error
 	)
 	if db.db, err = sql.Open("sqlite3", cf.IPDB.File); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if _, err = db.db.Exec("PRAGMA cache_size=" + cf.IPDB.CacheSize); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if db.stmt, err = db.db.Prepare(`
 		SELECT
@@ -368,24 +374,33 @@ func openDB(cf *configFile) *DB {
 			ip_start DESC
 		LIMIT 1
 	`); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	st := time.Now()
-	db.loadCache()
-	log.Println("IPDB cached in", time.Since(st))
-	return &db
+	if err = db.loadCache(); err != nil {
+		return nil, err
+	}
+	return &db, nil
 }
 
-func (db *DB) loadCache() {
-	var wg sync.WaitGroup
+func (db *DB) loadCache() error {
+	var (
+		wg   sync.WaitGroup
+		errc = make(chan error, 3)
+	)
 	wg.Add(3)
-	go db.loadCountries(&wg)
-	go db.loadRegions(&wg)
-	go db.loadCities(&wg)
+	go db.loadCountries(&wg, errc)
+	go db.loadRegions(&wg, errc)
+	go db.loadCities(&wg, errc)
 	wg.Wait()
+	select {
+	case err := <-errc:
+		return err
+	default:
+		return nil
+	}
 }
 
-func (db *DB) loadCountries(wg *sync.WaitGroup) {
+func (db *DB) loadCountries(wg *sync.WaitGroup, errc chan error) {
 	defer wg.Done()
 	db.country = make(map[string]string)
 	row, err := db.db.Query(`
@@ -396,7 +411,8 @@ func (db *DB) loadCountries(wg *sync.WaitGroup) {
 			country_blocks
 	`)
 	if err != nil {
-		log.Fatal("Failed to load countries from db:", err)
+		errc <- err
+		return
 	}
 	defer row.Close()
 	var country_code, name string
@@ -405,13 +421,14 @@ func (db *DB) loadCountries(wg *sync.WaitGroup) {
 			&country_code,
 			&name,
 		); err != nil {
-			log.Fatal("Failed to load country from db:", err)
+			errc <- err
+			return
 		}
 		db.country[country_code] = name
 	}
 }
 
-func (db *DB) loadRegions(wg *sync.WaitGroup) {
+func (db *DB) loadRegions(wg *sync.WaitGroup, errc chan error) {
 	defer wg.Done()
 	db.region = make(map[regionKey]string)
 	row, err := db.db.Query(`
@@ -423,7 +440,8 @@ func (db *DB) loadRegions(wg *sync.WaitGroup) {
 			region_names
 	`)
 	if err != nil {
-		log.Fatal("Failed to load regions from db:", err)
+		errc <- err
+		return
 	}
 	defer row.Close()
 	var country_code, region_code, name string
@@ -433,18 +451,20 @@ func (db *DB) loadRegions(wg *sync.WaitGroup) {
 			&region_code,
 			&name,
 		); err != nil {
-			log.Fatal("Failed to load region from db:", err)
+			errc <- err
+			return
 		}
 		db.region[regionKey{country_code, region_code}] = name
 	}
 }
 
-func (db *DB) loadCities(wg *sync.WaitGroup) {
+func (db *DB) loadCities(wg *sync.WaitGroup, errc chan error) {
 	defer wg.Done()
 	db.city = make(map[int]locationData)
 	row, err := db.db.Query("SELECT * FROM city_location")
 	if err != nil {
-		log.Fatal("Failed to load cities from db:", err)
+		errc <- err
+		return
 	}
 	defer row.Close()
 	var (
@@ -463,7 +483,8 @@ func (db *DB) loadCities(wg *sync.WaitGroup) {
 			&loc.MetroCode,
 			&loc.AreaCode,
 		); err != nil {
-			log.Fatal("Failed to load city from db:", err)
+			errc <- err
+			return
 		}
 		db.city[locId] = loc
 	}
