@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"net"
 	"sync"
 	"testing"
@@ -34,32 +35,52 @@ func TestOpenDB(t *testing.T) {
 }
 
 func TestQueryDB1(t *testing.T) {
-	if testDB == nil {
-		t.Skip("DB is not available")
-	}
-	ip := net.ParseIP("127.0.0.1")
-	nIP, _ := ip2int(ip)
-	record, err := testDB.Lookup(ip, nIP)
-	if err != nil {
-		t.Fatal(err)
-	}
+	record := testQuery(t, "127.0.0.1")
 	if record.CountryName != "Reserved" {
 		t.Fatal("Unexpected value:", record.CountryName)
 	}
 }
 
 func TestQueryDB2(t *testing.T) {
-	if testDB == nil {
-		t.Skip("DB is not available")
-	}
-	ip := net.ParseIP("8.8.8.8")
-	nIP, _ := ip2int(ip)
-	record, err := testDB.Lookup(ip, nIP)
-	if err != nil {
-		t.Fatal(err)
-	}
+	record := testQuery(t, "8.8.8.8")
 	if record.CountryCode != "US" {
 		t.Fatal("Unexpected value:", record.CountryCode)
+	}
+}
+
+func TestRecordJSON(t *testing.T) {
+	record := testQuery(t, "127.0.0.1")
+	b := bytes.NewBuffer(nil)
+	record.JSON(b)
+	if len(b.Bytes()) != 180 {
+		t.Fatal("Unexpected value:", b.String())
+	}
+}
+
+func TestRecordJSONP(t *testing.T) {
+	record := testQuery(t, "127.0.0.1")
+	b := bytes.NewBuffer(nil)
+	record.JSONP(b, "f")
+	if len(b.Bytes()) != 184 {
+		t.Fatal("Unexpected value:", b.String())
+	}
+}
+
+func TestRecordXML(t *testing.T) {
+	record := testQuery(t, "127.0.0.1")
+	b := bytes.NewBuffer(nil)
+	record.XML(b)
+	if len(b.Bytes()) != 338 {
+		t.Fatal("Unexpected value:", b.String())
+	}
+}
+
+func TestRecordCSV(t *testing.T) {
+	record := testQuery(t, "127.0.0.1")
+	b := bytes.NewBuffer(nil)
+	record.CSV(b)
+	if len(b.Bytes()) != 65 {
+		t.Fatal("Unexpected value:", b.String())
 	}
 }
 
@@ -144,6 +165,33 @@ func TestConcurrentDNSLookup2(t *testing.T) {
 		wg.Done()
 	}()
 	wg.Wait()
+}
+
+func BenchmarkQueryDB(b *testing.B) {
+	if testDB == nil {
+		b.Skip("DB is not available")
+	}
+	ip := net.ParseIP("8.8.8.8")
+	nIP, _ := ip2int(ip)
+	for i := 0; i < b.N; i++ {
+		_, err := testDB.Lookup(ip, nIP)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func testQuery(t *testing.T, addr string) *geoipRecord {
+	if testDB == nil {
+		t.Skip("DB is not available")
+	}
+	ip := net.ParseIP(addr)
+	nIP, _ := ip2int(ip)
+	record, err := testDB.Lookup(ip, nIP)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return record
 }
 
 func isLocalhostIP(ip string) bool {
