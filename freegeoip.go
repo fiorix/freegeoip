@@ -304,10 +304,8 @@ func (p *dnsPool) init(size int, queryTimeout time.Duration) {
 }
 
 func (p *dnsPool) doWork(t time.Duration) {
-	var q *dnsQuery
 	var ip net.IP
-	for {
-		q = <-p.qc // block till there's work to do
+	for q := range p.qc {
 		c := make(chan net.IP, 1)
 		go p.query(c, q.hostname)
 		select {
