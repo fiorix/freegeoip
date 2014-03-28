@@ -45,7 +45,7 @@ var (
 	statusCount   = expvar.NewMap("Status")   // 200, 403, 404, etc
 	protocolCount = expvar.NewMap("Protocol") // HTTP or HTTPS
 
-	dns *dnsHandler
+	dns *dnsPool
 )
 
 func main() {
@@ -70,10 +70,8 @@ func main() {
 		if err != nil {
 			log.Fatal("Invalid DNS timeout:", err)
 		}
-		dns = &dnsHandler{
-			Timeout:       t,
-			MaxConcurrent: cf.DNS.MaxConcurrent,
-		}
+		dns = new(dnsPool)
+		dns.init(cf.DNS.MaxConcurrent, t)
 	}
 
 	if *flLog != "" {
@@ -123,7 +121,7 @@ func lookupHandler(cf *configFile, db *DB) http.HandlerFunc {
 			rl = new(mapQuota)
 			log.Printf("Using internal map to manage quota.")
 		}
-		rl.Setup(cf)
+		rl.init(cf)
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -289,41 +287,56 @@ func runServer(mux *http.ServeMux, c *serverConfig) {
 	}
 }
 
-type dnsHandler struct {
-	Timeout       time.Duration
-	MaxConcurrent int
-
-	mu    sync.Mutex
-	count int
+type dnsPool struct {
+	qc chan *dnsQuery
 }
 
-func (dh *dnsHandler) LookupHost(name string) (ip net.IP) {
-	c := make(chan net.IP, 1)
-	dh.mu.Lock()
-	if dh.count == dh.MaxConcurrent {
-		dh.mu.Unlock()
-		return
+type dnsQuery struct {
+	hostname string
+	respc    chan net.IP
+}
+
+func (p *dnsPool) init(size int, queryTimeout time.Duration) {
+	p.qc = make(chan *dnsQuery, size)
+	for n := 0; n < size; n++ {
+		go p.doWork(queryTimeout)
 	}
-	dh.count++
-	dh.mu.Unlock()
-	go func() {
-		addrs, err := net.LookupHost(name)
-		if err != nil {
-			c <- nil
-		} else if len(addrs) == 1 {
-			c <- net.ParseIP(addrs[0])
-		} else {
-			c <- net.ParseIP(addrs[rand.Intn(len(addrs)-1)])
+}
+
+func (p *dnsPool) doWork(t time.Duration) {
+	var q *dnsQuery
+	var ip net.IP
+	for {
+		q = <-p.qc // block till there's work to do
+		c := make(chan net.IP, 1)
+		go p.query(c, q.hostname)
+		select {
+		case ip = <-c:
+			q.respc <- ip
+		case <-time.After(t):
+			q.respc <- nil
 		}
-	}()
-	select {
-	case ip = <-c:
-	case <-time.After(dh.Timeout):
 	}
-	dh.mu.Lock()
-	defer dh.mu.Unlock()
-	dh.count--
-	return
+}
+
+func (p *dnsPool) query(c chan net.IP, hostname string) {
+	if a, err := net.LookupHost(hostname); err != nil {
+		c <- nil
+	} else if len(a) == 1 {
+		c <- net.ParseIP(a[0])
+	} else {
+		c <- net.ParseIP(a[rand.Intn(len(a)-1)])
+	}
+}
+
+func (p *dnsPool) LookupHost(hostname string) net.IP {
+	q := &dnsQuery{hostname, make(chan net.IP, 1)}
+	select {
+	case p.qc <- q:
+		return <-q.respc
+	default:
+		return nil
+	}
 }
 
 type DB struct {
@@ -593,7 +606,7 @@ func (r *geoipRecord) CSV(w io.Writer) {
 }
 
 type rateLimiter interface {
-	Setup(cf *configFile)          // Initialize backend
+	init(cf *configFile)           // Initialize backend
 	Ok(ipkey uint32) (bool, error) // Returns true if under quota
 }
 
@@ -604,7 +617,7 @@ type mapQuota struct {
 	ip map[uint32]int
 }
 
-func (q *mapQuota) Setup(cf *configFile) {
+func (q *mapQuota) init(cf *configFile) {
 	q.cf = cf
 	q.ip = make(map[uint32]int)
 }
@@ -635,7 +648,7 @@ type redisQuota struct {
 	rc *redis.Client
 }
 
-func (q *redisQuota) Setup(cf *configFile) {
+func (q *redisQuota) init(cf *configFile) {
 	redis.MaxIdleConnsPerAddr = 5000
 	q.cf = cf
 	q.rc = redis.New(cf.Redis...)

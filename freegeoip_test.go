@@ -88,7 +88,7 @@ func TestMapQuota(t *testing.T) {
 	testCf.Limit.MaxRequests = 1
 	testCf.Limit.Expire = 1
 	rl := new(mapQuota)
-	rl.Setup(testCf)
+	rl.init(testCf)
 	nIP, _ := ip2int(net.ParseIP("127.0.0.1"))
 	if ok, _ := rl.Ok(nIP); !ok {
 		t.Fatal("Unexpected value:", ok)
@@ -105,7 +105,7 @@ func TestRedisQuota(t *testing.T) {
 	testCf.Limit.MaxRequests = 1
 	testCf.Limit.Expire = 1
 	rl := new(redisQuota)
-	rl.Setup(testCf)
+	rl.init(testCf)
 	nIP, _ := ip2int(net.ParseIP("127.0.0.1"))
 	if ok, err := rl.Ok(nIP); err != nil {
 		t.Fatal(err)
@@ -120,11 +120,9 @@ func TestRedisQuota(t *testing.T) {
 }
 
 func TestDNSLookup(t *testing.T) {
-	dh := &dnsHandler{
-		Timeout:       1000 * time.Millisecond,
-		MaxConcurrent: 1,
-	}
-	if ip := dh.LookupHost("localhost"); ip == nil {
+	dp := new(dnsPool)
+	dp.init(1, 1000*time.Millisecond)
+	if ip := dp.LookupHost("localhost"); ip == nil {
 		t.Fatal("Could not resolve host name")
 	} else if !isLocalhostIP(ip.String()) {
 		t.Fatal("Unexpected IP: " + ip.String())
@@ -132,15 +130,13 @@ func TestDNSLookup(t *testing.T) {
 }
 
 func TestConcurrentDNSLookup1(t *testing.T) {
-	dh := &dnsHandler{
-		Timeout:       1000 * time.Millisecond,
-		MaxConcurrent: 1,
-	}
-	go dh.LookupHost("invalid.host.name1")
+	dp := new(dnsPool)
+	dp.init(1, 1000*time.Millisecond)
+	go dp.LookupHost("invalid.host.name1")
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		if ip := dh.LookupHost("localhost"); ip != nil {
+		if ip := dp.LookupHost("localhost"); ip != nil {
 			t.Error("Unexpected IP: " + ip.String())
 		}
 		wg.Done()
@@ -149,15 +145,13 @@ func TestConcurrentDNSLookup1(t *testing.T) {
 }
 
 func TestConcurrentDNSLookup2(t *testing.T) {
-	dh := &dnsHandler{
-		Timeout:       1000 * time.Millisecond,
-		MaxConcurrent: 2,
-	}
-	go dh.LookupHost("invalid.host.name2")
+	dp := new(dnsPool)
+	dp.init(2, 1000*time.Millisecond)
+	go dp.LookupHost("invalid.host.name2")
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		if ip := dh.LookupHost("localhost"); ip == nil {
+		if ip := dp.LookupHost("localhost"); ip == nil {
 			t.Error("Could not resolve host name")
 		} else if !isLocalhostIP(ip.String()) {
 			t.Error("Unexpected IP: " + ip.String())
