@@ -124,6 +124,9 @@ func lookupHandler(cf *configFile, db *DB) http.HandlerFunc {
 		rl.init(cf)
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.TLS != nil {
+			w.Header().Set("Strict-Transport-Security", "max-age=31536000")
+		}
 		switch r.Method {
 		case "GET":
 			w.Header().Set("Access-Control-Allow-Origin", "*")
