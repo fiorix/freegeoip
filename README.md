@@ -9,7 +9,7 @@ the IP database.
 ## Overview
 
 freegeoip.net is the result of a web server research project that started in
-2009 hosted at Google's [App Engine](http://en.wikipedia.org/wiki/Geolocation),
+2009 hosted at Google's [App Engine](http://appengine.google.com),
 using the Python API.
 A year later it moved to its own server infrastructure built on the
 [Cyclone](http://cyclone.io) web framework, backed by
