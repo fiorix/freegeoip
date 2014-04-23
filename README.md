@@ -25,6 +25,8 @@ The current version is written in Go as the experiments progress with
 List of prerequisites for building and running the server:
 
 - Go compiler - for `freegeoip.go`
+- Git (for downloading Go packages)
+- Mercurial (for downloading Go packages)
 - libsqlite3-dev, gcc or llvm - for dependency `go-sqlite3`
 - Python - for the `updatedb` script
 - Redis - (optional) for API usage quotas
