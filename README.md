@@ -112,6 +112,11 @@ to start and stop the server:
 	setgid www-data
 	exec /opt/freegeoip/freegeoip -c /opt/freegeoip.conf -l /var/log/freegeoip/freegeoip.log
 
+The log directory must be created with the right permissions before the
+daemon can be started. Use the following command for this:
+
+	/usr/bin/install -o www-data -g www-data -m 0755 -d /var/log/freegeoip
+
 Then use `start freegeoip` and `stop freegeoip` to start and stop the server.
 
 Also, use the following configuration file in `/etc/logrotate.d/freegeoip` for
