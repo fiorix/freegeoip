@@ -637,8 +637,8 @@ func (q *mapQuota) Ok(ipkey uint32) (bool, error) {
 	go func() {
 		time.Sleep(time.Duration(q.cf.Limit.Expire) * time.Second)
 		q.mu.Lock()
-		defer q.mu.Unlock()
 		delete(q.ip, ipkey)
+		q.mu.Unlock()
 	}()
 	return true, nil
 }
