@@ -213,16 +213,14 @@ func handleRequest(
 				// DNS lookups not allowed.
 				http.Error(w, http.StatusText(404), 404)
 				return
-			}
-			if ip = dns.LookupHost(path[2]); ip == nil {
+			} else if ip = dns.LookupHost(path[2]); ip == nil {
 				// DNS lookup failed, assume host not found.
 				http.Error(w, http.StatusText(404), 404)
 				return
 			}
 		}
 
-		nIP, err = ip2int(ip) // IPv6 fails here.
-		if err != nil {
+		if nIP, err = ip2int(ip); err != nil { // IPv6 fails here.
 			context.Set(r, "log", err.Error())
 			http.Error(w, http.StatusText(404), 404)
 			return
@@ -241,17 +239,20 @@ func handleRequest(
 	case 'j':
 		if cb := r.FormValue("callback"); cb != "" {
 			w.Header().Set("Content-Type", "text/javascript")
-			record.JSONP(w, cb)
+			err = record.JSONP(w, cb)
 		} else {
 			w.Header().Set("Content-Type", "application/json")
-			record.JSON(w)
+			err = record.JSON(w)
 		}
 	case 'x':
 		w.Header().Set("Content-Type", "application/xml")
-		record.XML(w)
+		err = record.XML(w)
 	case 'c':
 		w.Header().Set("Content-Type", "application/csv")
-		record.CSV(w)
+		err = record.CSV(w)
+	}
+	if err != nil {
+		context.Set(r, "log", err.Error())
 	}
 }
 
@@ -559,39 +560,58 @@ type geoipRecord struct {
 	AreaCode    string   `json:"area_code"`
 }
 
-func (r *geoipRecord) JSON(w io.Writer) {
+func (r *geoipRecord) JSON(w io.Writer) error {
 	if collectStats {
 		outputCount.Add("json", 1)
 	}
-	json.NewEncoder(w).Encode(r)
+	return json.NewEncoder(w).Encode(r)
 }
 
-func (r *geoipRecord) JSONP(w io.Writer, callback string) {
+func (r *geoipRecord) JSONP(w io.Writer, callback string) error {
 	if collectStats {
 		outputCount.Add("json", 1)
 	}
-	w.Write([]byte(callback))
-	w.Write([]byte("("))
-	json.NewEncoder(w).Encode(r)
-	w.Write([]byte(");"))
+	var err error
+	if _, err = w.Write([]byte(callback)); err != nil {
+		return err
+	}
+	if _, err = w.Write([]byte("(")); err != nil {
+		return err
+	}
+	if err = json.NewEncoder(w).Encode(r); err != nil {
+		return err
+	}
+	if _, err = w.Write([]byte(");")); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (r *geoipRecord) XML(w io.Writer) {
+func (r *geoipRecord) XML(w io.Writer) error {
 	if collectStats {
 		outputCount.Add("xml", 1)
 	}
 	enc := xml.NewEncoder(w)
-	enc.Indent("", " ")
-	w.Write([]byte(xml.Header))
-	enc.Encode(r)
-	w.Write([]byte("\n"))
+	enc.Indent("", "\t")
+	var err error
+	if _, err = w.Write([]byte(xml.Header)); err != nil {
+		return err
+	}
+	if err = enc.Encode(r); err != nil {
+		return err
+	}
+	if _, err = w.Write([]byte("\n")); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (r *geoipRecord) CSV(w io.Writer) {
+func (r *geoipRecord) CSV(w io.Writer) error {
 	if collectStats {
 		outputCount.Add("csv", 1)
 	}
-	fmt.Fprintf(w, `"%s","%s","%s","%s","%s","%s","%s","%0.4f","%0.4f","%s","%s"`+"\r\n",
+	if _, err := fmt.Fprintf(w,
+		`"%s","%s","%s","%s","%s","%s","%s","%0.4f","%0.4f","%s","%s"`+"\r\n",
 		r.Ip,
 		r.CountryCode,
 		r.CountryName,
@@ -603,11 +623,14 @@ func (r *geoipRecord) CSV(w io.Writer) {
 		r.Longitude,
 		r.MetroCode,
 		r.AreaCode,
-	)
+	); err != nil {
+		return err
+	}
+	return nil
 }
 
 type rateLimiter interface {
-	init(cf *configFile)           // Initialize backend
+	init(cf *configFile)           // Initializes the limiter
 	Ok(ipkey uint32) (bool, error) // Returns true if under quota
 }
 
@@ -689,11 +712,9 @@ func runProfile() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	pprof.StartCPUProfile(f)
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
-
 	go func() {
 		<-sig
 		pprof.StopCPUProfile()
