@@ -110,7 +110,7 @@ to start and stop the server:
 	limit nofile 20000 20000
 	setuid www-data
 	setgid www-data
-	exec /opt/freegeoip/freegeoip -c /opt/freegeoip.conf -l /var/log/freegeoip/freegeoip.log
+	exec /opt/freegeoip/freegeoip -c /opt/freegeoip/freegeoip.conf -l /var/log/freegeoip/freegeoip.log
 
 The log directory must be created with the right permissions before the
 daemon can be started. Use the following command for this:
