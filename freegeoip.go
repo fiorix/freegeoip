@@ -331,7 +331,7 @@ func (p *dnsPool) LookupHost(hostname string) net.IP {
 	case p.queryChan <- q:
 		select {
 		case ip := <-q.respChan:
-			defer close(q.respChan)
+			close(q.respChan)
 			return ip
 		case <-time.After(p.queryTimeout):
 			return nil
