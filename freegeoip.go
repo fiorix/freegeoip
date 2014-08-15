@@ -292,50 +292,50 @@ func runServer(mux *http.ServeMux, c *serverConfig) {
 }
 
 type dnsPool struct {
-	qc chan *dnsQuery
+	queryChan    chan *dnsQuery
+	queryTimeout time.Duration
 }
 
 type dnsQuery struct {
 	hostname string
-	respc    chan net.IP
+	respChan chan net.IP
 }
 
 func (p *dnsPool) init(size int, queryTimeout time.Duration) {
-	p.qc = make(chan *dnsQuery, size)
+	p.queryChan = make(chan *dnsQuery, size)
+	p.queryTimeout = queryTimeout
 	for n := 0; n < size; n++ {
-		go p.doWork(queryTimeout)
+		go p.doWork()
 	}
 }
 
-func (p *dnsPool) doWork(t time.Duration) {
-	var ip net.IP
-	for q := range p.qc {
-		c := make(chan net.IP, 1)
-		go p.query(c, q.hostname)
-		select {
-		case ip = <-c:
-			q.respc <- ip
-		case <-time.After(t):
-			q.respc <- nil
-		}
+func (p *dnsPool) doWork() {
+	for q := range p.queryChan {
+		q.respChan <- p.resolve(q.hostname)
 	}
 }
 
-func (p *dnsPool) query(c chan net.IP, hostname string) {
+func (p *dnsPool) resolve(hostname string) net.IP {
 	if a, err := net.LookupHost(hostname); err != nil {
-		c <- nil
+		return nil
 	} else if len(a) == 1 {
-		c <- net.ParseIP(a[0])
+		return net.ParseIP(a[0])
 	} else {
-		c <- net.ParseIP(a[rand.Intn(len(a)-1)])
+		return net.ParseIP(a[rand.Intn(len(a)-1)])
 	}
 }
 
 func (p *dnsPool) LookupHost(hostname string) net.IP {
 	q := &dnsQuery{hostname, make(chan net.IP, 1)}
 	select {
-	case p.qc <- q:
-		return <-q.respc
+	case p.queryChan <- q:
+		select {
+		case ip := <-q.respChan:
+			defer close(q.respChan)
+			return ip
+		case <-time.After(p.queryTimeout):
+			return nil
+		}
 	default:
 		return nil
 	}
