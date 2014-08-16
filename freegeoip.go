@@ -74,7 +74,7 @@ func main() {
 		dns.init(cf.DNS.MaxConcurrent, t)
 	}
 
-	if *flLog != "" {
+	if len(*flLog) > 0 {
 		setLog(*flLog)
 	}
 
@@ -206,7 +206,7 @@ func handleRequest(
 	}
 
 	// Process the query, if there's one.
-	if path[2] != "" {
+	if len(path[2]) > 0 {
 		// Allow to query by IP or hostname.
 		if ip = net.ParseIP(path[2]); ip == nil {
 			if dns == nil {
@@ -237,7 +237,7 @@ func handleRequest(
 	// Write response.
 	switch path[1][0] {
 	case 'j':
-		if cb := r.FormValue("callback"); cb != "" {
+		if cb := r.FormValue("callback"); len(cb) > 0 {
 			w.Header().Set("Content-Type", "text/javascript")
 			err = record.JSONP(w, cb)
 		} else {
@@ -270,7 +270,7 @@ func runServer(mux *http.ServeMux, c *serverConfig) {
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
-	if c.KeyFile != "" && c.CertFile != "" {
+	if len(c.KeyFile) > 0 && len(c.CertFile) > 0 {
 		log.Printf("Starting HTTPS server on tcp/%s "+
 			"log=%t xheaders=%t cert=%s key=%s",
 			c.Addr,
@@ -302,7 +302,7 @@ type dnsQuery struct {
 }
 
 func (p *dnsPool) init(size int, queryTimeout time.Duration) {
-	p.queryChan = make(chan *dnsQuery, size)
+	p.queryChan = make(chan *dnsQuery)
 	p.queryTimeout = queryTimeout
 	for n := 0; n < size; n++ {
 		go p.doWork()
@@ -683,7 +683,7 @@ func (q *redisQuota) Ok(ipkey uint32) (bool, error) {
 	k := strconv.Itoa(int(ipkey)) // "numeric" key
 	if ns, err := q.rc.Get(k); err != nil {
 		return false, fmt.Errorf("redis get: %s", err)
-	} else if ns == "" {
+	} else if len(ns) == 0 {
 		if err = q.rc.SetEx(k, q.cf.Limit.Expire, "1"); err != nil {
 			return false, fmt.Errorf("redis setex: %s", err)
 		}
@@ -850,7 +850,7 @@ func loadConfig(filename string) (*configFile, error) {
 }
 
 func relativePath(basedir string, filename *string) {
-	if *filename != "" && (*filename)[0] != '/' {
+	if len(*filename) > 0 && (*filename)[0] != '/' {
 		*filename = filepath.Join(basedir, *filename)
 	}
 }
