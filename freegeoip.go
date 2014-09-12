@@ -209,8 +209,8 @@ func handleRequest(
 	if len(path[2]) > 0 {
 		// Allow to query by IP or hostname.
 		if ip = net.ParseIP(path[2]); ip == nil {
-			if dns == nil {
-				// DNS lookups not allowed.
+			if dns == nil || strings.Contains(path[2], " ") {
+				// DNS lookups not allowed or invalid hostname.
 				http.Error(w, http.StatusText(404), 404)
 				return
 			} else if ip = dns.LookupHost(path[2]); ip == nil {
