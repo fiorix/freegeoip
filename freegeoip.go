@@ -321,6 +321,16 @@ func (p *dnsPool) resolve(hostname string) net.IP {
 	} else if len(a) == 1 {
 		return net.ParseIP(a[0])
 	} else {
+		// return the first ip4 found
+		for _, v := range a {
+			ip := net.ParseIP(v)
+			ipv4 := ip.To4()
+			if ipv4 != nil {
+				//fmt.Printf("\nFound good ipv4 %#v\n", ipv4)
+				return ipv4
+			}
+		}
+		//fmt.Printf("\npicking a random IP to return from resolve('%s') all: %#v\n", hostname)
 		return net.ParseIP(a[rand.Intn(len(a)-1)])
 	}
 }
