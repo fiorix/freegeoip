@@ -1,198 +1,162 @@
-// Copyright 2009-2014 Alexandre Fiori
+// Copyright 2009-2014 The freegeoip authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package freegeoip
 
 import (
 	"bytes"
+	"encoding/csv"
+
+	"io/ioutil"
 	"net"
-	"sync"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
-	"time"
 )
 
-var (
-	testCf *configFile
-	testDB *DB
-)
+func TestQueryRemoteAddr(t *testing.T) {
+	want := net.ParseIP("8.8.8.8")
+	// No query argument, so we query the remote IP.
+	r := http.Request{
+		URL:        &url.URL{Path: "/"},
+		RemoteAddr: "8.8.8.8:8888",
+		Header:     http.Header{},
+	}
+	f := &Handler{}
+	if ip := f.queryIP(&r); !bytes.Equal(ip, want) {
+		t.Errorf("Unexpected IP: %s", ip)
+	}
+}
 
-func TestLoadConfig(t *testing.T) {
-	var err error
-	testCf, err = loadConfig("freegeoip.conf")
+func TestQueryDNS(t *testing.T) {
+	want4 := net.ParseIP("8.8.8.8")
+	want6 := net.ParseIP("2001:4860:4860::8888")
+	r := http.Request{
+		URL:        &url.URL{Path: "/google-public-dns-a.google.com"},
+		RemoteAddr: "127.0.0.1:8080",
+		Header:     make(map[string][]string),
+	}
+	f := &Handler{}
+	ip := f.queryIP(&r)
+	if ip == nil {
+		t.Fatal("Failed to resolve", r.URL.Path)
+	}
+	if !bytes.Equal(ip, want4) && !bytes.Equal(ip, want6) {
+		t.Errorf("Unexpected IP: %s", ip)
+	}
+}
+
+// Test the server.
+
+func runServer(pattern string, f Encoder) (*Handler, *httptest.Server, error) {
+	db, err := Open(testFile)
 	if err != nil {
-		t.Fatal(err)
+		return nil, nil, err
 	}
-}
-
-func TestOpenDB(t *testing.T) {
-	var err error
-	testDB, err = openDB(testCf)
-	if err != nil {
-		t.Log("Make sure the DB exists: cd db && ./updatedb")
-		t.Fatal(err)
-	}
-}
-
-func TestQueryDB1(t *testing.T) {
-	record := testQuery(t, "127.0.0.1")
-	if record.CountryName != "Reserved" {
-		t.Fatal("Unexpected value:", record.CountryName)
-	}
-}
-
-func TestQueryDB2(t *testing.T) {
-	record := testQuery(t, "8.8.8.8")
-	if record.CountryCode != "US" {
-		t.Fatal("Unexpected value:", record.CountryCode)
-	}
-}
-
-func TestRecordJSON(t *testing.T) {
-	record := testQuery(t, "127.0.0.1")
-	b := bytes.NewBuffer(nil)
-	record.JSON(b)
-	if len(b.Bytes()) != 180 {
-		t.Fatal("Unexpected value:", b.String())
-	}
-}
-
-func TestRecordJSONP(t *testing.T) {
-	record := testQuery(t, "127.0.0.1")
-	b := bytes.NewBuffer(nil)
-	record.JSONP(b, "f")
-	if len(b.Bytes()) != 184 {
-		t.Fatal("Unexpected value:", b.String())
-	}
-}
-
-func TestRecordXML(t *testing.T) {
-	record := testQuery(t, "127.0.0.1")
-	b := bytes.NewBuffer(nil)
-	record.XML(b)
-	if len(b.Bytes()) != 338 {
-		t.Fatal("Unexpected value:", b.String())
-	}
-}
-
-func TestRecordCSV(t *testing.T) {
-	record := testQuery(t, "127.0.0.1")
-	b := bytes.NewBuffer(nil)
-	record.CSV(b)
-	if len(b.Bytes()) != 65 {
-		t.Fatal("Unexpected value:", b.String())
-	}
-}
-
-func TestMapQuota(t *testing.T) {
-	testCf.Limit.MaxRequests = 1
-	testCf.Limit.Expire = 1
-	rl := new(mapQuota)
-	rl.init(testCf)
-	nIP, _ := ip2int(net.ParseIP("127.0.0.1"))
-	if ok, _ := rl.Ok(nIP); !ok {
-		t.Fatal("Unexpected value:", ok)
-	}
-	if ok, _ := rl.Ok(nIP); ok {
-		t.Fatal("Unexpected value:", ok)
-	}
-}
-
-func TestRedisQuota(t *testing.T) {
-	if len(testCf.Redis) < 1 {
-		t.Skip("Redis is not configured")
-	}
-	testCf.Limit.MaxRequests = 1
-	testCf.Limit.Expire = 1
-	rl := new(redisQuota)
-	rl.init(testCf)
-	nIP, _ := ip2int(net.ParseIP("127.0.0.1"))
-	if ok, err := rl.Ok(nIP); err != nil {
-		t.Fatal(err)
-	} else if !ok {
-		t.Fatal("Unexpected value:", ok)
-	}
-	if ok, err := rl.Ok(nIP); err != nil {
-		t.Fatal(err)
-	} else if ok {
-		t.Fatal("Unexpected value:", ok)
-	}
-}
-
-func TestDNSLookup(t *testing.T) {
-	dp := new(dnsPool)
-	dp.init(1, 1000*time.Millisecond)
-	if ip := dp.LookupHost("localhost"); ip == nil {
-		t.Fatal("Could not resolve host name")
-	} else if !isLocalhostIP(ip.String()) {
-		t.Fatal("Unexpected IP: " + ip.String())
-	}
-}
-
-func TestConcurrentDNSLookup1(t *testing.T) {
-	dp := new(dnsPool)
-	dp.init(1, 1000*time.Millisecond)
-	go dp.LookupHost("invalid.host.name1")
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		if ip := dp.LookupHost("localhost"); ip != nil {
-			t.Error("Unexpected IP: " + ip.String())
-		}
-		wg.Done()
-	}()
-	wg.Wait()
-}
-
-func TestConcurrentDNSLookup2(t *testing.T) {
-	dp := new(dnsPool)
-	dp.init(2, 1000*time.Millisecond)
-	go dp.LookupHost("invalid.host.name2")
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		if ip := dp.LookupHost("localhost"); ip == nil {
-			t.Error("Could not resolve host name")
-		} else if !isLocalhostIP(ip.String()) {
-			t.Error("Unexpected IP: " + ip.String())
-		}
-		wg.Done()
-	}()
-	wg.Wait()
-}
-
-func BenchmarkQueryDB(b *testing.B) {
-	if testDB == nil {
-		b.Skip("DB is not available")
-	}
-	ip := net.ParseIP("8.8.8.8")
-	nIP, _ := ip2int(ip)
-	for i := 0; i < b.N; i++ {
-		_, err := testDB.Lookup(ip, nIP)
+	select {
+	case <-db.NotifyOpen():
+	case err := <-db.NotifyError():
 		if err != nil {
-			b.Fatal(err)
+			return nil, nil, err
 		}
 	}
+	mux := http.NewServeMux()
+	handle := NewHandler(db, f)
+	mux.Handle(pattern, ProxyHandler(handle))
+	return handle, httptest.NewServer(mux), nil
 }
 
-func testQuery(t *testing.T, addr string) *geoipRecord {
-	if testDB == nil {
-		t.Skip("DB is not available")
-	}
-	ip := net.ParseIP(addr)
-	nIP, _ := ip2int(ip)
-	record, err := testDB.Lookup(ip, nIP)
+func TestLookupUnavailable(t *testing.T) {
+	handle, srv, err := runServer("/csv/", &CSVEncoder{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return record
+	defer srv.Close()
+	handle.db.mu.Lock()
+	reader := handle.db.reader
+	handle.db.reader = nil
+	handle.db.mu.Unlock()
+	defer func() {
+		handle.db.mu.Lock()
+		handle.db.reader = reader
+		handle.db.mu.Unlock()
+	}()
+	resp, err := http.Get(srv.URL + "/csv/8.8.8.8")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Fatalf("Unexpected query worked: %s\n%s", resp.Status, b)
+	}
 }
 
-func isLocalhostIP(ip string) bool {
-	for _, v := range []string{"::1", "fe80::1", "127.0.0.1"} {
-		if ip == v {
-			return true
-		}
+func TestLookupNotFound(t *testing.T) {
+	_, srv, err := runServer("/csv/", &CSVEncoder{})
+	if err != nil {
+		t.Fatal(err)
 	}
-	return false
+	defer srv.Close()
+	resp, err := http.Get(srv.URL + "/csv/fail-me")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNotFound {
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Fatalf("Unexpected query worked: %s\n%s", resp.Status, b)
+	}
+}
+
+func TestLookupXForwardedFor(t *testing.T) {
+	_, srv, err := runServer("/csv/", &CSVEncoder{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer srv.Close()
+	req, err := http.NewRequest("GET", srv.URL+"/csv/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("X-Forwarded-For", "8.8.8.8")
+	resp, err := http.DefaultClient.Do(req)
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		t.Fatal(resp.Status)
+	}
+	row, err := csv.NewReader(resp.Body).Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if row[0] != "US" {
+		t.Fatalf("Unexpected country code in record: %#v", row)
+	}
+}
+
+func TestLookupDatabaseDate(t *testing.T) {
+	_, srv, err := runServer("/csv/", &CSVEncoder{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer srv.Close()
+	resp, err := http.Get(srv.URL + "/csv/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		t.Fatal(resp.Status)
+	}
+	if len(resp.Header.Get("X-Database-Date")) == 0 {
+		t.Fatal("Header X-Database-Date is missing")
+	}
 }

@@ -1,188 +1,123 @@
-# freegeoip.net
+# freegeoip
 
-freegeoip.net is a public web service for searching
-[geolocation](http://en.wikipedia.org/wiki/Geolocation) of IP addresses.
-This is the source code of freegeoip.net's web server and script for building
-the IP database.
+This is the source code of the freegeoip software. It contains both
+the web server that empowers freegeoip.net, and a package for the
+[Go](http://golang.org) programming language that enables any web server
+to support IP geolocation with a simple and clean API.
 
+See http://en.wikipedia.org/wiki/Geolocation for details about geolocation.
 
-## Overview
+## Web Server
 
-freegeoip.net is the result of a web server research project that started in
-2009 hosted at Google's [App Engine](http://appengine.google.com),
-using the Python API.
-A year later it moved to its own server infrastructure built on the
-[Cyclone](http://cyclone.io) web framework, backed by
-[Twisted](http://twistedmatrix.com) and [PyPy](http://pypy.org).
+The freegeoip web server is a standalone program that serves an HTTP API
+for searching the geolocation of IP addresses. To serve the API, it uses
+an IP database that is automatically downloaded and auto-updated from
+the internet when the server is running.
 
-The current version is written in Go as the experiments progress with
-[go-web](https://github.com/fiorix/go-web) and
-[go-redis](https://github.com/fiorix/go-redis).
+The API returns data encoded in popular formats such as CSV, XML, JSON
+and JSONP.
 
-
-### Install
-
-List of prerequisites for building and running the server:
-
-- Go compiler - for `freegeoip.go`
-- Git (for downloading Go packages)
-- Mercurial (for downloading Go packages)
-- libsqlite3-dev, gcc or llvm - for dependency `go-sqlite3`
-- Python - for the `updatedb` script
-- Redis - (optional) for API usage quotas
-- The IP database
-
-The following instructions are for Debian and Ubuntu servers.
-
-Make sure Go is installed and both $GOROOT and $GOPATH are set, then run:
-
-	apt-get install build-essential libsqlite3-dev pkg-config
-	go get github.com/fiorix/freegeoip
-	cd $GOPATH/src/github.com/fiorix/freegeoip
-	go build
-
-On recent OSX you might have to set the CC=clang before `go build` if
-the sqlite3 package fails to compile.
-
-Proceed to building the IP database before starting the server.
-
-
-### Building the IP database
-
-The IP database is composed of multiple files from multiple sources. It's a
-combination of IP subnets, country codes, city names, etc.
-
-There's a helper script under the `db` directory that automates the process
-of building the database, and can be used regularly to update it as well.
-
-It's a Python script called `updatedb` that creates `ipdb.sqlite`:
-
-	$ cd db
-	$ ./updatedb
-	... will download files and process them to create ipdb.sqlite
-	$ file ipdb.sqlite
-	ipdb.sqlite: SQLite 3.x database
-
-This service includes GeoLite data created by MaxMind, available from
-maxmind.com.
-
-
-## Running
-
-The server looks for `freegeoip.conf` in the current directory, but an
-alternative config can be specified using the `-c` command line option.
-
-By default it logs to the stderr, but log file can be specified using
-the `-l` command line option. Log files are cycled on SIGHUP.
-
-If the server is proxied by Nginx or another HTTP load balancer, edit the
-configuration file and set `xheaders="true"` and it'll use X-Real-IP or
-X-Forwarded-For HTTP headers (when available) as the client IP.
+### Usage
 
 Run the server:
 
-	./freegeoip [-c freegeoip.conf] [-l freegeoip.log]
+	./freegeoip
 
-Then point the browser to http://localhost:8080.
+Wait for it to download the IP database file for the first time. It does
+it in background and writes a message to the console when ready. If you'd
+like to use an alternative database source, see the `-db` command line
+flag.
 
-If the IP database is unavailable (e.g. file does not exist, bad permissions)
-or redis is unreachable (if using redis as the quota backend), all queries
-will result in HTTP 503 (Service Unavailable).
+If the server is queried when there is no database available, including
+this initial first run, it returns *HTTP 503 (Service Unavailable)*, since
+it can't service requests before a proper database is in place.
 
-For listening on low ports as non-root user (e.g. www-data) on linux, set
-file capabilities at least once before running it:
+### Querying
 
-	/sbin/setcap 'cap_net_bind_service=+ep' /opt/freegeoip/freegeoip
+You can use any HTTP client to test the server. The examples below use
+curl and the environment variable $freegeoip, which must be set to the
+address of your server, like http://localhost:8080 for example:
 
-### Running with upstart
+	export freegeoip=http://localhost:8080
 
-On Ubuntu, use the following upstart script in `/etc/init/freegeoip.conf`
-to start and stop the server:
+Querying the API is very straightforward: you just have to pick a format
+of your choice and provide either the IP address or hostname that you'd
+like to search for. The syntax is as follows:
 
-	# freegeoip web service
-	# https://github.com/fiorix/freegeoip
-
-	description "freegeoip web service"
-
-	start on runlevel [2345]
-	stop on runlevel [!2345]
-
-	limit nofile 20000 20000
-	setuid www-data
-	setgid www-data
-	exec /opt/freegeoip/freegeoip -c /opt/freegeoip/freegeoip.conf -l /var/log/freegeoip/freegeoip.log
-
-The log directory must be created with the right permissions before the
-daemon can be started. Use the following command for this:
-
-	/usr/bin/install -o www-data -g www-data -m 0755 -d /var/log/freegeoip
-
-Then use `start freegeoip` and `stop freegeoip` to start and stop the server.
-
-Also, use the following configuration file in `/etc/logrotate.d/freegeoip` for
-log rotation:
-
-	/var/log/freegeoip/freegeoip.log
-	{
-		rotate 7
-		daily
-		missingok
-		notifempty
-		delaycompress
-		compress
-		postrotate
-			reload freegeoip > /dev/null 2>&1
-		endscript
-	}
-
-### Running with supervisord
-
-Use [supervisor](http://supervisord.org) with the following config in
-`/etc/supervisor/conf.d/freegeoip.conf`:
-
-	[program:freegeoip]
-	user=www-data
-	redirect_stderr=true
-	directory=/opt/freegeoip
-	command=/opt/freegeoip/freegeoip
-	stdout_logfile=/var/log/freegeoip/freegeoip.log
-	stdout_logfile_maxbytes=50MB
-	stdout_logfile_backups=20
-
-Then use `supervisorctl start freegeoip` and `supervisorctl stop freegeiop`
-to start and stop the server.
-
-
-## Usage
-
-Point the browser to http://localhost:8080 and search for IPs or hostnames.
-
-Use curl from the command line to query the API:
-
-	$ curl -v http://localhost:8080/{format}/{ip_or_hostname}
-
-It supports csv, json and xml as the output format. JSON supports callbacks
-with the `callback` query argument. The client (self) IP is used if
-`ip_or_hostname` is omitted in the query.
+	$freegeoip/{format}/{IP_or_hostname}
 
 Examples:
 
-	$ curl -v http://localhost:8080/csv/
-	$ curl -v http://localhost:8080/xml/
-	$ curl -v http://localhost:8080/xml/freegeoip.net
-	$ curl -v http://localhost:8080/json/github.com?callback=foobar
+	curl -i $freegeoip/csv/8.8.8.8
 
-If the server is listening on unix sockets, use `nc` to test:
+	curl -i $freegeoip/xml/4.2.2.2
 
-	echo -ne 'GET /json/my-domain.abc HTTP/1.0\r\n\r\n' | nc -U /tmp/freegeoip.sock
+	curl -i $freegeoip/json/github.com
 
+If a domain or hostname is passed in the URL, the server will resolve that
+name to its IP address and lookup the IP instead. If the hostname contains
+multiple IPs associated to it, the server picks one randomly, which means
+it could be either IPv4 or IPv6.
 
-## Credits
+If no IP or hostname is provided, then the server queries the IP address
+of the HTTP client.
 
-Thanks to (in no particular order):
+Example:
 
-- [Gleicon](https://github.com/gleicon) for all the drama.
-- Google for the map, Go, and AngularJS.
-- Twitter for Bootstrap.
-- MaxMind for the current database.
-- ipinfodb.com for both the IP and timezones database back in 2010 and 2011.
+	curl -i freegeoip.net/json/   (this queries your own IP address)
+
+The JSON endpoint also supports JSONP, by adding a `callback` argument
+to the request query.
+
+Example:
+
+	curl -i freegeoip.net/json/8.8.8.8?callback=f
+
+See http://en.wikipedia.org/wiki/JSONP for details on how JSONP works.
+
+## freegeoip package for Go
+
+The freegeoip package for the Go programming language provides two APIs:
+
+- A database API that requires zero maintenance of the IP database;
+- A geolocation `http.Handler` that can be used/served by any http server.
+
+tl;dr if all you want is code then see the `examples_test.go` file.
+
+Otherwise check out the godoc reference.
+
+[![GoDoc](https://godoc.org/github.com/fiorix/freegeoip?status.svg)](https://godoc.org/github.com/fiorix/freegeoip)
+[![Build Status](https://secure.travis-ci.org/fiorix/freegeoip.png)](http://travis-ci.org/fiorix/freegeoip)
+
+### Features
+
+- Zero maintenance
+
+The DB object alone can download an IP database file from the internet and
+service lookups to your program right away. It will auto-update the file in
+background and always magically work.
+
+- DevOps friendly
+
+If you do care about the database and have the commercial version of the
+MaxMind database, you can update the database file with your program running
+and the DB object will load it in background. You can focus on your stuff.
+
+- Extensible
+
+Besides the database part, the package provides an `http.Handler` object
+that you can add to your HTTP server to service IP geolocation lookups with
+the same simplistic API of freegeoip.net. There's also an interface for
+crafting your own HTTP responses encoded in any format.
+
+### Install
+
+Install the package:
+
+	go get github.com/fiorix/freegeoip
+
+Install the web server:
+
+	go install github.com/fiorix/freegeoip/cmd/freegeoip
+
+Test coverage is quite good and may help you find the stuff you need.
