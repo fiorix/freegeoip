@@ -84,6 +84,17 @@ Build the docker image:
 If you want just the API, not the front-end, edit the Dockerfile and
 comment out the `-public` command line flag.
 
+Or use the official image:
+
+	docker run --name freegeoip fiorix/freegeoip
+
+If you need quota then link the container to a Redis container:
+
+	docker run -d --name redis -p 6379:6379 dockerfile/redis
+	docker run -d --name freegeoip --link redis:redis -p 8080:8080 fiorix/freegeoip -redis redis:6379 -quota-max 10000
+
+You can use `redis-cli monitor` to assure things are working as expected.
+
 ## freegeoip package for Go
 
 The freegeoip package for the Go programming language provides two APIs:
