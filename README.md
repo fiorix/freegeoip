@@ -64,16 +64,25 @@ of the HTTP client.
 
 Example:
 
-	curl -i freegeoip.net/json/   (this queries your own IP address)
+	curl -i $freegeoip/json/   (this queries your own IP address)
 
 The JSON endpoint also supports JSONP, by adding a `callback` argument
 to the request query.
 
 Example:
 
-	curl -i freegeoip.net/json/8.8.8.8?callback=f
+	curl -i $freegeoip/json/8.8.8.8?callback=f
 
 See http://en.wikipedia.org/wiki/JSONP for details on how JSONP works.
+
+### Docker image
+
+Build the docker image:
+
+	docker build -t my/freegeoip .
+
+If you want just the API, not the front-end, edit the Dockerfile and
+comment out the `-public` command line flag.
 
 ## freegeoip package for Go
 
