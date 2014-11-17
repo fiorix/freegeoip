@@ -3,8 +3,10 @@ go:
   - 1.3
   - release
   - tip
-script:
-  - go test -v -cover ./...
 
 install:
+  - go get -v ./...
   - go get golang.org/x/tools/cmd/cover
+
+script:
+  - go test -v -cover ./...
