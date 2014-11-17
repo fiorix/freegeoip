@@ -86,7 +86,7 @@ comment out the `-public` command line flag.
 
 Or use the official image:
 
-	docker run --name freegeoip fiorix/freegeoip
+	docker run -d --name freegeoip -p 8080:8080 fiorix/freegeoip
 
 If you need quota then link the container to a Redis container:
 
