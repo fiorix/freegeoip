@@ -95,8 +95,8 @@ func main() {
 
 // openDB opens and returns the IP database.
 func openDB(dsn string, updateIntvl, maxRetryIntvl time.Duration) (db *freegeoip.DB, err error) {
-	_, err = url.Parse(dsn)
-	if err != nil {
+	u, err := url.Parse(dsn)
+	if err != nil || len(u.Scheme) == 0 {
 		db, err = freegeoip.Open(dsn)
 	} else {
 		db, err = freegeoip.OpenURL(dsn, updateIntvl, maxRetryIntvl)
