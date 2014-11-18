@@ -137,7 +137,7 @@ func TestLookupXForwardedFor(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if row[0] != "US" {
+	if row[1] != "US" {
 		t.Fatalf("Unexpected country code in record: %#v", row)
 	}
 }

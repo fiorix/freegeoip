@@ -137,6 +137,7 @@ func (f *CSVEncoder) Encode(w http.ResponseWriter, r *http.Request, q Query, ip 
 	cw := csv.NewWriter(w)
 	cw.UseCRLF = f.UseCRLF
 	err := cw.Write([]string{
+		ip.String(),
 		record.CountryCode,
 		record.CountryName,
 		record.RegionCode,
