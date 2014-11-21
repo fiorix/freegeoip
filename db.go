@@ -263,8 +263,8 @@ func (db *DB) renameFile(name string) error {
 // Date returns the UTC date the database file was last modified.
 // If no database file has been opened the behaviour of Date is undefined.
 func (db *DB) Date() time.Time {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 	return db.lastUpdated
 }
 
@@ -287,8 +287,8 @@ func (db *DB) NotifyError() (errChan <-chan error) {
 }
 
 func (db *DB) sendError(err error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 	if db.closed {
 		return
 	}
