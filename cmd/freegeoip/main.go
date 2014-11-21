@@ -6,6 +6,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -20,6 +21,7 @@ import (
 	"github.com/gorilla/context"
 )
 
+var VERSION = "3.0.2"
 var maxmindFile = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
 
 func main() {
@@ -35,7 +37,13 @@ func main() {
 	redisAddr := flag.String("redis", "127.0.0.1:6379", "Redis address in form of ip:port for quota")
 	quotaMax := flag.Int("quota-max", 0, "Max requests per source IP per interval; Set 0 to turn off")
 	quotaIntvl := flag.Duration("quota-interval", time.Hour, "Quota expiration interval")
+	version := flag.Bool("version", false, "Show version and exit")
 	flag.Parse()
+
+	if *version {
+		fmt.Printf("freegeoip v%s\n", VERSION)
+		return
+	}
 
 	rc, err := redis.Dial(*redisAddr)
 	if err != nil {
