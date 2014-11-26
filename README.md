@@ -17,6 +17,14 @@ the internet when the server is running.
 The API returns data encoded in popular formats such as CSV, XML, JSON
 and JSONP.
 
+### Download
+
+If you're not a developer and is only looking for the web server, you
+can download binaries directly.
+
+See https://github.com/fiorix/freegeoip/releases for tarballs for your
+platform.
+
 ### Usage
 
 Run the server:
