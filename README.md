@@ -146,8 +146,6 @@ Install the package:
 
 Install the web server:
 
-	go get github.com/fiorix/go-redis/redis
-	go get github.com/gorilla/context
-	go install github.com/fiorix/freegeoip/cmd/freegeoip
+	go get github.com/fiorix/freegeoip/cmd/freegeoip
 
 Test coverage is quite good and may help you find the stuff you need.
