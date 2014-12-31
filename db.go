@@ -97,13 +97,9 @@ func (db *DB) watchFile() error {
 	if err != nil {
 		return err
 	}
-	dbdir := filepath.Dir(db.file)
-	_, err = os.Stat(dbdir)
+	dbdir, err := db.makeDir()
 	if err != nil {
-		err = os.MkdirAll(dbdir, 0755)
-		if err != nil {
-			return err
-		}
+		return err
 	}
 	go db.watchEvents(watcher)
 	return watcher.Watch(dbdir)
@@ -215,7 +211,12 @@ func (db *DB) runUpdate(url string) error {
 	if err != nil {
 		return err
 	}
-	return db.renameFile(tmpfile)
+	err = db.renameFile(tmpfile)
+	if err != nil {
+		// Cleanup the tempfile if renaming failed.
+		os.RemoveAll(tmpfile)
+	}
+	return err
 }
 
 func (db *DB) needUpdate(url string) (bool, error) {
@@ -255,8 +256,24 @@ func (db *DB) download(url string) (tmpfile string, err error) {
 	return tmpfile, nil
 }
 
+func (db *DB) makeDir() (dbdir string, err error) {
+	dbdir = filepath.Dir(db.file)
+	_, err = os.Stat(dbdir)
+	if err != nil {
+		err = os.MkdirAll(dbdir, 0755)
+		if err != nil {
+			return "", err
+		}
+	}
+	return dbdir, nil
+}
+
 func (db *DB) renameFile(name string) error {
 	os.Rename(db.file, db.file+".bak") // Optional, might fail.
+	_, err := db.makeDir()
+	if err != nil {
+		return err
+	}
 	return os.Rename(name, db.file)
 }
 
