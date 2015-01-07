@@ -11,9 +11,12 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/fiorix/freegeoip"
@@ -38,11 +41,16 @@ func main() {
 	quotaMax := flag.Int("quota-max", 0, "Max requests per source IP per interval; Set 0 to turn off")
 	quotaIntvl := flag.Duration("quota-interval", time.Hour, "Quota expiration interval")
 	version := flag.Bool("version", false, "Show version and exit")
+        logFile := flag.String("log", "", "log to file instead of stderr")
 	flag.Parse()
 
 	if *version {
 		fmt.Printf("freegeoip v%s\n", VERSION)
 		return
+	}
+        
+        if len(*logFile) > 0 {
+		setLog(*logFile)
 	}
 
 	rc, err := redis.Dial(*redisAddr)
@@ -255,4 +263,35 @@ func (f *responseWriter) Write(b []byte) (int, error) {
 func (f *responseWriter) WriteHeader(code int) {
 	f.status = code
 	f.ResponseWriter.WriteHeader(code)
+}
+
+func setLog(filename string) {
+	f := openLog(filename)
+	log.SetOutput(f)
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, syscall.SIGHUP)
+	go func() {
+		// Recycle log file on SIGHUP.
+		var fb *os.File
+		for {
+			<-sigc
+			fb = f
+			f = openLog(filename)
+			log.SetOutput(f)
+			fb.Close()
+		}
+	}()
+}
+
+func openLog(filename string) *os.File {
+	f, err := os.OpenFile(
+		filename,
+		os.O_WRONLY|os.O_CREATE|os.O_APPEND,
+		0644,
+	)
+	if err != nil {
+		log.SetOutput(os.Stderr)
+		log.Fatal(err)
+	}
+	return f
 }
