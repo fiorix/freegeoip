@@ -27,6 +27,7 @@ var maxmindFile = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-C
 func main() {
 	addr := flag.String("addr", ":8080", "Address in form of ip:port to listen on")
 	certFile := flag.String("cert", "", "X.509 certificate file")
+	addContinent := flag.Bool("continent", false, "Add continent field")
 	keyFile := flag.String("key", "", "X.509 key file")
 	public := flag.String("public", "", "Public directory to serve at the / endpoint")
 	ipdb := flag.String("db", maxmindFile, "IP database file or URL")
@@ -58,9 +59,9 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	encoders := map[string]http.Handler{
-		"/csv/":  freegeoip.NewHandler(db, &freegeoip.CSVEncoder{UseCRLF: true}),
-		"/xml/":  freegeoip.NewHandler(db, &freegeoip.XMLEncoder{Indent: true}),
-		"/json/": freegeoip.NewHandler(db, &freegeoip.JSONEncoder{}),
+		"/csv/":  freegeoip.NewHandler(db, &freegeoip.CSVEncoder{UseCRLF: true, AddContinent: *addContinent}),
+		"/xml/":  freegeoip.NewHandler(db, &freegeoip.XMLEncoder{Indent: true, AddContinent: *addContinent}),
+		"/json/": freegeoip.NewHandler(db, &freegeoip.JSONEncoder{AddContinent: *addContinent}),
 	}
 
 	if *quotaMax > 0 {
