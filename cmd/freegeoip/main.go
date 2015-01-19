@@ -66,7 +66,7 @@ func main() {
 	if *quotaMax > 0 {
 		seconds := int((*quotaIntvl).Seconds())
 		for path, f := range encoders {
-			encoders[path] = userQuota(rc, *quotaMax, seconds, f)
+			encoders[path] = userQuota(rc, *quotaMax, seconds, f, *silent)
 		}
 	}
 
@@ -141,7 +141,7 @@ func CORS(f http.Handler, allow ...string) http.Handler {
 // It allows qmax requests per qintvl, in seconds.
 //
 // If redis is not available it responds with service unavailable.
-func userQuota(rc *redis.Client, qmax int, qintvl int, f http.Handler) http.Handler {
+func userQuota(rc *redis.Client, qmax int, qintvl int, f http.Handler, silent bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var ip string
 		if idx := strings.LastIndex(r.RemoteAddr, ":"); idx != -1 {
@@ -169,7 +169,7 @@ func userQuota(rc *redis.Client, qmax int, qintvl int, f http.Handler) http.Hand
 			return
 		}
 		_, err = rc.Incr(ip)
-		if err != nil {
+		if err != nil && !silent {
 			context.Set(r, "log", err.Error())
 		}
 		f.ServeHTTP(w, r)
