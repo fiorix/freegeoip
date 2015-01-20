@@ -1,4 +1,4 @@
-// Copyright 2009-2014 The freegeoip authors. All rights reserved.
+// Copyright 2009-2015 The freegeoip authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -23,7 +23,7 @@ import (
 	"github.com/gorilla/context"
 )
 
-var VERSION = "3.0.2"
+var VERSION = "3.0.3"
 var maxmindFile = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
 
 func main() {
