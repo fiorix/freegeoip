@@ -151,13 +151,21 @@ func userQuota(rc *redis.Client, qmax int, qintvl int, f http.Handler, silent bo
 		}
 		sreq, err := rc.Get(ip)
 		if err != nil {
-			serviceUnavailable(w, r, err.Error())
+			if !silent {
+				context.Set(r, "log", err.Error())
+			}
+			http.Error(w, "Try again later",
+				http.StatusServiceUnavailable)
 			return
 		}
 		if len(sreq) == 0 {
 			err = rc.SetEx(ip, qintvl, "1")
 			if err != nil {
-				serviceUnavailable(w, r, err.Error())
+				if !silent {
+					context.Set(r, "log", err.Error())
+				}
+				http.Error(w, "Try again later",
+					http.StatusServiceUnavailable)
 				return
 			}
 			f.ServeHTTP(w, r)
@@ -174,12 +182,6 @@ func userQuota(rc *redis.Client, qmax int, qintvl int, f http.Handler, silent bo
 		}
 		f.ServeHTTP(w, r)
 	})
-}
-
-// serviceUnavailable writes an http error 501 to a client.
-func serviceUnavailable(w http.ResponseWriter, r *http.Request, log string) {
-	context.Set(r, "log", log)
-	http.Error(w, "Try again later", http.StatusServiceUnavailable)
 }
 
 // logEvents logs database events.
