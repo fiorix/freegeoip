@@ -16,6 +16,8 @@ import (
 	"strings"
 	"time"
 
+	_ "net/http/pprof"
+
 	"github.com/fiorix/freegeoip"
 	"github.com/fiorix/go-redis/redis"
 	"github.com/gorilla/context"
@@ -38,6 +40,7 @@ func main() {
 	quotaMax := flag.Int("quota-max", 0, "Max requests per source IP per interval; Set 0 to turn off")
 	quotaIntvl := flag.Duration("quota-interval", time.Hour, "Quota expiration interval")
 	version := flag.Bool("version", false, "Show version and exit")
+	pprof := flag.String("pprof", "", "Address in form of ip:port to listen on for pprof")
 	flag.Parse()
 
 	if *version {
@@ -89,6 +92,12 @@ func main() {
 
 	if *useXFF {
 		handler = freegeoip.ProxyHandler(handler)
+	}
+
+	if len(*pprof) > 0 {
+		go func() {
+			log.Fatal(http.ListenAndServe(*pprof, nil))
+		}()
 	}
 
 	if len(*certFile) > 0 && len(*keyFile) > 0 {
