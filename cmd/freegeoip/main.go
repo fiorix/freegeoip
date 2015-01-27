@@ -23,7 +23,7 @@ import (
 	"github.com/gorilla/context"
 )
 
-var VERSION = "3.0.3"
+var VERSION = "3.0.4"
 var maxmindFile = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
 
 func main() {
@@ -37,6 +37,7 @@ func main() {
 	useXFF := flag.Bool("use-x-forwarded-for", false, "Use the X-Forwarded-For header when available")
 	silent := flag.Bool("silent", false, "Do not log requests to stderr")
 	redisAddr := flag.String("redis", "127.0.0.1:6379", "Redis address in form of ip:port for quota")
+	redisTimeout := flag.Duration("redis-timeout", 500*time.Millisecond, "Redis read/write timeout")
 	quotaMax := flag.Int("quota-max", 0, "Max requests per source IP per interval; Set 0 to turn off")
 	quotaIntvl := flag.Duration("quota-interval", time.Hour, "Quota expiration interval")
 	version := flag.Bool("version", false, "Show version and exit")
@@ -52,6 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	rc.Timeout = *redisTimeout
 
 	db, err := openDB(*ipdb, *updateIntvl, *retryIntvl)
 	if err != nil {
