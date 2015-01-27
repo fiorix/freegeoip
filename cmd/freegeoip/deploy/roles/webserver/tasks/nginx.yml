@@ -1,0 +1,75 @@
+- name: Install nginx
+  action: apt name=nginx state=installed
+
+- name: Create nginx's SSL cert directory
+  file: path=/etc/nginx/cert
+        state=directory
+
+- name: Copy SSL certificate
+  copy: src=cert.pem
+        dest=/etc/nginx/cert/freegeoip_cert.pem
+        owner=root
+        group=root
+        mode=0640
+        backup=yes
+  notify:
+    - restart nginx
+
+- name: Copy SSL key
+  copy:
+        src=key.pem
+        dest=/etc/nginx/cert/freegeoip_key.pem
+        owner=root
+        group=root
+        mode=0640
+        backup=yes
+  notify:
+    - restart nginx
+
+- name: Write custom nginx.conf
+  copy: src=nginx.conf
+        dest=/etc/nginx/nginx.conf
+        owner=root
+        group=root
+        mode=0644
+        backup=yes
+
+- name: Delete default nginx vhost
+  file: path=/etc/nginx/sites-enabled/default
+        state=absent
+
+- name: Write freegeoip site configuration for nginx
+  copy: src=nginx.freegeoip.conf
+        dest=/etc/nginx/sites-available/freegeoip
+        owner=root
+        group=root
+        mode=0644
+  notify:
+    - restart nginx
+
+- name: Activate freegeoip site configuration
+  file: src=/etc/nginx/sites-available/freegeoip
+        dest=/etc/nginx/sites-enabled/freegeoip
+        owner=root
+        group=root
+        mode=0644
+        state=link
+  notify:
+    - restart nginx
+
+- name: Make sure nginx is running
+  service: name=nginx state=running
+
+- name: Configure cron to rotate nginx logs hourly
+  copy: src=nginx.cron.sh
+        dest=/etc/cron.hourly/nginx
+        owner=root
+        group=root
+        mode=0755
+
+- name: Write custom nginx logrotate config
+  copy: src=nginx.logrotate.conf
+        dest=/etc/logrotate.d/nginx
+        owner=root
+        group=root
+        mode=0644

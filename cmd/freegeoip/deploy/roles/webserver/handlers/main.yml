@@ -1,0 +1,8 @@
+- name: restart nginx
+  service: name=nginx state=restarted
+
+- name: restart dnsmasq
+  service: name=dnsmasq state=restarted
+
+- name: restart freegeoip
+  service: name=freegeoip state=restarted

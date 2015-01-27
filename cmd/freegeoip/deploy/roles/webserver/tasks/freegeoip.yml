@@ -1,0 +1,38 @@
+- name: Install freegeoip (from GitHub releases)
+  action: shell curl -sL https://github.com/fiorix/freegeoip/releases/download/v{{freegeoip_version}}/freegeoip-{{freegeoip_version}}-{{freegeoip_arch}}.tar.gz | tar -C /opt -zx
+
+- name: Link freegeoip directory
+  file: src=/opt/freegeoip-{{freegeoip_version}}-{{freegeoip_arch}}
+        dest=/opt/freegeoip
+        owner=root
+        group=root
+        mode=0755
+        state=link
+
+- name: Set freegeoip's owner and group
+  file: path=/opt/freegeoip/
+        owner=root
+        group=root
+        recurse=yes
+
+- name: Write freegeoip's upstart configuration
+  template: src=upstart.conf
+            dest=/etc/init/freegeoip.conf
+            owner=root
+            group=root
+            mode=0644
+  notify:
+    - restart freegeoip
+
+- name: Link freegeoip's upstart job
+  file: src=/lib/init/upstart-job
+        dest=/etc/init.d/freegeoip
+        owner=root
+        group=root
+        mode=0644
+        state=link
+  notify:
+    - restart freegeoip
+
+- name: Make sure freegeoip is running
+  service: name=freegeoip state=running

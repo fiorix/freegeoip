@@ -1,0 +1,5 @@
+#!/bin/sh -e
+
+iptables-restore < /etc/iptables.conf
+
+exit 0

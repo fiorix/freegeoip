@@ -1,6 +1,0 @@
-- name: update timezone
-  command: dpkg-reconfigure --frontend noninteractive tzdata
-
-- name: reload nginx
-  action: service name=nginx state=reloaded enabled=yes
-
