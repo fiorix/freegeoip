@@ -1,9 +1,11 @@
 # Ansible Playbook
 
-This is an ansible playbook for freegeoip and redis. It ships with
-snakeoil SSL certificates, replace them with real ones.
+This is an ansible playbook for freegeoip and redis.
 
-Following is a list of files to be edited prior to using this:
+If you plan to use SSL, replace the snakeoil certificate and key
+(the `.pem` files) in `roles/webserver/files/` with real ones.
+
+Following is a list of other files to be edited prior to using this:
 
 - hosts: to add your servers
 - roles/webserver/vars/main.yml: to configure the freegeoip daemon

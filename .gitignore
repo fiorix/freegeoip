@@ -1,5 +1,4 @@
 db.gz
-*.pem
 *.rdb
 *.swp
 *.csv
