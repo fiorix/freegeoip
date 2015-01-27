@@ -1,0 +1,3 @@
+- hosts: web
+  roles:
+    - webserver

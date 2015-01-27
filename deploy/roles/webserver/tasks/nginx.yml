@@ -1,0 +1,21 @@
+- name: install nginx
+  action: apt name=nginx state=installed
+
+- name: write nginx.conf
+  action: template src=templates/nginx.conf.j2 dest=/etc/nginx/nginx.conf
+  notify:
+    - reload nginx
+
+- name: write freegeoip nginx site
+  action: template src=templates/freegeoip_site.j2 dest=/etc/nginx/sites-available/freegeoip
+  notify:
+    - reload nginx
+
+- name: delete default vhost
+  action: file path=/etc/nginx/sites-enabled/default state=absent
+  notify:
+    - reload nginx
+
+- name: Creates ssl directory
+  file: path=/etc/nginx/cert state=directory
+
