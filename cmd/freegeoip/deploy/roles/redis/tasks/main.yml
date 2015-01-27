@@ -11,6 +11,11 @@
   notify:
     - restart redis
 
+- name: Increase redis max open files
+  lineinfile: dest=/etc/default/redis-server line="ULIMIT=500000"
+  notify:
+    - restart redis
+
 - name: Make sure redis is running
   service: name=redis-server state=running
 
