@@ -145,6 +145,8 @@ func (f *CSVEncoder) Encode(w http.ResponseWriter, r *http.Request, q Query, ip 
 		record.City,
 		record.ZipCode,
 		record.TimeZone,
+//		strconv.FormatBool(record.IsAnonymousProxy),
+		strconv.FormatBool(record.IsSatelliteProvider),
 		strconv.FormatFloat(record.Latitude, 'f', 2, 64),
 		strconv.FormatFloat(record.Longitude, 'f', 2, 64),
 		strconv.Itoa(int(record.MetroCode)),
@@ -180,23 +182,29 @@ type maxmindQuery struct {
 	Postal struct {
 		Code string `maxminddb:"code"`
 	} `maxminddb:"postal"`
+	Traits struct {
+//        	IsAnonymousProxy    bool `maxminddb:"is_anonymous_proxy"`
+        	IsSatelliteProvider bool `maxminddb:"is_satellite_provider"`
+    	}   `maxminddb:"traits"`
 }
 
 // responseRecord is the object that gets encoded as the response of an
 // IP lookup request. It is encoded to formats such as xml and json.
 type responseRecord struct {
-	XMLName     xml.Name `xml:"Response" json:"-"`
-	IP          string   `json:"ip"`
-	CountryCode string   `json:"country_code"`
-	CountryName string   `json:"country_name"`
-	RegionCode  string   `json:"region_code"`
-	RegionName  string   `json:"region_name"`
-	City        string   `json:"city"`
-	ZipCode     string   `json:"zip_code"`
-	TimeZone    string   `json:"time_zone"`
-	Latitude    float64  `json:"latitude"`
-	Longitude   float64  `json:"longitude"`
-	MetroCode   uint     `json:"metro_code"`
+	XMLName		xml.Name `xml:"Response" json:"-"`
+	IP		string   `json:"ip"`
+	CountryCode	string   `json:"country_code"`
+	CountryName	string   `json:"country_name"`
+	RegionCode	string   `json:"region_code"`
+	RegionName	string   `json:"region_name"`
+	City		string   `json:"city"`
+	ZipCode		string   `json:"zip_code"`
+	TimeZone	string   `json:"time_zone"`
+	Latitude	float64  `json:"latitude"`
+	Longitude	float64  `json:"longitude"`
+	MetroCode	uint     `json:"metro_code"`
+//	IsAnonymousProxy	bool	 `json:"is_anonymous_proxy"`
+	IsSatelliteProvider	bool	 `json:"is_satellite_provider"`
 }
 
 // newResponse translates a maxmindQuery into a responseRecord, setting
@@ -216,6 +224,8 @@ func newResponse(query *maxmindQuery, ip net.IP, lang []string) *responseRecord 
 		Latitude:    roundFloat(query.Location.Latitude, .5, 3),
 		Longitude:   roundFloat(query.Location.Longitude, .5, 3),
 		MetroCode:   query.Location.MetroCode,
+//		IsAnonymousProxy: query.Traits.IsAnonymousProxy,
+		IsSatelliteProvider: query.Traits.IsSatelliteProvider,
 	}
 	if len(query.Region) > 0 {
 		record.RegionCode = query.Region[0].ISOCode
