@@ -23,7 +23,9 @@ import (
 	"github.com/gorilla/context"
 )
 
-var VERSION = "3.0.4"
+// Version tag.
+var Version = "3.0.4"
+
 var maxmindFile = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
 
 func main() {
@@ -45,7 +47,7 @@ func main() {
 	flag.Parse()
 
 	if *version {
-		fmt.Printf("freegeoip v%s\n", VERSION)
+		fmt.Printf("freegeoip v%s\n", Version)
 		return
 	}
 
