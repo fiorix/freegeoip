@@ -185,7 +185,7 @@ func TestRequestLang(t *testing.T) {
 		t.Fatal("Unexpected list is not nil")
 	}
 	r.Header = map[string][]string{
-		"Accept-Language": []string{"en-us,en;q=0.5"},
+		"Accept-Language": {"en-us,en;q=0.5"},
 	}
 	want := []string{"en-us", "en"}
 	list = requestLang(&r)
@@ -213,7 +213,7 @@ func TestLocalizedName(t *testing.T) {
 	mkReq := func(lang string) *http.Request {
 		return &http.Request{
 			Header: map[string][]string{
-				"Accept-Language": []string{lang},
+				"Accept-Language": {lang},
 			},
 		}
 	}
