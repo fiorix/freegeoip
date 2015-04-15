@@ -253,4 +253,15 @@ var IsoAlpha3 = map[string]string{
 	"ZW": "ZWE", // Zimbabwe
 	"CS": "SCG", // Serbia and Montenegro
 	"AN": "ANT", // Netherlands Antilles
+	/* These codes from Maxmind do not have representation in ISO alpha-3 or in
+	   its exceptional reservations. In the case of the A1 and A2 codes, the ISO
+	   convention of prefixing User-assigned code elements with an 'X' has been
+	   used. In the case of EU (an exceptional reservation in ISO alpha-2, but
+	   not in alpha-3) and AP (not present in either), provisional names have
+	   been chosen, but could be subject to change, should the standard extend.
+	*/
+	"EU": "EUR", // Europe
+	"AP": "APC", // Asia/Pacific Region
+	"A1": "XA1", // Anonymous Proxy
+	"A2": "XA2", // Satellite Provider
 }
