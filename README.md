@@ -110,7 +110,7 @@ The freegeoip package for the Go programming language provides two APIs:
 - A database API that requires zero maintenance of the IP database;
 - A geolocation `http.Handler` that can be used/served by any http server.
 
-tl;dr if all you want is code then see the `examples_test.go` file.
+tl;dr if all you want is code then see the `example_test.go` file.
 
 Otherwise check out the godoc reference.
 
