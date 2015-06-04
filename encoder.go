@@ -139,6 +139,7 @@ func (f *CSVEncoder) Encode(w http.ResponseWriter, r *http.Request, q Query, ip 
 	err := cw.Write([]string{
 		ip.String(),
 		record.CountryCode,
+		record.CountryCode3,
 		record.CountryName,
 		record.RegionCode,
 		record.RegionName,
@@ -185,18 +186,19 @@ type maxmindQuery struct {
 // responseRecord is the object that gets encoded as the response of an
 // IP lookup request. It is encoded to formats such as xml and json.
 type responseRecord struct {
-	XMLName     xml.Name `xml:"Response" json:"-"`
-	IP          string   `json:"ip"`
-	CountryCode string   `json:"country_code"`
-	CountryName string   `json:"country_name"`
-	RegionCode  string   `json:"region_code"`
-	RegionName  string   `json:"region_name"`
-	City        string   `json:"city"`
-	ZipCode     string   `json:"zip_code"`
-	TimeZone    string   `json:"time_zone"`
-	Latitude    float64  `json:"latitude"`
-	Longitude   float64  `json:"longitude"`
-	MetroCode   uint     `json:"metro_code"`
+	XMLName      xml.Name `xml:"Response" json:"-"`
+	IP           string   `json:"ip"`
+	CountryCode  string   `json:"country_code"`
+	CountryCode3 string   `json:"country_code3"`
+	CountryName  string   `json:"country_name"`
+	RegionCode   string   `json:"region_code"`
+	RegionName   string   `json:"region_name"`
+	City         string   `json:"city"`
+	ZipCode      string   `json:"zip_code"`
+	TimeZone     string   `json:"time_zone"`
+	Latitude     float64  `json:"latitude"`
+	Longitude    float64  `json:"longitude"`
+	MetroCode    uint     `json:"metro_code"`
 }
 
 // newResponse translates a maxmindQuery into a responseRecord, setting
@@ -207,15 +209,16 @@ type responseRecord struct {
 func newResponse(query *maxmindQuery, ip net.IP, lang []string) *responseRecord {
 
 	record := &responseRecord{
-		IP:          ip.String(),
-		CountryCode: query.Country.ISOCode,
-		CountryName: localizedName(query.Country.Names, lang),
-		City:        localizedName(query.City.Names, lang),
-		ZipCode:     query.Postal.Code,
-		TimeZone:    query.Location.TimeZone,
-		Latitude:    roundFloat(query.Location.Latitude, .5, 3),
-		Longitude:   roundFloat(query.Location.Longitude, .5, 3),
-		MetroCode:   query.Location.MetroCode,
+		IP:           ip.String(),
+		CountryCode:  query.Country.ISOCode,
+		CountryCode3: IsoAlpha3[query.Country.ISOCode],
+		CountryName:  localizedName(query.Country.Names, lang),
+		City:         localizedName(query.City.Names, lang),
+		ZipCode:      query.Postal.Code,
+		TimeZone:     query.Location.TimeZone,
+		Latitude:     roundFloat(query.Location.Latitude, .5, 3),
+		Longitude:    roundFloat(query.Location.Longitude, .5, 3),
+		MetroCode:    query.Location.MetroCode,
 	}
 	if len(query.Region) > 0 {
 		record.RegionCode = query.Region[0].ISOCode
