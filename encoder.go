@@ -213,8 +213,8 @@ func newResponse(query *maxmindQuery, ip net.IP, lang []string) *responseRecord 
 		City:        localizedName(query.City.Names, lang),
 		ZipCode:     query.Postal.Code,
 		TimeZone:    query.Location.TimeZone,
-		Latitude:    roundFloat(query.Location.Latitude, .5, 3),
-		Longitude:   roundFloat(query.Location.Longitude, .5, 3),
+		Latitude:    roundFloat(query.Location.Latitude, .5, 4),
+		Longitude:   roundFloat(query.Location.Longitude, .5, 4),
 		MetroCode:   query.Location.MetroCode,
 	}
 	if len(query.Region) > 0 {
