@@ -24,7 +24,7 @@ import (
 )
 
 // Version tag.
-var Version = "3.0.4"
+var Version = "3.0.5"
 
 var maxmindFile = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
 
