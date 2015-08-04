@@ -132,7 +132,7 @@ func openDB(dsn string, updateIntvl, maxRetryIntvl time.Duration) (db *freegeoip
 func CORS(f http.Handler, allow ...string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Method",
+		w.Header().Set("Access-Control-Allow-Methods",
 			strings.Join(allow, ", ")+", OPTIONS")
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(200)
