@@ -16,5 +16,3 @@ ENTRYPOINT ["/go/bin/freegeoip"]
 #   Add     "-public", "/var/www"   to enable the web application
 #
 #   Full example:   CMD ["-use-x-forwarded-for", "-public", "/var/www"]
-
-/bin/sh: 1: q: not found
