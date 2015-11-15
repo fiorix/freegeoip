@@ -24,7 +24,7 @@ import (
 )
 
 // Version tag.
-var Version = "3.0.5"
+var Version = "3.0.6"
 
 var maxmindFile = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
 
@@ -38,7 +38,7 @@ func main() {
 	retryIntvl := flag.Duration("retry", time.Hour, "Max time to wait before retrying update")
 	useXFF := flag.Bool("use-x-forwarded-for", false, "Use the X-Forwarded-For header when available")
 	silent := flag.Bool("silent", false, "Do not log requests to stderr")
-	redisAddr := flag.String("redis", "127.0.0.1:6379", "Redis address in form of ip:port for quota")
+	redisAddr := flag.String("redis", "127.0.0.1:6379", "Redis address in form of ip:port[,ip:port] for quota")
 	redisTimeout := flag.Duration("redis-timeout", 500*time.Millisecond, "Redis read/write timeout")
 	quotaMax := flag.Int("quota-max", 0, "Max requests per source IP per interval; Set 0 to turn off")
 	quotaIntvl := flag.Duration("quota-interval", time.Hour, "Quota expiration interval")
@@ -51,7 +51,8 @@ func main() {
 		return
 	}
 
-	rc, err := redis.Dial(*redisAddr)
+	addrs := strings.Split(*redisAddr, ",")
+	rc, err := redis.Dial(addrs...)
 	if err != nil {
 		log.Fatal(err)
 	}
