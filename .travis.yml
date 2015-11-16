@@ -11,6 +11,9 @@ install:
   - go get -v ./...
   - go get golang.org/x/tools/cmd/cover
 
+services:
+  - redis-server
+
 script:
   - go test -v -cover .
   - go test -v -cover ./apiserver
