@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -26,7 +27,7 @@ var (
 	// ErrUnavailable may be returned by DB.Lookup when the database
 	// points to a URL and is not yet available because it's being
 	// downloaded in background.
-	ErrUnavailable = errors.New("No database available")
+	ErrUnavailable = errors.New("no database available")
 
 	// Local cached copy of a database downloaded from a URL.
 	defaultDB = filepath.Join(os.TempDir(), "freegeoip", "db.gz")
@@ -72,7 +73,8 @@ func Open(dsn string) (db *DB, err error) {
 }
 
 // OpenURL creates and initializes a DB from a remote file.
-// It automatically downloads and updates the file in background.
+// It automatically downloads and updates the file in background, and
+// keeps a local copy on $TMPDIR.
 func OpenURL(url string, updateInterval, maxRetryInterval time.Duration) (db *DB, err error) {
 	db = &DB{
 		file:             defaultDB,
@@ -171,29 +173,21 @@ func (db *DB) setReader(reader *maxminddb.Reader, modtime time.Time) {
 }
 
 func (db *DB) autoUpdate(url string) {
-	var sleep time.Duration
-	var retrying bool
+	backoff := time.Second
 	for {
 		err := db.runUpdate(url)
 		if err != nil {
-			db.sendError(fmt.Errorf("Database update failed: %s", err))
-			if !retrying {
-				retrying = true
-				sleep = 5 * time.Second
-			} else {
-				sleep *= 2
-				if sleep > db.maxRetryInterval {
-					sleep = db.maxRetryInterval
-				}
-			}
+			bs := backoff.Seconds()
+			ms := db.maxRetryInterval.Seconds()
+			backoff = time.Duration(math.Min(bs*math.E, ms)) * time.Second
+			db.sendError(fmt.Errorf("download failed (will retry in %s): %s", backoff, err))
 		} else {
-			retrying = false
-			sleep = db.updateInterval
+			backoff = db.updateInterval
 		}
 		select {
 		case <-db.notifyQuit:
 			return
-		case <-time.After(sleep):
+		case <-time.After(backoff):
 			// Sleep till time for the next update attempt.
 		}
 	}

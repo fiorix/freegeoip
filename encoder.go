@@ -205,7 +205,6 @@ type responseRecord struct {
 //
 // See the maxminddb documentation for supported languages.
 func newResponse(query *maxmindQuery, ip net.IP, lang []string) *responseRecord {
-
 	record := &responseRecord{
 		IP:          ip.String(),
 		CountryCode: query.Country.ISOCode,

@@ -2,16 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
-
-import (
-	"log"
-
-	"github.com/fiorix/freegeoip/apiserver"
-)
-
-func main() {
-	if err := apiserver.Run(); err != nil {
-		log.Fatal(err)
-	}
-}
+// Package apiserver provides the freegeoip web server API, used by
+// the freegeoip daemon tool.
+package apiserver
