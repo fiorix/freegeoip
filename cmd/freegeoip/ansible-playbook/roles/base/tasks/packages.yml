@@ -1,0 +1,29 @@
+- name: Ensure distro is up to date (once per hour)
+  apt: update_cache=yes cache_valid_time=3600 upgrade=dist
+
+- name: Install base packages
+  action: apt pkg={{item}} state=installed
+  with_items:
+  - dnsmasq
+  - git
+  - htop
+  - iftop
+  - iotop
+  - iptables-persistent
+  - iptraf-ng
+  - linux-image-extra-virtual-lts-vivid
+  - linux-virtual-lts-vivid
+  - logtop
+  - mtr-tiny
+  - ngrep
+  - ntpdate
+  - tcpdump
+  - tmux
+  - tzdata
+  - vim-nox
+
+- name: Autoremove packages
+  command: apt-get -y autoremove
+
+- name: Delete downloaded packages
+  command: apt-get -y clean

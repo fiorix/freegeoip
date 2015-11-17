@@ -1,0 +1,35 @@
+- name: Configure UTC timezone
+  copy: content="Etc/UTC"
+        dest=/etc/timezone
+        owner=root
+        group=root
+        mode=0644
+  notify:
+  - update-timezone
+
+- name: Write custom sysctl.conf
+  copy: src=sysctl.conf
+        dest=/etc/sysctl.conf
+        owner=root
+        group=root
+        mode=0644
+  notify:
+  - reload-sysctl
+
+- name: Write custom sshd_config
+  copy: src=sshd_config
+        dest=/etc/ssh/sshd_config
+        owner=root
+        group=root
+        mode=0644
+  notify:
+  - restart-sshd
+
+- name: Configure dnsmasq for cluster dns
+  copy: src=dnsmasq.conf
+        dest=/etc/dnsmasq.conf
+        owner=root
+        group=root
+        mode=0644
+  notify:
+  - restart-dnsmasq

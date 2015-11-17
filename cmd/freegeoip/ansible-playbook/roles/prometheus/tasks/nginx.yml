@@ -1,0 +1,54 @@
+- name: Ensure distro lists are up to date (once per hour)
+  apt: update_cache=yes cache_valid_time=3600
+
+- name: Install nginx and related packages
+  action: apt pkg={{item}} state=installed
+  with_items:
+  - nginx
+  - python-passlib
+  - ssl-cert
+
+- name: Autoremove packages
+  command: apt-get -y autoremove
+
+- name: Delete downloaded packages
+  command: apt-get -y clean
+
+- name: Copy nginx configuration for prometheus
+  copy: src=nginx.conf
+        dest=/etc/nginx/nginx.conf
+        owner=root
+        group=root
+        mode=0644
+
+- name: Delete default nginx vhost
+  file: path=/etc/nginx/sites-enabled/default
+        state=absent
+
+- name: Copy prometheus vhost configuration for nginx
+  copy: src=nginx.prometheus.conf
+        dest=/etc/nginx/sites-available/prometheus
+        owner=root
+        group=root
+        mode=0644
+
+- name: Activate prometheus vhost configuration for nginx
+  file: src=/etc/nginx/sites-available/prometheus
+        dest=/etc/nginx/sites-enabled/prometheus
+        owner=root
+        group=root
+        mode=0644
+        state=link
+  notify:
+  - restart-nginx
+
+- name: Create nginx htpasswd for prometheus
+  htpasswd: path=/etc/nginx/prometheus_htpasswd
+            name={{ prometheus_user }}
+            password={{ prometheus_passwd }}
+            owner=root
+            group=www-data
+            mode=0640
+
+- name: Make sure nginx is running
+  service: name=nginx state=running

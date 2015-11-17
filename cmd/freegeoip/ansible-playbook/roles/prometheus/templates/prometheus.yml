@@ -1,0 +1,8 @@
+scrape_configs:
+- job_name: "freegeoip"
+  scrape_interval: "15s"
+  target_groups:
+  - targets:
+{% for host in groups['freegeoip'] %}
+    - "{{ hostvars[host]['private_ip'] }}:8888"
+{% endfor %}

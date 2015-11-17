@@ -1,0 +1,33 @@
+- hosts: nodes
+  roles:
+  - base
+
+- hosts: freegeoip
+  roles:
+  - freegeoip
+  - redis
+  vars:
+    freegeoip_url: https://github.com/fiorix/freegeoip/releases/download/v3.0.7/freegeoip-3.0.7-linux-amd64.tar.gz
+    freegeoip_params:
+    - -http=:80
+    - -https=:443
+    - -cert=/etc/ssl/certs/freegeoip.pem
+    - -key=/etc/ssl/private/freegeoip.key
+    - -internal-server=:8888
+    - -silent
+    - -public=/opt/freegeoip/public
+    - -quota-max=10000
+    - -quota-interval=1h
+    - -redis={% for host in groups['freegeoip'] %}{{ hostvars[host]['private_ip'] }}:6379{% if not loop.last %},{% endif %}{% endfor %}
+    - -redis-timeout=5s
+
+- hosts: monitor
+  roles:
+  - prometheus
+  vars:
+    prometheus_user: admin
+    prometheus_passwd: lerolero
+    prometheus_url: https://github.com/prometheus/prometheus/releases/download/0.16.1/prometheus-0.16.1.linux-amd64.tar.gz
+    prometheus_params:
+    - -web.listen-address=:9090
+    - -config.file=/opt/prometheus/prometheus.yml

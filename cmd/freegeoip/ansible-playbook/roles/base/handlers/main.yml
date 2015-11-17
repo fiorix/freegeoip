@@ -1,0 +1,14 @@
+- name: update-timezone
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+
+- name: reload-sysctl
+  command: sysctl -p
+
+- name: reload-iptables
+  service: name=iptables-persistent state=restarted
+
+- name: restart-sshd
+  service: name=ssh state=restarted
+
+- name: restart-dnsmasq
+  service: name=dnsmasq state=restarted

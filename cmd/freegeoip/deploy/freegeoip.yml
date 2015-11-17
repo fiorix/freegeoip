@@ -1,9 +1,0 @@
-- hosts: freegeoip
-  roles:
-    - bootstrap
-    - webserver
-
-- hosts: redis
-  roles:
-    - bootstrap
-    - redis

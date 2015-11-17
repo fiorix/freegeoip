@@ -1,0 +1,11 @@
+[nodes]
+n0.domain	private_ip=10.0.0.1
+n1.domain	private_ip=10.0.0.2
+n2.domain	private_ip=10.0.0.3
+
+[freegeoip]
+n1.domain
+n1.domain
+
+[monitor]
+n0.domain

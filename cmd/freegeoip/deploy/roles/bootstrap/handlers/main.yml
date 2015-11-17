@@ -1,8 +1,0 @@
-- name: update timezone
-  command: dpkg-reconfigure --frontend noninteractive tzdata
-
-- name: reload sysctl
-  command: sysctl -p
-
-- name: restart sshd
-  service: name=ssh state=restarted

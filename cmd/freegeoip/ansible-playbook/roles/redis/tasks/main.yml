@@ -1,0 +1,19 @@
+- name: Install redis
+  apt: name=redis-server state=installed
+
+- name: Write custom redis.conf
+  copy: src=redis.conf
+        dest=/etc/redis/redis.conf
+        owner=root
+        group=root
+        mode=0644
+  notify:
+  - restart redis
+
+- name: Increase redis max open files
+  lineinfile: dest=/etc/default/redis-server line="ULIMIT=500000"
+  notify:
+  - restart redis
+
+- name: Make sure redis is running
+  service: name=redis-server state=running

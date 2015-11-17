@@ -1,0 +1,54 @@
+- name: Download freegeoip
+  get_url: url={{ freegeoip_url }}
+             dest=/var/tmp/freegeoip.tgz
+             owner=root
+             group=root
+             mode=0600
+  register: freegeoip_download
+
+- name: Ensure freegeoip directory exists
+  file: path=/opt/freegeoip
+        state=directory
+        owner=root
+        group=root
+        mode=0700
+
+- name: Unpack freegeoip
+  command: tar zxf /var/tmp/freegeoip.tgz -C /opt/freegeoip --strip-components=1
+  when: freegeoip_download.changed
+
+- name: Copy freegeoip SSL certificate
+  copy: src=cert.pem
+        dest=/etc/ssl/certs/freegeoip.pem
+        owner=root
+        group=root
+        mode=0600
+
+- name: Copy freegeoip SSL key
+  copy: src=key.pem
+        dest=/etc/ssl/private/freegeoip.key
+        owner=root
+        group=root
+        mode=0600
+
+- name: Create freegeoip upstart configuration
+  template: src=upstart.conf
+            dest=/etc/init/freegeoip.conf
+            owner=root
+            group=root
+            mode=0644
+  notify:
+  - restart-freegeoip
+
+- name: Link freegeoip upstart job
+  file: src=/lib/init/upstart-job
+        dest=/etc/init.d/freegeoip
+        owner=root
+        group=root
+        mode=0644
+        state=link
+  notify:
+  - restart-freegeoip
+
+- name: Make sure freegeoip is running
+  service: name=freegeoip state=running

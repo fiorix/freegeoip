@@ -1,3 +1,0 @@
-- include: nginx.yml
-- include: dnsmasq.yml
-- include: freegeoip.yml

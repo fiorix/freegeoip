@@ -1,4 +1,0 @@
-freegeoip_version: 3.0.4
-freegeoip_arch: linux-amd64
-freegeoip_params: "-silent -use-x-forwarded-for -public /opt/freegeoip/public"
-#freegeoip_params: "-silent -use-x-forwarded-for -public /opt/freegeoip/public -quota-max 10000 -redis 127.0.0.1:6379"
