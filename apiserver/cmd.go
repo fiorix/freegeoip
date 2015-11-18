@@ -45,7 +45,7 @@ var (
 	flSilent         = flag.Bool("silent", false, "Do not log HTTP or HTTPS requests to stderr")
 	flLogToStdout    = flag.Bool("logtostdout", false, "Log to stdout instead of stderr")
 	flRedisAddr      = flag.String("redis", "127.0.0.1:6379", "Redis address in form of ip:port[,ip:port] for quota")
-	flRedisTimeout   = flag.Duration("redis-timeout", 500*time.Millisecond, "Redis read/write timeout")
+	flRedisTimeout   = flag.Duration("redis-timeout", time.Second, "Redis read/write timeout")
 	flQuotaMax       = flag.Int("quota-max", 0, "Max requests per source IP per interval; set 0 to turn off")
 	flQuotaIntvl     = flag.Duration("quota-interval", time.Hour, "Quota expiration interval per source IP querying the API")
 	flVersion        = flag.Bool("version", false, "Show version and exit")
@@ -68,11 +68,11 @@ func Run() error {
 	log.SetPrefix("[freegeoip] ")
 
 	addrs := strings.Split(*flRedisAddr, ",")
-	rc, err := redis.Dial(addrs...)
+	rc, err := redis.NewClient(addrs...)
 	if err != nil {
 		return err
 	}
-	rc.Timeout = *flRedisTimeout
+	rc.SetTimeout(*flRedisTimeout)
 
 	db, err := openDB(*flDB, *flUpdateIntvl, *flRetryIntvl)
 	if err != nil {
