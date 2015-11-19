@@ -16,10 +16,12 @@ COMMIT
 :PREROUTING ACCEPT [6339959:482653478]
 :OUTPUT ACCEPT [6491251:772905897]
 -A PREROUTING -i lo -j NOTRACK
+-A PREROUTING -i eth1 -j NOTRACK
 -A PREROUTING -i eth0 -p tcp -m tcp --dport 22 -j NOTRACK
 -A PREROUTING -i eth0 -p tcp -m tcp --dport 80 -j NOTRACK
 -A PREROUTING -i eth0 -p tcp -m tcp --dport 443 -j NOTRACK
 -A OUTPUT -o lo -j NOTRACK
+-A OUTPUT -o eth1 -j NOTRACK
 -A OUTPUT -o eth0 -p tcp -m tcp --sport 22 -j NOTRACK
 -A OUTPUT -o eth0 -p tcp -m tcp --sport 80 -j NOTRACK
 -A OUTPUT -o eth0 -p tcp -m tcp --sport 443 -j NOTRACK
