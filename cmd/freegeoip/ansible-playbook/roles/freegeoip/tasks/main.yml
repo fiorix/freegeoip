@@ -52,3 +52,5 @@
 
 - name: Make sure freegeoip is running
   service: name=freegeoip state=running
+
+- include: prometheus.yml

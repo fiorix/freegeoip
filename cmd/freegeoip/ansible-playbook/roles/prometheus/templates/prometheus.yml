@@ -5,4 +5,5 @@ scrape_configs:
   - targets:
 {% for host in groups['freegeoip'] %}
     - "{{ hostvars[host]['private_ip'] }}:8888"
+    - "{{ hostvars[host]['private_ip'] }}:9100"
 {% endfor %}

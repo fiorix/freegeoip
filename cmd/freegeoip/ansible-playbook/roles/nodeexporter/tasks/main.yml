@@ -1,0 +1,33 @@
+- name: Download node exporter
+  get_url: url={{ nodeexporter_url }}
+             dest=/var/tmp/nodeexporter.tgz
+             owner=root
+             group=root
+             mode=0600
+  register: nodeexporter_download
+
+- name: Unpack node exporter
+  command: tar zxf /var/tmp/nodeexporter.tgz -C /usr/local/bin
+  when: nodeexporter_download.changed
+
+- name: Create node exporter upstart configuration
+  copy: src=upstart.conf
+        dest=/etc/init/node_exporter.conf
+        owner=root
+        group=root
+        mode=0644
+  notify:
+  - restart-nodeexporter
+
+- name: Link node exporter upstart job
+  file: src=/lib/init/upstart-job
+        dest=/etc/init.d/node_exporter
+        owner=root
+        group=root
+        mode=0644
+        state=link
+  notify:
+  - restart-nodeexporter
+
+- name: Make sure node exporter is running
+  service: name=node_exporter state=running

@@ -4,9 +4,11 @@
 
 - hosts: freegeoip
   roles:
+  - nodeexporter
   - freegeoip
   - redis
   vars:
+    nodeexporter_url: http://github.com/prometheus/node_exporter/releases/download/0.11.0/node_exporter-0.11.0.linux-amd64.tar.gz
     freegeoip_url: https://github.com/fiorix/freegeoip/releases/download/v3.0.7/freegeoip-3.0.7-linux-amd64.tar.gz
     freegeoip_params:
     - -http=:80
@@ -19,7 +21,7 @@
     - -quota-max=10000
     - -quota-interval=1h
     - -redis={% for host in groups['freegeoip'] %}{{ hostvars[host]['private_ip'] }}:6379{% if not loop.last %},{% endif %}{% endfor %}
-    - -redis-timeout=5s
+    - -redis-timeout=1s
 
 - hosts: monitor
   roles:
