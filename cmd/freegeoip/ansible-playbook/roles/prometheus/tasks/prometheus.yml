@@ -23,6 +23,7 @@
             owner=root
             group=root
             mode=0600
+  register: prometheus_update_config
 
 - name: Create prometheus upstart configuration
   template: src=upstart.conf
@@ -42,6 +43,10 @@
         state=link
   notify:
   - restart-prometheus
+
+- name: Restart prometheus due to config changes
+  service: name=prometheus state=restarted
+  when: prometheus_update_config.changed
 
 - name: Make sure prometheus is running
   service: name=prometheus state=running
