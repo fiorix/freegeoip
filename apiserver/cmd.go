@@ -57,7 +57,7 @@ func Run() error {
 	flag.Parse()
 
 	if *flVersion {
-		fmt.Printf("freegeoip v%s\n", Version)
+		fmt.Printf("freegeoip %s\n", Version)
 		return nil
 	}
 
