@@ -12,7 +12,9 @@ RUN cp -r public /var/www
 ENTRYPOINT ["/go/bin/freegeoip"]
 
 # CMD instructions:
-#   Add     "-use-x-forwarded-for"  if your image is proxied by an HTTP load balancer
-#   Add     "-public", "/var/www"   to enable the web application
+# Add  "-use-x-forwarded-for"      if your server is behind a reverse proxy
+# Add  "-public", "/var/www"       to enable the web front-end
+# Add  "-internal-server", "8888"  to enable the pprof+metrics server
 #
-#   Full example:   CMD ["-use-x-forwarded-for", "-public", "/var/www"]
+# Example:
+# CMD ["-use-x-forwarded-for", "-public", "/var/www", "-internal-server", "8888"]
