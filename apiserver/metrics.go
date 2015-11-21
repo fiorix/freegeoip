@@ -13,25 +13,27 @@ var dbEventCounter = prometheus.NewCounterVec(
 		Name: "db_event_counter",
 		Help: "Counter per DB event",
 	},
-	[]string{"event", "data"},
+	[]string{"event"},
 )
 
-var httpConnsGauge = prometheus.NewGauge(
-	prometheus.GaugeOpts{
-		Name: "current_http_conns",
-		Help: "Current number of HTTP connections",
+var clientIPProtoCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "client_ipproto_version",
+		Help: "IP version of clients",
 	},
+	[]string{"ip"},
 )
 
-var httpsConnsGauge = prometheus.NewGauge(
+var clientConnsGauge = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
-		Name: "current_https_conns",
-		Help: "Current number of HTTPS connections",
+		Name: "client_connections",
+		Help: "Number of client connections per protocol",
 	},
+	[]string{"proto"},
 )
 
 func init() {
 	prometheus.MustRegister(dbEventCounter)
-	prometheus.MustRegister(httpConnsGauge)
-	prometheus.MustRegister(httpsConnsGauge)
+	prometheus.MustRegister(clientConnsGauge)
+	prometheus.MustRegister(clientIPProtoCounter)
 }

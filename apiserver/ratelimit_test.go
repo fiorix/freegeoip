@@ -47,7 +47,7 @@ func TestRateLimiter(t *testing.T) {
 		}
 		resp.Body.Close()
 		if resp.StatusCode == http.StatusServiceUnavailable {
-			t.Skip("redis unavailable, can't test")
+			t.Skip("Redis unavailable, cannot proceed")
 		}
 		if resp.StatusCode != http.StatusOK {
 			if resp.StatusCode == http.StatusForbidden && i != 2 {

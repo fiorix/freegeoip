@@ -29,10 +29,10 @@ func watchEvents(db *freegeoip.DB) {
 		select {
 		case file := <-db.NotifyOpen():
 			log.Println("database loaded:", file)
-			dbEventCounter.WithLabelValues("loaded", file).Inc()
+			dbEventCounter.WithLabelValues("loaded").Inc()
 		case err := <-db.NotifyError():
 			log.Println("database error:", err)
-			dbEventCounter.WithLabelValues("failed", err.Error()).Inc()
+			dbEventCounter.WithLabelValues("failed").Inc()
 		case <-db.NotifyClose():
 			return
 		}

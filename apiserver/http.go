@@ -35,13 +35,21 @@ func NewHandler(conf *HandlerConfig) http.Handler {
 
 type ConnStateFunc func(c net.Conn, s http.ConnState)
 
-func ConnStateMetrics(g prometheus.Gauge) ConnStateFunc {
+func ConnStateMetrics(proto string) ConnStateFunc {
+	ipver := func(c net.Conn) string {
+		ip, _, _ := net.SplitHostPort(c.RemoteAddr().String())
+		if net.ParseIP(ip).To4() != nil {
+			return "4"
+		}
+		return "6"
+	}
 	return func(c net.Conn, s http.ConnState) {
 		switch s {
 		case http.StateNew:
-			g.Inc()
+			clientIPProtoCounter.WithLabelValues(ipver(c)).Inc()
+			clientConnsGauge.WithLabelValues(proto).Inc()
 		case http.StateClosed:
-			g.Dec()
+			clientConnsGauge.WithLabelValues(proto).Inc()
 		}
 	}
 }

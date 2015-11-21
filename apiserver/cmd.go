@@ -113,7 +113,7 @@ func Run() error {
 			Handler:      ah,
 			ReadTimeout:  *flReadTimeout,
 			WriteTimeout: *flWriteTimeout,
-			ConnState:    ConnStateMetrics(httpConnsGauge),
+			ConnState:    ConnStateMetrics("http"),
 		}
 		go func() { log.Fatal(srv.ListenAndServe()) }()
 	}
@@ -125,7 +125,7 @@ func Run() error {
 			Handler:      ah,
 			ReadTimeout:  *flReadTimeout,
 			WriteTimeout: *flWriteTimeout,
-			ConnState:    ConnStateMetrics(httpsConnsGauge),
+			ConnState:    ConnStateMetrics("https"),
 		}
 		http2.ConfigureServer(srv, nil)
 		go func() { log.Fatal(srv.ListenAndServeTLS(*flCertFile, *flKeyFile)) }()

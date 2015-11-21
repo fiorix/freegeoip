@@ -45,7 +45,11 @@ func TestHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	switch resp.StatusCode {
+	case http.StatusOK:
+	case http.StatusServiceUnavailable:
+		t.Skip("Redis available?")
+	default:
 		t.Fatal(resp.Status)
 	}
 	m := struct {
