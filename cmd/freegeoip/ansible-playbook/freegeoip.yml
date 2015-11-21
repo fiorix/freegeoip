@@ -32,4 +32,3 @@
     prometheus_url: https://github.com/prometheus/prometheus/releases/download/0.16.1/prometheus-0.16.1.linux-amd64.tar.gz
     prometheus_params:
     - -web.listen-address=:9090
-    - -config.file=/opt/prometheus/prometheus.yml
