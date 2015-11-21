@@ -60,7 +60,7 @@ func TestHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	if m.Country != "Venezuela" && m.City != "Caracas" {
-		t.Fatal("Query data does not match: want Caracas,Venezuela, have %q,%q",
+		t.Fatalf("Query data does not match: want Caracas,Venezuela, have %q,%q",
 			m.City, m.Country)
 	}
 }

@@ -90,6 +90,7 @@ func Run() error {
 			Max:      *flQuotaMax,
 			Interval: *flQuotaIntvl,
 		},
+		UseXForwardedFor: *flUseXFF,
 	})
 
 	if !*flSilent {

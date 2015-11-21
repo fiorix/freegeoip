@@ -15,11 +15,12 @@ import (
 
 // HandlerConfig holds configuration for freegeoip http handlers.
 type HandlerConfig struct {
-	Prefix      string
-	Origin      string
-	PublicDir   string
-	DB          *freegeoip.DB
-	RateLimiter RateLimiter
+	Prefix           string
+	Origin           string
+	PublicDir        string
+	DB               *freegeoip.DB
+	RateLimiter      RateLimiter
+	UseXForwardedFor bool
 }
 
 // NewHandler creates a freegeoip http handler.
@@ -30,26 +31,21 @@ func NewHandler(conf *HandlerConfig) http.Handler {
 	ah.RegisterEncoder(mux, "csv", &freegeoip.CSVEncoder{UseCRLF: true})
 	ah.RegisterEncoder(mux, "xml", &freegeoip.XMLEncoder{Indent: true})
 	ah.RegisterEncoder(mux, "json", &freegeoip.JSONEncoder{})
-	return mux
+	return ah.metricsCollector(mux)
 }
 
+// ConnStateFunc is a function that can handle connection state.
 type ConnStateFunc func(c net.Conn, s http.ConnState)
 
+// ConnStateMetrics collect metrics per connection state, per protocol.
+// e.g. new http, closed http.
 func ConnStateMetrics(proto string) ConnStateFunc {
-	ipver := func(c net.Conn) string {
-		ip, _, _ := net.SplitHostPort(c.RemoteAddr().String())
-		if net.ParseIP(ip).To4() != nil {
-			return "4"
-		}
-		return "6"
-	}
 	return func(c net.Conn, s http.ConnState) {
 		switch s {
 		case http.StateNew:
-			clientIPProtoCounter.WithLabelValues(ipver(c)).Inc()
 			clientConnsGauge.WithLabelValues(proto).Inc()
 		case http.StateClosed:
-			clientConnsGauge.WithLabelValues(proto).Inc()
+			clientConnsGauge.WithLabelValues(proto).Dec()
 		}
 	}
 }
@@ -87,4 +83,40 @@ func (ah *apiHandler) RegisterEncoder(mux *http.ServeMux, path string, enc freeg
 	f = cors(f, origin, "GET", "HEAD")
 	f = prometheus.InstrumentHandler(path, f)
 	mux.Handle(ah.prefix(path), f)
+}
+
+func (ah *apiHandler) metricsCollector(handler http.Handler) http.Handler {
+	type query struct {
+		Country struct {
+			ISOCode string `maxminddb:"iso_code"`
+		} `maxminddb:"country"`
+	}
+	f := func(w http.ResponseWriter, r *http.Request) {
+		handler.ServeHTTP(w, r)
+		// Collect metrics after serving the request.
+		var ip net.IP
+		if ah.conf.UseXForwardedFor {
+			ip = net.ParseIP(r.RemoteAddr)
+		} else {
+			addr, _, _ := net.SplitHostPort(r.RemoteAddr)
+			ip = net.ParseIP(addr)
+		}
+		if ip == nil {
+			// TODO: increment error count?
+			return
+		}
+		if ip.To4() != nil {
+			clientIPProtoCounter.WithLabelValues("4").Inc()
+		} else {
+			clientIPProtoCounter.WithLabelValues("6").Inc()
+		}
+		var q query
+		err := ah.conf.DB.Lookup(ip, &q)
+		if err != nil || q.Country.ISOCode == "" {
+			clientCountryCounter.WithLabelValues("unknown").Inc()
+			return
+		}
+		clientCountryCounter.WithLabelValues(q.Country.ISOCode).Inc()
+	}
+	return http.HandlerFunc(f)
 }
