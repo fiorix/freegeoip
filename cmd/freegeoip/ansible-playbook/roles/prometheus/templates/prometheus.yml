@@ -5,6 +5,14 @@ scrape_configs:
 {% for host in groups['freegeoip'] %}
   - targets:
     - "{{ hostvars[host]['private_ip'] }}:8888"
+    labels:
+      instance: "{{ host }}"
+{% endfor %}
+- job_name: "node"
+  scrape_interval: "15s"
+  target_groups:
+{% for host in groups['freegeoip'] %}
+  - targets:
     - "{{ hostvars[host]['private_ip'] }}:9100"
     labels:
       instance: "{{ host }}"
