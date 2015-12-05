@@ -7,7 +7,7 @@ package apiserver
 import (
 	"net"
 	"net/http"
-	"path/filepath"
+	"path"
 
 	"github.com/fiorix/freegeoip"
 	"github.com/prometheus/client_golang/prometheus"
@@ -54,8 +54,8 @@ type apiHandler struct {
 	conf *HandlerConfig
 }
 
-func (ah *apiHandler) prefix(path string) string {
-	p := filepath.Clean(filepath.Join("/", ah.conf.Prefix, path))
+func (ah *apiHandler) prefix(p string) string {
+	p = path.Clean(path.Join("/", ah.conf.Prefix, p))
 	if p[len(p)-1] != '/' {
 		p += "/"
 	}
