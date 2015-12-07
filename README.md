@@ -7,14 +7,14 @@ to support IP geolocation with a simple and clean API.
 
 See http://en.wikipedia.org/wiki/Geolocation for details about geolocation.
 
+Developers looking for the Go API can skip to the **Package freegeiop**
+section below.
+
 ## Running
 
 This section is for people who desire to run the freegeoip web server
 on their own infrastructure. The easiest and most generic way of doing
 this is by using Docker.
-
-Developers looking for the Go API can skip to the **Package freegeiop**
-section below.
 
 See the **Server Options** below for more information on configuring
 the server.
