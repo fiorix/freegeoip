@@ -7,103 +7,146 @@ to support IP geolocation with a simple and clean API.
 
 See http://en.wikipedia.org/wiki/Geolocation for details about geolocation.
 
-## Web Server
+## Running
 
-The freegeoip web server is a standalone program that serves an HTTP API
-for searching the geolocation of IP addresses. To serve the API, it uses
-an IP database that is automatically downloaded and auto-updated from
-the internet when the server is running.
+This section is for people who desire to run the freegeoip web server
+on their own infrastructure. The easiest and most generic way of doing
+this is by using Docker.
 
-The API returns data encoded in popular formats such as CSV, XML, JSON
-and JSONP.
+Developers looking for the Go API can skip to the **Package freegeiop**
+section below.
 
-### Download
+See the **Server Options** below for more information on configuring
+the server.
 
-If you're not a developer and is only looking for the web server, you
-can download binaries directly.
+### Docker
 
-See https://github.com/fiorix/freegeoip/releases for tarballs for your
-platform.
+Install Docker on Ubuntu 14.04 LTS:
 
-### Usage
+```bash
+sudo apt-get install docker.io
+```
 
-Run the server:
+Install Docker on CentOS 7:
 
-	./freegeoip
+```bash
+yum install docker
+```
 
-Wait for it to download the IP database file for the first time. It does
-it in background and writes a message to the console when ready. If you'd
-like to use an alternative database source, see the `-db` command line
-flag.
+Run the freegeoip web server:
 
-If the server is queried when there is no database available, including
-this initial first run, it returns *HTTP 503 (Service Unavailable)*, since
-it can't service requests before a proper database is in place.
+```bash
+docker run --net=host --restart=always -d fiorix/freegeoip
+```
 
-### Querying
+Test:
 
-You can use any HTTP client to test the server. The examples below use
-curl and the environment variable $freegeoip, which must be set to the
-address of your server, like http://localhost:8080 for example:
+```bash
+curl localhost:8080/json/1.2.3.4
+```
 
-	export freegeoip=http://localhost:8080
+See the **API** section below for details.
 
-Querying the API is very straightforward: you just have to pick a format
-of your choice and provide either the IP address or hostname that you'd
-like to search for. The syntax is as follows:
+### Other Linux, OS X, or FreeBSD
 
-	$freegeoip/{format}/{IP_or_hostname}
+There are pre-compiled binaries available for you:
 
-Examples:
+https://github.com/fiorix/freegeoip/releases
 
-	curl -i $freegeoip/csv/8.8.8.8
+You'll have to set up your own init scripts for your system.
 
-	curl -i $freegeoip/xml/4.2.2.2
+### Server Options
 
-	curl -i $freegeoip/json/github.com
+You can configure the freegeoip web server to listen on a port
+other than the default 8080, and also listen on HTTPS by passing
+an ip:port and X.509 certificate and key files.
 
-If a domain or hostname is passed in the URL, the server will resolve that
-name to its IP address and lookup the IP instead. If the hostname contains
-multiple IPs associated to it, the server picks one randomly, which means
-it could be either IPv4 or IPv6.
+These and many other options are described in the help. If you're
+using Docker, you can see them like this:
 
-If no IP or hostname is provided, then the server queries the IP address
-of the HTTP client.
+```bash
+docker run --rm -it fiorix/freegeoip --help
+```
+
+By default, the Docker image of freegeoip does not provide the
+web page from freegeiop.net, it only provides the API.
+
+If you want to serve that page, you can pass the `-public=/var/www`
+parameter in the command line. You can also tell Docker to mount that
+directory as a volume on the host machine and have it serve your own
+page, using Docker's `-v` parameter.
+
+If the freegeoip web server is running behind a proxy or load
+balancer, you have to run it passing the `-use-x-forwarded-for`
+parameter and provide the `X-Forwarded-For` HTTP header so the web
+server is capable of using the source IP address of the connection
+to perform geolocation lookups when an IP is not provided to
+the API, e.g. `/json/` vs `/json/1.2.3.4`.
+
+## Database
+
+The current implementation uses the free [GeoLite2](http://dev.maxmind.com/geoip/geoip2/geolite2/)
+database from MaxMind.
+
+In the past we had databases from other providers, and at some point
+even our own database comprised of different sources. This means it
+might change in the future.
+
+If you have purchased the commercial database from MaxMind, you can
+point the freegeoip web server or Go API to the URL of it, or local
+file, and the server will use it.
+
+In case of files on disk, you can replace with a new version and the
+freegeoip software will load it automatically. URLs are frequently
+checked in background, and if a new version of the database is
+available it is loaded automatically also.
+
+## API
+
+The freegeoip API is served by endpoints that encode the response
+in different formats.
 
 Example:
 
-	curl -i $freegeoip/json/   (this queries your own IP address)
+```bash
+curl freegeoip.net/json/
+```
 
-The JSON endpoint also supports JSONP, by adding a `callback` argument
-to the request query.
+Returns the geolocation information of your own IP address, the source
+IP address of the connection.
 
-Example:
+You can pass a different IP or hostname:
 
-	curl -i $freegeoip/json/8.8.8.8?callback=f
+```bash
+curl freegeoip.net/json/github.com
+```
 
-See http://en.wikipedia.org/wiki/JSONP for details on how JSONP works.
+To lookup the geolocation of `github.com` after resolving its IP address,
+which might be IPv4 or IPv6.
 
-### Docker image
+Responses can also be encoded as JSONP, by adding the `callback` parameter:
 
-Build the docker image:
+```bash
+curl freegeoip.net/json/?callback=foobar
+```
 
-	docker build -t my/freegeoip .
+Same semantics are available for the `/xml/{ip}` and `/csv/{ip}` endpoints
+except the callback parameter.
 
-If you want just the API, not the front-end, edit the Dockerfile and
-comment out the `-public` command line flag.
+## Metrics and profiling
 
-Or use the official image:
+The freegeoip web server can provide metrics about its usage, and also
+supports runtime profiling.
 
-	docker run -d --name freegeoip -p 8080:8080 fiorix/freegeoip
+Both are disabled by default, but can be enabled by passing the
+`-internal-server=:8081` parameter in the command line. Metrics are
+generated for [Prometheus](http://prometheus.io) and can be queried
+at `/metrics` even with curl.
 
-If you need quota then link the container to a Redis container:
+HTTP pprof is available at `/debug/pprof` and the examples from
+the [pprof](https://golang.org/pkg/net/http/pprof/) package work.
 
-	docker run -d --name redis -p 6379:6379 dockerfile/redis
-	docker run -d --name freegeoip --link redis:redis -p 8080:8080 fiorix/freegeoip -redis redis:6379 -quota-max 10000
-
-You can use `redis-cli monitor` to assure things are working as expected.
-
-## freegeoip package for Go
+## Package freegeoip
 
 The freegeoip package for the Go programming language provides two APIs:
 
@@ -140,12 +183,12 @@ crafting your own HTTP responses encoded in any format.
 
 ### Install
 
-Install the package:
+Download the package:
 
-	go get github.com/fiorix/freegeoip
+	go get -d github.com/fiorix/freegeoip
 
 Install the web server:
 
-	go get github.com/fiorix/freegeoip/cmd/freegeoip
+	go install github.com/fiorix/freegeoip/cmd/freegeoip
 
-Test coverage is quite good and may help you find the stuff you need.
+Test coverage is quite good and tests may help you find the stuff you need.
