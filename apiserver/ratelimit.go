@@ -74,14 +74,15 @@ func (rl *RateLimiter) do(w http.ResponseWriter, r *http.Request) (int, error) {
 	if err != nil {
 		return http.StatusServiceUnavailable, errRedisUnavailable
 	}
-	var ttl = 0
-	if nreq == 1 {
+	ttl, err := rl.Redis.TTL(k)
+	if err != nil {
+		return http.StatusServiceUnavailable, errRedisUnavailable
+	}
+	if ttl == -1 {
 		if _, err = rl.Redis.Expire(k, rl.secInterval); err != nil {
 			return http.StatusServiceUnavailable, errRedisUnavailable
 		}
 		ttl = rl.secInterval
-	} else if ttl, err = rl.Redis.TTL(k); err != nil {
-		return http.StatusServiceUnavailable, errRedisUnavailable
 	}
 	rem := rl.Max - nreq
 	w.Header().Set("X-RateLimit-Limit", strconv.Itoa(rl.Max))
