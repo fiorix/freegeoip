@@ -9,7 +9,7 @@
   - redis
   vars:
     nodeexporter_url: http://github.com/prometheus/node_exporter/releases/download/0.11.0/node_exporter-0.11.0.linux-amd64.tar.gz
-    freegeoip_url: https://github.com/fiorix/freegeoip/releases/download/v3.0.8/freegeoip-3.0.8-linux-amd64.tar.gz
+    freegeoip_url: https://github.com/fiorix/freegeoip/releases/download/v3.0.10/freegeoip-3.0.10-linux-amd64.tar.gz
     freegeoip_params:
     - -http=:80
     - -https=:443

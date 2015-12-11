@@ -5,7 +5,7 @@ VERSION=$(go run main.go -version | cut -d\  -f2)
 function pack() {
 	dir=freegeoip-$VERSION-$1
 	mkdir $dir
-	cp -r freegeoip public ansible-playbook $dir
+	cp -r freegeoip public $dir
 	tar czf ${dir}.tar.gz $dir
 	rm -rf $dir
 }
