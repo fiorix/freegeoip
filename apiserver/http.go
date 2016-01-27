@@ -63,6 +63,9 @@ func (ah *apiHandler) prefix(p string) string {
 }
 
 func (ah *apiHandler) RegisterPublicDir(mux *http.ServeMux) {
+	if ah.conf.PublicDir == "" {
+		return
+	}
 	fs := http.FileServer(http.Dir(ah.conf.PublicDir))
 	fs = prometheus.InstrumentHandler("frontend", fs)
 	prefix := ah.prefix("")
