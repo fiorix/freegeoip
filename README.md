@@ -49,11 +49,9 @@ See the **API** section below for details.
 
 ### Other Linux, OS X, or FreeBSD
 
-There are pre-compiled binaries available for you:
+There are [pre-compiled binaries](https://github.com/fiorix/freegeoip/releases) available. You'll have to set up your own init scripts for your system.
 
-https://github.com/fiorix/freegeoip/releases
-
-You'll have to set up your own init scripts for your system.
+There is also a [Chef cookbook](https://supermarket.chef.io/cookbooks/freegeoip) to deploy it automatically.
 
 ### Server Options
 
