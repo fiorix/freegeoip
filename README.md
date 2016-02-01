@@ -185,7 +185,7 @@ crafting your own HTTP responses encoded in any format.
 
 Download the package:
 
-	go get -d github.com/fiorix/freegeoip
+	go get -d github.com/fiorix/freegeoip/...
 
 Install the web server:
 
