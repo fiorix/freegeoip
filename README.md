@@ -7,7 +7,7 @@ to support IP geolocation with a simple and clean API.
 
 See http://en.wikipedia.org/wiki/Geolocation for details about geolocation.
 
-Developers looking for the Go API can skip to the **Package freegeiop**
+Developers looking for the Go API can skip to the [Package freegeoip](#packagefreegeoip)
 section below.
 
 ## Running
@@ -16,7 +16,7 @@ This section is for people who desire to run the freegeoip web server
 on their own infrastructure. The easiest and most generic way of doing
 this is by using Docker.
 
-See the **Server Options** below for more information on configuring
+See the [Server Options](#serveroptions) below for more information on configuring
 the server.
 
 ### Docker
@@ -53,6 +53,7 @@ There are [pre-compiled binaries](https://github.com/fiorix/freegeoip/releases) 
 
 There is also a [Chef cookbook](https://supermarket.chef.io/cookbooks/freegeoip) to deploy it automatically.
 
+<a name="serveroptions">
 ### Server Options
 
 You can configure the freegeoip web server to listen on a port
@@ -144,6 +145,7 @@ at `/metrics` even with curl.
 HTTP pprof is available at `/debug/pprof` and the examples from
 the [pprof](https://golang.org/pkg/net/http/pprof/) package work.
 
+<a name="packagefreegeoip">
 ## Package freegeoip
 
 The freegeoip package for the Go programming language provides two APIs:
