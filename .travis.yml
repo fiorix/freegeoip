@@ -4,11 +4,10 @@ language: go
 
 go:
   - 1.4.3
-  - 1.5
-  - 1.5.1
+  - 1.5.3
 
 install:
-  - go get -v ./...
+  - go get -t -d -v ./...
   - go get golang.org/x/tools/cmd/cover
 
 services:

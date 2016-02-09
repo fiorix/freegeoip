@@ -14,10 +14,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-
-	// otto is used for testing the JSONP encoder. It's imported here
-	// to make `go get` download it before `go test` fails.
-	_ "github.com/robertkrimen/otto"
 )
 
 // A Query object is used to query the IP database.
