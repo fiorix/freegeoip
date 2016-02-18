@@ -1,13 +1,9 @@
-FROM golang:1.5
+FROM golang:1.6
+
+COPY cmd/freegeoip/public /var/www
 
 ADD . /go/src/github.com/fiorix/freegeoip
-WORKDIR /go/src/github.com/fiorix/freegeoip/cmd/freegeoip
-
-RUN go get
-RUN go install
-
-# Init public web application
-RUN cp -r public /var/www
+RUN cd /go/src/github.com/fiorix/freegeoip/cmd/freegeoip && go get && go install
 
 ENTRYPOINT ["/go/bin/freegeoip"]
 
