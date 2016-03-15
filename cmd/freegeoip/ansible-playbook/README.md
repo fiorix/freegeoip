@@ -19,5 +19,5 @@ Following is a TODO list for people willing to use this playbook:
 Then run:
 
 ```bash
-ansible-playbook -u root ./freegeoip.yml
+ansible-playbook -u $user ./freegeoip.yml
 ```

@@ -6,7 +6,3 @@
             mode=0644
   notify:
     - reload-iptables
-
-- debug: trigger reload-iptables
-  notify: reload-iptables
-  changed_when: true
