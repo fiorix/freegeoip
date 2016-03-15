@@ -46,9 +46,6 @@ func ExampleRemoteDatabaseQuery() {
 	log.Printf("%#v", result)
 }
 
-// A customEncoder writes a custom JSON object to an http response.
-type customEncoder struct{}
-
 // A customQuery is the query executed in the maxmind database for
 // every IP lookup request.
 type customQuery struct {
