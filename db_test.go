@@ -1,4 +1,4 @@
-// Copyright 2009-2014 The freegeoip authors. All rights reserved.
+// Copyright 2009 The freegeoip authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -22,7 +22,7 @@ func TestDownload(t *testing.T) {
 		t.Skip("Test database already exists:", testFile)
 	}
 	db := &DB{}
-	dbfile, err := db.download(maxmindFile)
+	dbfile, err := db.download(MaxMindDB)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +198,7 @@ func TestLookupOnFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	var record testRecord
+	var record DefaultQuery
 	err = db.Lookup(net.ParseIP("8.8.8.8"), &record)
 	if err != nil {
 		t.Fatal(err)
@@ -231,7 +231,7 @@ func TestLookupOnURL(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("Timed out")
 	}
-	var record testRecord
+	var record DefaultQuery
 	err = db.Lookup(net.ParseIP("8.8.8.8"), &record)
 	if err != nil {
 		t.Fatal(err)
@@ -247,10 +247,4 @@ func TestLookuUnavailable(t *testing.T) {
 	if err == nil {
 		t.Fatal("Unexpected lookup worked")
 	}
-}
-
-type testRecord struct {
-	Country struct {
-		ISOCode string `maxminddb:"iso_code"`
-	} `maxminddb:"country"`
 }

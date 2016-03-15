@@ -9,11 +9,9 @@ go:
 
 install:
   - go get -t -d -v ./...
-  - go get golang.org/x/tools/cmd/cover
 
 services:
   - redis-server
 
 script:
-  - go test -v -cover .
-  - go test -v -cover ./apiserver
+  - go test -v ./ ./apiserver

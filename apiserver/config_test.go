@@ -2,10 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package apiserver
 
-import "github.com/fiorix/freegeoip/apiserver"
+import (
+	"flag"
+	"testing"
+)
 
-func main() {
-	apiserver.Run()
+func TestConfig(t *testing.T) {
+	c := NewConfig()
+	c.AddFlags(flag.NewFlagSet("freegeoip", flag.ContinueOnError))
 }

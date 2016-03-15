@@ -1,4 +1,4 @@
-// Copyright 2009-2014 The freegeoip authors. All rights reserved.
+// Copyright 2009 The freegeoip authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -31,6 +31,9 @@ var (
 
 	// Local cached copy of a database downloaded from a URL.
 	defaultDB = filepath.Join(os.TempDir(), "freegeoip", "db.gz")
+
+	// MaxMindDB is the URL of the free MaxMind GeoLite2 database.
+	MaxMindDB = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
 )
 
 // DB is the IP geolocation database.
@@ -72,7 +75,7 @@ func Open(dsn string) (db *DB, err error) {
 	return db, nil
 }
 
-// OpenURL creates and initializes a DB from a remote file.
+// OpenURL creates and initializes a DB from a URL.
 // It automatically downloads and updates the file in background, and
 // keeps a local copy on $TMPDIR.
 func OpenURL(url string, updateInterval, maxRetryInterval time.Duration) (db *DB, err error) {
@@ -329,6 +332,33 @@ func (db *DB) Lookup(addr net.IP, result interface{}) error {
 		return db.reader.Lookup(addr, result)
 	}
 	return ErrUnavailable
+}
+
+// DefaultQuery is the default query used for database lookups.
+type DefaultQuery struct {
+	Continent struct {
+		Names map[string]string `maxminddb:"names"`
+	} `maxminddb:"continent"`
+	Country struct {
+		ISOCode string            `maxminddb:"iso_code"`
+		Names   map[string]string `maxminddb:"names"`
+	} `maxminddb:"country"`
+	Region []struct {
+		ISOCode string            `maxminddb:"iso_code"`
+		Names   map[string]string `maxminddb:"names"`
+	} `maxminddb:"subdivisions"`
+	City struct {
+		Names map[string]string `maxminddb:"names"`
+	} `maxminddb:"city"`
+	Location struct {
+		Latitude  float64 `maxminddb:"latitude"`
+		Longitude float64 `maxminddb:"longitude"`
+		MetroCode uint    `maxminddb:"metro_code"`
+		TimeZone  string  `maxminddb:"time_zone"`
+	} `maxminddb:"location"`
+	Postal struct {
+		Code string `maxminddb:"code"`
+	} `maxminddb:"postal"`
 }
 
 // Close the database.
