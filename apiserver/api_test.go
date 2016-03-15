@@ -10,16 +10,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"path/filepath"
+	"runtime"
 	"testing"
-
-	"github.com/fiorix/freegeoip"
 )
 
 func newTestHandler() (http.Handler, error) {
+	_, f, _, _ := runtime.Caller(0)
 	c := NewConfig()
 	c.APIPrefix = "/api"
 	c.PublicDir = "."
-	c.DB = freegeoip.MaxMindDB
+	c.DB = filepath.Join(filepath.Dir(f), "../testdata/db.gz")
 	c.RateLimitLimit = 5
 	c.RateLimitBackend = "map"
 	c.Silent = true
