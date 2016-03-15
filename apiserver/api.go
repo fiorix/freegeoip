@@ -173,6 +173,17 @@ func xmlWriter(w http.ResponseWriter, r *http.Request, d *responseRecord) {
 }
 
 func jsonWriter(w http.ResponseWriter, r *http.Request, d *responseRecord) {
+	if cb := r.FormValue("callback"); cb != "" {
+		w.Header().Set("Content-Type", "application/javascript")
+		io.WriteString(w, cb)
+		w.Write([]byte("("))
+		b, err := json.Marshal(d)
+		if err == nil {
+			w.Write(b)
+		}
+		io.WriteString(w, ");")
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(d)
 }
