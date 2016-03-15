@@ -19,7 +19,7 @@ import (
 )
 
 // Version tag.
-var Version = "3.1.2"
+var Version = "3.1.3"
 
 // Run is the entrypoint for the freegeoip server.
 func Run() {
@@ -34,7 +34,9 @@ func Run() {
 	if c.LogToStdout {
 		log.SetOutput(os.Stdout)
 	}
-	log.SetPrefix("[freegeoip] ")
+	if !c.LogTimestamp {
+		log.SetFlags(0)
+	}
 	f, err := NewHandler(c)
 	if err != nil {
 		log.Fatal(err)

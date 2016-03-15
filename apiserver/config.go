@@ -31,6 +31,7 @@ type Config struct {
 	UseXForwardedFor   bool
 	Silent             bool
 	LogToStdout        bool
+	LogTimestamp       bool
 	RedisAddr          string
 	RedisTimeout       time.Duration
 	MemcacheAddr       string
@@ -57,6 +58,7 @@ func NewConfig() *Config {
 		DB:                freegeoip.MaxMindDB,
 		UpdateInterval:    24 * time.Hour,
 		RetryInterval:     2 * time.Hour,
+		LogTimestamp:      true,
 		RedisAddr:         "localhost:6379",
 		RedisTimeout:      time.Second,
 		MemcacheAddr:      "localhost:11211",
@@ -83,6 +85,7 @@ func (c *Config) AddFlags(fs *flag.FlagSet) {
 	fs.BoolVar(&c.UseXForwardedFor, "use-x-forwarded-for", c.UseXForwardedFor, "Use the X-Forwarded-For header when available (e.g. behind proxy)")
 	fs.BoolVar(&c.Silent, "silent", c.Silent, "Disable HTTP and HTTPS log request details")
 	fs.BoolVar(&c.LogToStdout, "logtostdout", c.LogToStdout, "Log to stdout instead of stderr")
+	fs.BoolVar(&c.LogTimestamp, "logtimestamp", c.LogTimestamp, "Prefix non-access logs with timestamp")
 	fs.StringVar(&c.RedisAddr, "redis", c.RedisAddr, "Redis address in form of host:port[,host:port] for quota")
 	fs.DurationVar(&c.RedisTimeout, "redis-timeout", c.RedisTimeout, "Redis read/write timeout")
 	fs.StringVar(&c.MemcacheAddr, "memcache", c.MemcacheAddr, "Memcache address in form of host:port[,host:port] for quota")
@@ -101,7 +104,10 @@ func (c *Config) logWriter() io.Writer {
 }
 
 func (c *Config) errorLogger() *log.Logger {
-	return log.New(c.logWriter(), "[error] ", log.LstdFlags)
+	if c.LogTimestamp {
+		return log.New(c.logWriter(), "[error] ", log.LstdFlags)
+	}
+	return log.New(c.logWriter(), "[error] ", 0)
 }
 
 func (c *Config) accessLogger() *log.Logger {
