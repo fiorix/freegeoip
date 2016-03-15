@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"math/rand"
 	"net"
 	"net/http"
@@ -192,8 +193,8 @@ func (q *geoipQuery) Record(ip net.IP, lang string) *responseRecord {
 		City:        q.City.Names[lang],
 		ZipCode:     q.Postal.Code,
 		TimeZone:    q.Location.TimeZone,
-		Latitude:    q.Location.Latitude,
-		Longitude:   q.Location.Longitude,
+		Latitude:    roundFloat(q.Location.Latitude, .5, 4),
+		Longitude:   roundFloat(q.Location.Longitude, .5, 4),
 		MetroCode:   q.Location.MetroCode,
 	}
 	if len(q.Region) > 0 {
@@ -201,6 +202,19 @@ func (q *geoipQuery) Record(ip net.IP, lang string) *responseRecord {
 		r.RegionName = q.Region[0].Names[lang]
 	}
 	return r
+}
+
+func roundFloat(val float64, roundOn float64, places int) (newVal float64) {
+	var round float64
+	pow := math.Pow(10, float64(places))
+	digit := pow * val
+	_, div := math.Modf(digit)
+	if div >= roundOn {
+		round = math.Ceil(digit)
+	} else {
+		round = math.Floor(digit)
+	}
+	return round / pow
 }
 
 type responseRecord struct {
