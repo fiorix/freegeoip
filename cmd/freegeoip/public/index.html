@@ -42,7 +42,7 @@ angular.module("freegeoip", [function($locationProvider) {
 	$scope.record = {};
 	$scope.searching = false;
 	$scope.lastUpdated = '';
-	$scope.rateLimit = {remaining: 0, expires: 0};
+	$scope.rateLimit = {ok: false, remaining: 0, expires: 0};
 	$scope.search = function(q) {
 		$scope.searching = true;
 		$http.get("json/" + (q || '')).
@@ -58,13 +58,19 @@ angular.module("freegeoip", [function($locationProvider) {
 			$scope.record = data;
 			$scope.lastUpdated = headers('X-Database-Date');
 			var n = headers('X-RateLimit-Remaining');
-			reset = parseInt(headers('X-RateLimit-Reset'), 10);
-			$scope.rateLimit = {remaining: n, expires: Math.floor(reset/60) + ' minutes'};
+			var reset = parseInt(headers('X-RateLimit-Reset'), 10);
+			if (n) {
+				$scope.rateLimit = {
+					ok: true,
+					remaining: n,
+					expires: Math.floor(reset/60) + ' minutes'
+				};
+			}
 			$scope.searching = false;
 		})
 		.error(function(data, status) {
 			$scope.lastUpdated = '';
-			$scope.rateLimit = {remaining: 0, expires: 0};
+			$scope.rateLimit = {ok: false, remaining: 0, expires: 0};
 			$scope.error = 'HTTP ' + status + ': ' + data;
 			$scope.searching = false;
 		});
@@ -122,8 +128,8 @@ angular.module("freegeoip", [function($locationProvider) {
 			<br/>
 			<p ng-show="searching">Searching, please wait...</p>
 			<p ng-show="error" class="label label-danger">Server returned {{error}}</p>
-			<small ng-show="lastUpdated&&!searching">IP database date: {{lastUpdated}}</small><br>
-			<small ng-show="rateLimit.expires&&!searching">{{rateLimit.remaining}} calls remaining, resets in {{rateLimit.expires}}</small><br>
+			<small ng-show="rateLimit.ok&&!searching">{{rateLimit.remaining}} calls remaining, resets in {{rateLimit.expires}}<br/></small>
+			<small ng-show="lastUpdated&&!searching">IP database date: {{lastUpdated}}</small><br/>
 			<table ng-hide="error||searching" class="table">
 				<tr ng-show="record.ip != q">
 					<td>IP</td>
