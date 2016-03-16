@@ -70,18 +70,18 @@ func (f *apiHandler) config(mc *httpmux.Config) error {
 		mc.NotFound = f.publicDir()
 	}
 	if f.conf.UseXForwardedFor {
-		mc.Use(httplog.UseXForwardedFor)
+		mc.UseFunc(httplog.UseXForwardedFor)
 	}
 	if !f.conf.Silent {
-		mc.Use(httplog.ApacheCombinedFormat(f.conf.accessLogger()))
+		mc.UseFunc(httplog.ApacheCombinedFormat(f.conf.accessLogger()))
 	}
-	mc.Use(f.metrics)
+	mc.UseFunc(f.metrics)
 	if f.conf.RateLimitLimit > 0 {
 		rl, err := newRateLimiter(f.conf)
 		if err != nil {
 			return fmt.Errorf("failed to create rate limiter: %v", err)
 		}
-		mc.Use(rl.HandleFunc)
+		mc.Use(rl.Handle)
 	}
 	return nil
 }
