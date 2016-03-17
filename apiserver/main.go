@@ -19,7 +19,7 @@ import (
 )
 
 // Version tag.
-var Version = "3.1.3"
+var Version = "3.1.4"
 
 // Run is the entrypoint for the freegeoip server.
 func Run() {
