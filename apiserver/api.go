@@ -9,6 +9,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -17,8 +18,10 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/fiorix/go-redis/redis"
@@ -34,9 +37,10 @@ import (
 )
 
 type apiHandler struct {
-	db   *freegeoip.DB
-	conf *Config
-	cors *cors.Cors
+	db    *freegeoip.DB
+	conf  *Config
+	cors  *cors.Cors
+	cache *memcache.Client
 }
 
 // NewHandler creates an http handler for the freegeoip server that
@@ -60,7 +64,7 @@ func NewHandler(c *Config) (http.Handler, error) {
 	mux.GET("/csv/*host", f.register("csv", csvWriter))
 	mux.GET("/xml/*host", f.register("xml", xmlWriter))
 	mux.GET("/json/*host", f.register("json", jsonWriter))
-	go watchEvents(db)
+	go f.watchEvents(db)
 	return mux, nil
 }
 
@@ -74,6 +78,12 @@ func (f *apiHandler) config(mc *httpmux.Config) error {
 	}
 	if !f.conf.Silent {
 		mc.UseFunc(httplog.ApacheCombinedFormat(f.conf.accessLogger()))
+	}
+	if f.conf.MemcacheAddr != "" {
+		addrs := strings.Split(f.conf.MemcacheAddr, ",")
+		cache := memcache.New(addrs...)
+		cache.Timeout = f.conf.MemcacheTimeout
+		f.cache = cache // response cache
 	}
 	mc.UseFunc(f.metrics)
 	if f.conf.RateLimitLimit > 0 {
@@ -123,14 +133,14 @@ func (f *apiHandler) metrics(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-type writerFunc func(w http.ResponseWriter, r *http.Request, d *responseRecord)
+type writerFunc func(w io.Writer, r *http.Request, d *responseRecord)
 
 func (f *apiHandler) register(name string, writer writerFunc) http.HandlerFunc {
-	h := prometheus.InstrumentHandler(name, f.iplookup(writer))
+	h := prometheus.InstrumentHandler(name, f.iplookup(name, writer))
 	return f.cors.Handler(h).ServeHTTP
 }
 
-func (f *apiHandler) iplookup(writer writerFunc) http.HandlerFunc {
+func (f *apiHandler) iplookup(format string, writer writerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		host := httpmux.Params(r).ByName("host")
 		if len(host) > 0 && host[0] == '/' {
@@ -141,6 +151,17 @@ func (f *apiHandler) iplookup(writer writerFunc) http.HandlerFunc {
 			if host == "" {
 				host = r.RemoteAddr
 			}
+		}
+		if format == "json" && r.FormValue("callback") != "" {
+			format = "jsonp"
+			writer = jsonpWriter
+		}
+		b, err := f.fromCache(format, host)
+		if err == nil {
+			w.Header().Set("Content-Type", contentType[format])
+			w.Header().Set("X-Database-Date", f.db.Date().Format(http.TimeFormat))
+			w.Write(b)
+			return
 		}
 		ips, err := net.LookupIP(host)
 		if err != nil || len(ips) == 0 {
@@ -153,39 +174,80 @@ func (f *apiHandler) iplookup(writer writerFunc) http.HandlerFunc {
 			http.Error(w, "Try again later.", http.StatusServiceUnavailable)
 			return
 		}
+		w.Header().Set("Content-Type", contentType[format])
 		w.Header().Set("X-Database-Date", f.db.Date().Format(http.TimeFormat))
-		resp := q.Record(ip, r.Header.Get("Accept-Language"))
-		writer(w, r, resp)
+		// TODO: cache per language?
+		// resp := q.Record(ip, r.Header.Get("Accept-Language"))
+		bw := respBuff.Get().(*bytes.Buffer)
+		bw.Reset()
+		writer(bw, r, q.Record(ip, ""))
+		b = bw.Bytes()
+		f.toCache(format, host, b)
+		w.Write(b)
+		respBuff.Put(bw)
 	}
 }
 
-func csvWriter(w http.ResponseWriter, r *http.Request, d *responseRecord) {
-	w.Header().Set("Content-Type", "text/csv")
+var (
+	contentType = map[string]string{
+		"csv":   "text/csv",
+		"xml":   "application/xml",
+		"json":  "application/json",
+		"jsonp": "application/javascript",
+	}
+	respBuff = &sync.Pool{
+		New: func() interface{} {
+			return bytes.NewBuffer(make([]byte, 0, 1<<10))
+		},
+	}
+	errCacheNotAvailable = errors.New("cache not available")
+)
+
+func (f *apiHandler) fromCache(format, host string) ([]byte, error) {
+	if f.cache == nil {
+		return nil, errCacheNotAvailable
+	}
+	v, err := f.cache.Get(path.Join(format, host))
+	if err != nil {
+		return nil, err
+	}
+	return v.Value, err
+}
+
+func (f *apiHandler) toCache(format, host string, v []byte) error {
+	if f.cache == nil {
+		return errCacheNotAvailable
+	}
+	return f.cache.Set(&memcache.Item{
+		Key:   path.Join(format, host),
+		Value: v,
+	})
+}
+
+func csvWriter(w io.Writer, r *http.Request, d *responseRecord) {
 	io.WriteString(w, d.String())
 }
 
-func xmlWriter(w http.ResponseWriter, r *http.Request, d *responseRecord) {
-	w.Header().Set("Content-Type", "application/xml")
+func xmlWriter(w io.Writer, r *http.Request, d *responseRecord) {
 	x := xml.NewEncoder(w)
 	x.Indent("", "\t")
 	x.Encode(d)
 	w.Write([]byte{'\n'})
 }
 
-func jsonWriter(w http.ResponseWriter, r *http.Request, d *responseRecord) {
-	if cb := r.FormValue("callback"); cb != "" {
-		w.Header().Set("Content-Type", "application/javascript")
-		io.WriteString(w, cb)
-		w.Write([]byte("("))
-		b, err := json.Marshal(d)
-		if err == nil {
-			w.Write(b)
-		}
-		io.WriteString(w, ");")
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
+func jsonWriter(w io.Writer, r *http.Request, d *responseRecord) {
 	json.NewEncoder(w).Encode(d)
+}
+
+func jsonpWriter(w io.Writer, r *http.Request, d *responseRecord) {
+	cb := r.FormValue("callback")
+	io.WriteString(w, cb)
+	w.Write([]byte("("))
+	b, err := json.Marshal(d)
+	if err == nil {
+		w.Write(b)
+	}
+	io.WriteString(w, ");")
 }
 
 type geoipQuery struct {
@@ -274,7 +336,7 @@ func openDB(c *Config) (*freegeoip.DB, error) {
 }
 
 // watchEvents logs and collect metrics of database events.
-func watchEvents(db *freegeoip.DB) {
+func (f *apiHandler) watchEvents(db *freegeoip.DB) {
 	for {
 		select {
 		case file := <-db.NotifyOpen():
