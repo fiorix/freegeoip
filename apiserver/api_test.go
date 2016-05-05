@@ -61,17 +61,17 @@ func TestMetricsHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	tp := []http.Request{
-		http.Request{
+		{
 			Method:     "GET",
 			URL:        &url.URL{Path: "/api/json/200.1.2.3"},
 			RemoteAddr: "[::1]:1905",
 		},
-		http.Request{
+		{
 			Method:     "GET",
 			URL:        &url.URL{Path: "/api/json/200.1.2.3"},
 			RemoteAddr: "127.0.0.1:1905",
 		},
-		http.Request{
+		{
 			Method:     "GET",
 			URL:        &url.URL{Path: "/api/json/200.1.2.3"},
 			RemoteAddr: "200.1.2.3:1905",
@@ -92,17 +92,17 @@ func TestWriters(t *testing.T) {
 		t.Fatal(err)
 	}
 	tp := []http.Request{
-		http.Request{
+		{
 			Method:     "GET",
 			URL:        &url.URL{Path: "/api/csv/"},
 			RemoteAddr: "[::1]:1905",
 		},
-		http.Request{
+		{
 			Method:     "GET",
 			URL:        &url.URL{Path: "/api/xml/"},
 			RemoteAddr: "[::1]:1905",
 		},
-		http.Request{
+		{
 			Method:     "GET",
 			URL:        &url.URL{Path: "/api/json/"},
 			RemoteAddr: "[::1]:1905",
