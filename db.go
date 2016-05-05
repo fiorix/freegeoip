@@ -15,7 +15,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync"
 	"time"
 
@@ -226,8 +225,7 @@ func (db *DB) needUpdate(url string) (bool, error) {
 		return false, err
 	}
 	defer resp.Body.Close()
-	size, err := strconv.Atoi(resp.Header.Get("Content-Length"))
-	if stat.Size() != int64(size) {
+	if stat.Size() != resp.ContentLength {
 		return true, nil
 	}
 	return false, nil
