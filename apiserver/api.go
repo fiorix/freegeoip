@@ -256,8 +256,8 @@ func (rr *responseRecord) String() string {
 		rr.City,
 		rr.ZipCode,
 		rr.TimeZone,
-		strconv.FormatFloat(rr.Latitude, 'f', 2, 64),
-		strconv.FormatFloat(rr.Longitude, 'f', 2, 64),
+		strconv.FormatFloat(rr.Latitude, 'f', 4, 64),
+		strconv.FormatFloat(rr.Longitude, 'f', 4, 64),
 		strconv.Itoa(int(rr.MetroCode)),
 	})
 	w.Flush()
