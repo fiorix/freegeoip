@@ -4,7 +4,7 @@
 
 package main
 
-import "github.com/fiorix/freegeoip/apiserver"
+import "github.com/ashleym1972/freegeoip/apiserver"
 
 func main() {
 	apiserver.Run()

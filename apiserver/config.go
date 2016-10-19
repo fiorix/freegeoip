@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/fiorix/freegeoip"
+	"github.com/ashleym1972/freegeoip"
 )
 
 // Config is the configuration of the freegeoip server.
@@ -40,6 +40,10 @@ type Config struct {
 	RateLimitLimit     uint64
 	RateLimitInterval  time.Duration
 	InternalServerAddr string
+	UpdatesHost        string
+	LicenseKey         string
+	UserID             string
+	ProductID          string
 
 	errorLog  *log.Logger
 	accessLog *log.Logger
@@ -65,6 +69,8 @@ func NewConfig() *Config {
 		MemcacheTimeout:   time.Second,
 		RateLimitBackend:  "redis",
 		RateLimitInterval: time.Hour,
+		UpdatesHost:       "updates.maxmind.com",
+		ProductID:         "GeoIP2-City",
 	}
 }
 
@@ -94,6 +100,10 @@ func (c *Config) AddFlags(fs *flag.FlagSet) {
 	fs.Uint64Var(&c.RateLimitLimit, "quota-max", c.RateLimitLimit, "Max requests per source IP per interval; set 0 to turn quotas off")
 	fs.DurationVar(&c.RateLimitInterval, "quota-interval", c.RateLimitInterval, "Quota expiration interval, per source IP querying the API")
 	fs.StringVar(&c.InternalServerAddr, "internal-server", c.InternalServerAddr, "Address in form of ip:port to listen on for metrics and pprof")
+	fs.StringVar(&c.UpdatesHost, "updates-host", c.UpdatesHost, "MaxMind Updates Host")
+	fs.StringVar(&c.LicenseKey, "license-key", c.LicenseKey, "MaxMind License key")
+	fs.StringVar(&c.UserID, "user-id", c.UserID, "MaxMind User ID")
+	fs.StringVar(&c.ProductID, "product-id", c.ProductID, "MaxMinf product id (e.g GeoIP2-City)")
 }
 
 func (c *Config) logWriter() io.Writer {

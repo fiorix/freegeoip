@@ -6,6 +6,7 @@ package freegeoip
 
 import (
 	"compress/gzip"
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"io"
@@ -72,6 +73,41 @@ func Open(dsn string) (db *DB, err error) {
 		return nil, fmt.Errorf("fsnotify failed for %s: %s", dsn, err)
 	}
 	return db, nil
+}
+
+// Calculate geoipupdate URL
+// The auto update URL for paid products has a fun scheme.
+// Use this function to calculate that URL from various information
+func GeoIPUpdateURL(hostName string, userID string, licenseKey string, productID string) (url string, err error) {
+	// Get the file name from the product
+	url = fmt.Sprintf("%s://%s/app/update_getfilename?product_id=%s", "https", hostName, productID)
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	hexDigest := fmt.Sprintf("%x", md5.Sum(body))
+
+	// Get our client IP address
+	url = fmt.Sprintf("%s://%s/app/update_getipaddr", "https", hostName)
+	resp, err = http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	challenge := []byte(fmt.Sprintf("%s%s", licenseKey, body))
+	hexDigest2 := fmt.Sprintf("%x", md5.Sum(challenge))
+
+	// Create the URL
+	return fmt.Sprintf("%s://%s/app/update_secure?db_md5=%s&challenge_md5=%s&user_id=%s&edition_id=%s", "https", hostName, hexDigest, hexDigest2, userID, productID), nil
 }
 
 // OpenURL creates and initializes a DB from a URL.
