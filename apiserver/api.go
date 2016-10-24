@@ -30,7 +30,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/cors"
 
-	"github.com/ashleym1972/freegeoip"
+	"github.com/fiorix/freegeoip"
 )
 
 type apiHandler struct {
@@ -294,6 +294,8 @@ func watchEvents(db *freegeoip.DB) {
 		case err := <-db.NotifyError():
 			log.Println("database error:", err)
 			dbEventCounter.WithLabelValues("failed").Inc()
+		case msg := <-db.NotifyInfo():
+			log.Println("database info:", msg)
 		case <-db.NotifyClose():
 			return
 		}

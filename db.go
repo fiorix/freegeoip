@@ -43,6 +43,7 @@ type DB struct {
 	notifyQuit  chan struct{}     // Stop auto-update and watch goroutines.
 	notifyOpen  chan string       // Notify when a db file is open.
 	notifyError chan error        // Notify when an error occurs.
+	notifyInfo  chan string       // Notify random actions for logging
 	closed      bool              // Mark this db as closed.
 	lastUpdated time.Time         // Last time the db was updated.
 	mu          sync.RWMutex      // Protects all the above.
@@ -61,6 +62,7 @@ func Open(dsn string) (db *DB, err error) {
 		notifyQuit:  make(chan struct{}),
 		notifyOpen:  make(chan string, 1),
 		notifyError: make(chan error, 1),
+		notifyInfo:  make(chan string, 1),
 	}
 	err = db.openFile()
 	if err != nil {
@@ -119,6 +121,7 @@ func OpenURL(url string, updateInterval, maxRetryInterval time.Duration) (db *DB
 		notifyQuit:       make(chan struct{}),
 		notifyOpen:       make(chan string, 1),
 		notifyError:      make(chan error, 1),
+		notifyInfo:       make(chan string, 1),
 		updateInterval:   updateInterval,
 		maxRetryInterval: maxRetryInterval,
 	}
@@ -232,6 +235,7 @@ func (db *DB) autoUpdate(url string) {
 }
 
 func (db *DB) runUpdate(url string) error {
+	db.sendInfo("starting update")
 	yes, err := db.needUpdate(url)
 	if err != nil {
 		return err
@@ -248,6 +252,7 @@ func (db *DB) runUpdate(url string) error {
 		// Cleanup the tempfile if renaming failed.
 		os.RemoveAll(tmpfile)
 	}
+	db.sendInfo("finished update")
 	return err
 }
 
@@ -268,6 +273,7 @@ func (db *DB) needUpdate(url string) (bool, error) {
 }
 
 func (db *DB) download(url string) (tmpfile string, err error) {
+	db.sendInfo("starting download")
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -284,6 +290,7 @@ func (db *DB) download(url string) (tmpfile string, err error) {
 	if err != nil {
 		return "", err
 	}
+	db.sendInfo("finished download")
 	return tmpfile, nil
 }
 
@@ -334,6 +341,12 @@ func (db *DB) NotifyError() (errChan <-chan error) {
 	return db.notifyError
 }
 
+// NotifyInfo returns a channel that notifies informational messages
+// while downloading or reloading.
+func (db *DB) NotifyInfo() <-chan string {
+	return db.notifyInfo
+}
+
 func (db *DB) sendError(err error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
@@ -342,6 +355,18 @@ func (db *DB) sendError(err error) {
 	}
 	select {
 	case db.notifyError <- err:
+	default:
+	}
+}
+
+func (db *DB) sendInfo(message string) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	if db.closed {
+		return
+	}
+	select {
+	case db.notifyInfo <- message:
 	default:
 	}
 }
@@ -404,6 +429,7 @@ func (db *DB) Close() {
 		close(db.notifyQuit)
 		close(db.notifyOpen)
 		close(db.notifyError)
+		close(db.notifyInfo)
 	}
 	if db.reader != nil {
 		db.reader.Close()
