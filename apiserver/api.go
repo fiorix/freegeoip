@@ -266,6 +266,17 @@ func (rr *responseRecord) String() string {
 
 // openDB opens and returns the IP database file or URL.
 func openDB(c *Config) (*freegeoip.DB, error) {
+	// This is a paid product. Get the updates URL.
+	if len(c.UserID) > 0 && len(c.LicenseKey) > 0 {
+		var err error
+		c.DB, err = freegeoip.GeoIPUpdateURL(c.UpdatesHost, c.UserID, c.LicenseKey, c.ProductID)
+		if err != nil {
+			return nil, err
+		} else {
+			log.Println("Using updates URL:", c.DB)
+		}
+	}
+
 	u, err := url.Parse(c.DB)
 	if err != nil || len(u.Scheme) == 0 {
 		return freegeoip.Open(c.DB)
@@ -283,6 +294,8 @@ func watchEvents(db *freegeoip.DB) {
 		case err := <-db.NotifyError():
 			log.Println("database error:", err)
 			dbEventCounter.WithLabelValues("failed").Inc()
+		case msg := <-db.NotifyInfo():
+			log.Println("database info:", msg)
 		case <-db.NotifyClose():
 			return
 		}
