@@ -84,6 +84,53 @@ func TestNeedUpdateSameFile(t *testing.T) {
 	}
 }
 
+func TestNeedUpdateSameMD5(t *testing.T) {
+  db := &DB{file: testFile}
+  _, checksum, err := db.newReader(db.file)
+  if err != nil {
+    t.Fatal(err)
+  }
+  db.checksum = checksum
+	mux := http.NewServeMux()
+  changeHeaderThenServe := func(h http.Handler) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+      w.Header().Add("X-Database-MD5", checksum)
+      h.ServeHTTP(w, r)
+    }
+  }
+  mux.Handle("/testdata/", changeHeaderThenServe(http.FileServer(http.Dir("."))))
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	yes, err := db.needUpdate(srv.URL + "/" + testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if yes {
+		t.Fatal("Unexpected: db is not supposed to need an update")
+	}
+}
+
+func TestNeedUpdateMD5(t *testing.T) {
+	mux := http.NewServeMux()
+  changeHeaderThenServe := func(h http.Handler) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+      w.Header().Add("X-Database-MD5", "9823y5981y2398y1234")
+      h.ServeHTTP(w, r)
+    }
+  }
+  mux.Handle("/testdata/", changeHeaderThenServe(http.FileServer(http.Dir("."))))
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	db := &DB{file: testFile}
+	yes, err := db.needUpdate(srv.URL + "/" + testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !yes {
+		t.Fatal("Unexpected: db is supposed to need an update")
+	}
+}
+
 func TestNeedUpdate(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.Handle("/testdata/", http.FileServer(http.Dir(".")))
