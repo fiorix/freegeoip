@@ -17,6 +17,32 @@ import (
 
 var testFile = "testdata/db.gz"
 
+func TestGeoIPUpdateURL(t *testing.T) {
+	t.Skip("Updates information required")
+	licenseKey := ""
+	UserID := ""
+	url, err := GeoIPUpdateURL("updates.maxmind.com", licenseKey, UserID, "GeoIP2-City")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	db := &DB{}
+	dbfile, err := db.download(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(testFile); err == nil {
+		err := os.Remove(testFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	err = os.Rename(dbfile, testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestDownload(t *testing.T) {
 	if _, err := os.Stat(testFile); err == nil {
 		t.Skip("Test database already exists:", testFile)

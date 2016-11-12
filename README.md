@@ -159,6 +159,7 @@ Otherwise check out the godoc reference.
 
 [![GoDoc](https://godoc.org/github.com/fiorix/freegeoip?status.svg)](https://godoc.org/github.com/fiorix/freegeoip)
 [![Build Status](https://secure.travis-ci.org/fiorix/freegeoip.png)](http://travis-ci.org/fiorix/freegeoip)
+[![GoReportCard](https://goreportcard.com/badge/github.com/fiorix/freegeoip)](https://goreportcard.com/report/github.com/fiorix/freegeoip)
 
 ### Features
 

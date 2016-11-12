@@ -6,6 +6,7 @@ package freegeoip
 
 import (
 	"compress/gzip"
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"io"
@@ -15,7 +16,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync"
 	"time"
 
@@ -43,6 +43,7 @@ type DB struct {
 	notifyQuit  chan struct{}     // Stop auto-update and watch goroutines.
 	notifyOpen  chan string       // Notify when a db file is open.
 	notifyError chan error        // Notify when an error occurs.
+	notifyInfo  chan string       // Notify random actions for logging
 	closed      bool              // Mark this db as closed.
 	lastUpdated time.Time         // Last time the db was updated.
 	mu          sync.RWMutex      // Protects all the above.
@@ -61,6 +62,7 @@ func Open(dsn string) (db *DB, err error) {
 		notifyQuit:  make(chan struct{}),
 		notifyOpen:  make(chan string, 1),
 		notifyError: make(chan error, 1),
+		notifyInfo:  make(chan string, 1),
 	}
 	err = db.openFile()
 	if err != nil {
@@ -75,6 +77,41 @@ func Open(dsn string) (db *DB, err error) {
 	return db, nil
 }
 
+// Calculate geoipupdate URL
+// The auto update URL for paid products has a fun scheme.
+// Use this function to calculate that URL from various information
+func GeoIPUpdateURL(hostName string, userID string, licenseKey string, productID string) (url string, err error) {
+	// Get the file name from the product
+	url = fmt.Sprintf("%s://%s/app/update_getfilename?product_id=%s", "https", hostName, productID)
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	hexDigest := fmt.Sprintf("%x", md5.Sum(body))
+
+	// Get our client IP address
+	url = fmt.Sprintf("%s://%s/app/update_getipaddr", "https", hostName)
+	resp, err = http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	challenge := []byte(fmt.Sprintf("%s%s", licenseKey, body))
+	hexDigest2 := fmt.Sprintf("%x", md5.Sum(challenge))
+
+	// Create the URL
+	return fmt.Sprintf("%s://%s/app/update_secure?db_md5=%s&challenge_md5=%s&user_id=%s&edition_id=%s", "https", hostName, hexDigest, hexDigest2, userID, productID), nil
+}
+
 // OpenURL creates and initializes a DB from a URL.
 // It automatically downloads and updates the file in background, and
 // keeps a local copy on $TMPDIR.
@@ -84,6 +121,7 @@ func OpenURL(url string, updateInterval, maxRetryInterval time.Duration) (db *DB
 		notifyQuit:       make(chan struct{}),
 		notifyOpen:       make(chan string, 1),
 		notifyError:      make(chan error, 1),
+		notifyInfo:       make(chan string, 1),
 		updateInterval:   updateInterval,
 		maxRetryInterval: maxRetryInterval,
 	}
@@ -197,6 +235,7 @@ func (db *DB) autoUpdate(url string) {
 }
 
 func (db *DB) runUpdate(url string) error {
+	db.sendInfo("starting update")
 	yes, err := db.needUpdate(url)
 	if err != nil {
 		return err
@@ -213,6 +252,7 @@ func (db *DB) runUpdate(url string) error {
 		// Cleanup the tempfile if renaming failed.
 		os.RemoveAll(tmpfile)
 	}
+	db.sendInfo("finished update")
 	return err
 }
 
@@ -226,14 +266,14 @@ func (db *DB) needUpdate(url string) (bool, error) {
 		return false, err
 	}
 	defer resp.Body.Close()
-	size, err := strconv.Atoi(resp.Header.Get("Content-Length"))
-	if stat.Size() != int64(size) {
+	if stat.Size() != resp.ContentLength {
 		return true, nil
 	}
 	return false, nil
 }
 
 func (db *DB) download(url string) (tmpfile string, err error) {
+	db.sendInfo("starting download")
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -250,6 +290,7 @@ func (db *DB) download(url string) (tmpfile string, err error) {
 	if err != nil {
 		return "", err
 	}
+	db.sendInfo("finished download")
 	return tmpfile, nil
 }
 
@@ -300,6 +341,12 @@ func (db *DB) NotifyError() (errChan <-chan error) {
 	return db.notifyError
 }
 
+// NotifyInfo returns a channel that notifies informational messages
+// while downloading or reloading.
+func (db *DB) NotifyInfo() <-chan string {
+	return db.notifyInfo
+}
+
 func (db *DB) sendError(err error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
@@ -308,6 +355,18 @@ func (db *DB) sendError(err error) {
 	}
 	select {
 	case db.notifyError <- err:
+	default:
+	}
+}
+
+func (db *DB) sendInfo(message string) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	if db.closed {
+		return
+	}
+	select {
+	case db.notifyInfo <- message:
 	default:
 	}
 }
@@ -370,6 +429,7 @@ func (db *DB) Close() {
 		close(db.notifyQuit)
 		close(db.notifyOpen)
 		close(db.notifyError)
+		close(db.notifyInfo)
 	}
 	if db.reader != nil {
 		db.reader.Close()
