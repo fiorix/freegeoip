@@ -199,9 +199,9 @@ func (q *geoipQuery) Record(ip net.IP, lang string) *responseRecord {
 	}
 	r := &responseRecord{
 		IP:            ip.String(),
-		CountryCode:   q.Country.ISOCode,
-		Continent:     q.Continent.Names[lang],
 		ContinentCode: q.Continent.Code,
+		ContinentName: q.Continent.Names[lang],
+		CountryCode:   q.Country.ISOCode,
 		CountryName:   q.Country.Names[lang],
 		City:          q.City.Names[lang],
 		ZipCode:       q.Postal.Code,
@@ -233,9 +233,9 @@ func roundFloat(val float64, roundOn float64, places int) (newVal float64) {
 type responseRecord struct {
 	XMLName       xml.Name `xml:"Response" json:"-"`
 	IP            string   `json:"ip"`
-	CountryCode   string   `json:"country_code"`
-	Continent     string   `json:"continent_name"`
 	ContinentCode string   `json:"continent_code"`
+	ContinentName string   `json:"continent_name"`
+	CountryCode   string   `json:"country_code"`
 	CountryName   string   `json:"country_name"`
 	RegionCode    string   `json:"region_code"`
 	RegionName    string   `json:"region_name"`
@@ -254,7 +254,7 @@ func (rr *responseRecord) String() string {
 	w.Write([]string{
 		rr.IP,
 		rr.ContinentCode,
-		rr.Continent,
+		rr.ContinentName,
 		rr.CountryCode,
 		rr.CountryName,
 		rr.RegionCode,
