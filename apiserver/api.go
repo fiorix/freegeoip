@@ -198,15 +198,17 @@ func (q *geoipQuery) Record(ip net.IP, lang string) *responseRecord {
 		lang = "en"
 	}
 	r := &responseRecord{
-		IP:          ip.String(),
-		CountryCode: q.Country.ISOCode,
-		CountryName: q.Country.Names[lang],
-		City:        q.City.Names[lang],
-		ZipCode:     q.Postal.Code,
-		TimeZone:    q.Location.TimeZone,
-		Latitude:    roundFloat(q.Location.Latitude, .5, 4),
-		Longitude:   roundFloat(q.Location.Longitude, .5, 4),
-		MetroCode:   q.Location.MetroCode,
+		IP:            ip.String(),
+		CountryCode:   q.Country.ISOCode,
+		Continent:     q.Continent.Names[lang],
+		ContinentCode: q.Continent.Code,
+		CountryName:   q.Country.Names[lang],
+		City:          q.City.Names[lang],
+		ZipCode:       q.Postal.Code,
+		TimeZone:      q.Location.TimeZone,
+		Latitude:      roundFloat(q.Location.Latitude, .5, 4),
+		Longitude:     roundFloat(q.Location.Longitude, .5, 4),
+		MetroCode:     q.Location.MetroCode,
 	}
 	if len(q.Region) > 0 {
 		r.RegionCode = q.Region[0].ISOCode
@@ -229,18 +231,20 @@ func roundFloat(val float64, roundOn float64, places int) (newVal float64) {
 }
 
 type responseRecord struct {
-	XMLName     xml.Name `xml:"Response" json:"-"`
-	IP          string   `json:"ip"`
-	CountryCode string   `json:"country_code"`
-	CountryName string   `json:"country_name"`
-	RegionCode  string   `json:"region_code"`
-	RegionName  string   `json:"region_name"`
-	City        string   `json:"city"`
-	ZipCode     string   `json:"zip_code"`
-	TimeZone    string   `json:"time_zone"`
-	Latitude    float64  `json:"latitude"`
-	Longitude   float64  `json:"longitude"`
-	MetroCode   uint     `json:"metro_code"`
+	XMLName       xml.Name `xml:"Response" json:"-"`
+	IP            string   `json:"ip"`
+	CountryCode   string   `json:"country_code"`
+	Continent     string   `json:"continent_name"`
+	ContinentCode string   `json:"continent_code"`
+	CountryName   string   `json:"country_name"`
+	RegionCode    string   `json:"region_code"`
+	RegionName    string   `json:"region_name"`
+	City          string   `json:"city"`
+	ZipCode       string   `json:"zip_code"`
+	TimeZone      string   `json:"time_zone"`
+	Latitude      float64  `json:"latitude"`
+	Longitude     float64  `json:"longitude"`
+	MetroCode     uint     `json:"metro_code"`
 }
 
 func (rr *responseRecord) String() string {
@@ -249,6 +253,8 @@ func (rr *responseRecord) String() string {
 	w.UseCRLF = true
 	w.Write([]string{
 		rr.IP,
+		rr.ContinentCode,
+		rr.Continent,
 		rr.CountryCode,
 		rr.CountryName,
 		rr.RegionCode,
