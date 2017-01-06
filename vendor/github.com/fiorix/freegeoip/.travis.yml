@@ -1,0 +1,18 @@
+sudo: false
+
+language: go
+
+go:
+  - 1.4.3
+  - 1.5.3
+  - 1.6
+  - 1.7
+
+install:
+  - go get -t -d -v ./...
+
+services:
+  - redis-server
+
+script:
+  - go test -v ./ ./apiserver

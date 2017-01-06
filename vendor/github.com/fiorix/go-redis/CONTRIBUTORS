@@ -1,0 +1,17 @@
+# This is the official list of go-redis contributors for copyright purposes.
+#
+# Names should be added to this file as
+#	Name or Organization <email address>
+#
+# Use the following command to generate the list:
+#
+#	git shortlog -se | awk '{print $2 " " $3 " " $4}'
+#
+# The email address is not required for organizations.
+#
+# Please keep the list sorted.
+
+Bruno Celeste <bruno.celeste@gmail.com>
+Juliano Martinez <juliano@martinez.io>
+Thiago Ribeiro <ribeiro.it@gmail.com>
+Thijs Cadier <thijs@80beans.com>

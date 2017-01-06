@@ -1,0 +1,6 @@
+db.gz
+*.rdb
+*.swp
+*.csv
+*.zip
+*.sqlite

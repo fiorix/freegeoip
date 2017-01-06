@@ -1,7 +1,5 @@
 # freegeoip
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
-
 This is the source code of the freegeoip software. It contains both
 the web server that empowers freegeoip.net, and a package for the
 [Go](http://golang.org) programming language that enables any web server
