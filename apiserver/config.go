@@ -44,6 +44,8 @@ type Config struct {
 	LicenseKey         string
 	UserID             string
 	ProductID          string
+	NewrelicName       string
+	NewrelicKey        string
 
 	errorLog  *log.Logger
 	accessLog *log.Logger
@@ -104,6 +106,8 @@ func (c *Config) AddFlags(fs *flag.FlagSet) {
 	fs.StringVar(&c.LicenseKey, "license-key", c.LicenseKey, "MaxMind License key")
 	fs.StringVar(&c.UserID, "user-id", c.UserID, "MaxMind User ID")
 	fs.StringVar(&c.ProductID, "product-id", c.ProductID, "MaxMinf product id (e.g GeoIP2-City)")
+	fs.StringVar(&c.NewrelicName, "newrelic-name", c.NewrelicName, "Newrepic APM application name")
+	fs.StringVar(&c.NewrelicKey, "newrelic-key", c.NewrelicKey, "Nerelic API key")
 }
 
 func (c *Config) logWriter() io.Writer {

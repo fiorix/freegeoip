@@ -28,6 +28,7 @@ import (
 	"github.com/go-web/httprl/memcacherl"
 	"github.com/go-web/httprl/redisrl"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/newrelic/go-agent"
 	"github.com/rs/cors"
 
 	"github.com/fiorix/freegeoip"
@@ -37,6 +38,7 @@ type apiHandler struct {
 	db   *freegeoip.DB
 	conf *Config
 	cors *cors.Cors
+	nrapp newrelic.Application
 }
 
 // NewHandler creates an http handler for the freegeoip server that
@@ -83,6 +85,14 @@ func (f *apiHandler) config(mc *httpmux.Config) error {
 		}
 		mc.Use(rl.Handle)
 	}
+	if f.conf.NewrelicName != "" && f.conf.NewrelicKey != "" {
+		config := newrelic.NewConfig(f.conf.NewrelicName, f.conf.NewrelicKey)
+		app, err := newrelic.NewApplication(config)
+		if err != nil {
+			return fmt.Errorf("failed to create newrelic application: {name: %v, key: %v}", f.conf.NewrelicName, f.conf.NewrelicKey)
+		}
+		f.nrapp = app
+	}	
 	return nil
 }
 
@@ -126,7 +136,13 @@ func (f *apiHandler) metrics(next http.HandlerFunc) http.HandlerFunc {
 type writerFunc func(w http.ResponseWriter, r *http.Request, d *responseRecord)
 
 func (f *apiHandler) register(name string, writer writerFunc) http.HandlerFunc {
-	h := prometheus.InstrumentHandler(name, f.iplookup(writer))
+	var h http.Handler
+	if f.nrapp == nil {
+		h = prometheus.InstrumentHandler(name, f.iplookup(writer))
+	} else {
+		h = prometheus.InstrumentHandler(newrelic.WrapHandle(f.nrapp, name, f.iplookup(writer)))
+	}
+
 	return f.cors.Handler(h).ServeHTTP
 }
 
@@ -272,9 +288,9 @@ func openDB(c *Config) (*freegeoip.DB, error) {
 		c.DB, err = freegeoip.GeoIPUpdateURL(c.UpdatesHost, c.UserID, c.LicenseKey, c.ProductID)
 		if err != nil {
 			return nil, err
-		} else {
-			log.Println("Using updates URL:", c.DB)
 		}
+		// else
+		log.Println("Using updates URL:", c.DB)
 	}
 
 	u, err := url.Parse(c.DB)
