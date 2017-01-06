@@ -1,0 +1,209 @@
+{
+	"comment": "",
+	"heroku": {
+		"install" : [ "./cmd/..." ],
+		"goVersion": "go1.7"
+		 },
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "spyv5/YFBjYyZLZa1U2LBfDR8PM=",
+			"path": "github.com/beorn7/perks/quantile",
+			"revision": "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9",
+			"revisionTime": "2016-08-04T10:47:26Z"
+		},
+		{
+			"checksumSHA1": "un79juR7EIavyegPSipMhklDhj4=",
+			"path": "github.com/bradfitz/gomemcache/memcache",
+			"revision": "2fafb84a66c4911e11a8f50955b01e74fe3ab9c5",
+			"revisionTime": "2016-11-27T23:23:02Z"
+		},
+		{
+			"checksumSHA1": "bvd8LkQAIwPZND7b3vpVsPSbkqQ=",
+			"path": "github.com/fiorix/freegeoip",
+			"revision": "2dd1041b59f1341a60bdbecfc4c918a8e86f30b6",
+			"revisionTime": "2017-01-06T11:01:25Z"
+		},
+		{
+			"checksumSHA1": "3NOCRqHwvi2qGzdFJpUbuRNvp9s=",
+			"path": "github.com/fiorix/freegeoip/apiserver",
+			"revision": "2dd1041b59f1341a60bdbecfc4c918a8e86f30b6",
+			"revisionTime": "2017-01-06T11:01:25Z"
+		},
+		{
+			"checksumSHA1": "s3x0QTPmuue1OQckgsD00CvvS4k=",
+			"path": "github.com/fiorix/freegeoip/cmd/freegeoip",
+			"revision": "2dd1041b59f1341a60bdbecfc4c918a8e86f30b6",
+			"revisionTime": "2017-01-06T11:01:25Z"
+		},
+		{
+			"checksumSHA1": "4aYbMnXo3kz6UgMHC5Vz79BdCaU=",
+			"path": "github.com/fiorix/go-redis/redis",
+			"revision": "d987058b55eb470a35e9e18169011cd44bb20cc9",
+			"revisionTime": "2016-01-04T01:03:33Z"
+		},
+		{
+			"checksumSHA1": "lwZofErBLqnpq1trzO2hS3Rm1+s=",
+			"path": "github.com/go-web/httplog",
+			"revision": "580d0d49f0d3990a37bf9f11f7b14d4021c5d8fc",
+			"revisionTime": "2016-04-12T23:27:24Z"
+		},
+		{
+			"checksumSHA1": "qkKztjBfRJc6mMmsX7yg7dR1UR8=",
+			"path": "github.com/go-web/httpmux",
+			"revision": "9e95425ee2c3de016d8630f6ec9455aaf7abadd2",
+			"revisionTime": "2016-05-05T07:02:39Z"
+		},
+		{
+			"checksumSHA1": "GYxpsIiASzEFuLmpqDJjKB2mWag=",
+			"path": "github.com/go-web/httprl",
+			"revision": "20dc8024cb5d04a4bffe6585685122cee1111a9f",
+			"revisionTime": "2016-05-05T07:01:43Z"
+		},
+		{
+			"checksumSHA1": "SKzmeIlam7dWKsSBkzIpH11AyVA=",
+			"path": "github.com/go-web/httprl/memcacherl",
+			"revision": "20dc8024cb5d04a4bffe6585685122cee1111a9f",
+			"revisionTime": "2016-05-05T07:01:43Z"
+		},
+		{
+			"checksumSHA1": "90DPhOc8ocLJ+Sx+QlT1gfM6LaU=",
+			"path": "github.com/go-web/httprl/redisrl",
+			"revision": "20dc8024cb5d04a4bffe6585685122cee1111a9f",
+			"revisionTime": "2016-05-05T07:01:43Z"
+		},
+		{
+			"checksumSHA1": "kBeNcaKk56FguvPSUCEaH6AxpRc=",
+			"path": "github.com/golang/protobuf/proto",
+			"revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
+			"revisionTime": "2016-11-17T03:31:26Z"
+		},
+		{
+			"checksumSHA1": "ZxzYc1JwJ3U6kZbw/KGuPko5lSY=",
+			"path": "github.com/howeyc/fsnotify",
+			"revision": "f0c08ee9c60704c1879025f2ae0ff3e000082c13",
+			"revisionTime": "2015-10-03T19:46:02Z"
+		},
+		{
+			"checksumSHA1": "Y3U6on66N0BszKXYvb2Q+qpG6f4=",
+			"path": "github.com/julienschmidt/httprouter",
+			"revision": "8a45e95fc75cb77048068a62daed98cc22fdac7c",
+			"revisionTime": "2017-01-04T18:58:16Z"
+		},
+		{
+			"checksumSHA1": "bKMZjd2wPw13VwoE7mBeSv5djFA=",
+			"path": "github.com/matttproud/golang_protobuf_extensions/pbutil",
+			"revision": "c12348ce28de40eed0136aa2b644d0ee0650e56c",
+			"revisionTime": "2016-04-24T11:30:07Z"
+		},
+		{
+			"checksumSHA1": "WQJBP9v20jr44RiZ1YbfrpGaEqk=",
+			"path": "github.com/newrelic/go-agent",
+			"revision": "7d12ae2201fc160e486197614a6f65afcf3f8170",
+			"revisionTime": "2016-11-16T22:44:47Z"
+		},
+		{
+			"checksumSHA1": "lLXXIL0C/ZzMDqN2BlQRZInhot0=",
+			"path": "github.com/newrelic/go-agent/internal",
+			"revision": "7d12ae2201fc160e486197614a6f65afcf3f8170",
+			"revisionTime": "2016-11-16T22:44:47Z"
+		},
+		{
+			"checksumSHA1": "mkbupMdy+cF7xyo8xW0A6Bq15k4=",
+			"path": "github.com/newrelic/go-agent/internal/jsonx",
+			"revision": "7d12ae2201fc160e486197614a6f65afcf3f8170",
+			"revisionTime": "2016-11-16T22:44:47Z"
+		},
+		{
+			"checksumSHA1": "ywxlVKtGArJ2vDfH1rAqEFwSGds=",
+			"path": "github.com/newrelic/go-agent/internal/logger",
+			"revision": "7d12ae2201fc160e486197614a6f65afcf3f8170",
+			"revisionTime": "2016-11-16T22:44:47Z"
+		},
+		{
+			"checksumSHA1": "S7CiHO7EblgZt9q7wgiXMv/j/ao=",
+			"path": "github.com/newrelic/go-agent/internal/sysinfo",
+			"revision": "7d12ae2201fc160e486197614a6f65afcf3f8170",
+			"revisionTime": "2016-11-16T22:44:47Z"
+		},
+		{
+			"checksumSHA1": "c2JSKesj3tHYgzIF3QL37WfHWG8=",
+			"path": "github.com/newrelic/go-agent/internal/utilization",
+			"revision": "7d12ae2201fc160e486197614a6f65afcf3f8170",
+			"revisionTime": "2016-11-16T22:44:47Z"
+		},
+		{
+			"checksumSHA1": "rnQM9A55VCOSbv0IOuUn/Yl+IFk=",
+			"path": "github.com/oschwald/maxminddb-golang",
+			"revision": "4cf6490e82edd288b91d6a786d85dab042015e24",
+			"revisionTime": "2016-12-31T00:38:52Z"
+		},
+		{
+			"checksumSHA1": "/j0HRFJPThv7HEkZZ/gurf+5fQI=",
+			"path": "github.com/prometheus/client_golang/prometheus",
+			"revision": "575f371f7862609249a1be4c9145f429fe065e32",
+			"revisionTime": "2016-11-24T15:57:32Z"
+		},
+		{
+			"checksumSHA1": "DvwvOlPNAgRntBzt3b3OSRMS2N4=",
+			"path": "github.com/prometheus/client_model/go",
+			"revision": "fa8ad6fec33561be4280a8f0514318c79d7f6cb6",
+			"revisionTime": "2015-02-12T10:17:44Z"
+		},
+		{
+			"checksumSHA1": "mHyjbJ3BWOfUV6q9f5PBt0gaY1k=",
+			"path": "github.com/prometheus/common/expfmt",
+			"revision": "6d76b79f239843a04e8ad8dfd8fcadfa3920236f",
+			"revisionTime": "2016-12-20T17:45:53Z"
+		},
+		{
+			"checksumSHA1": "GWlM3d2vPYyNATtTFgftS10/A9w=",
+			"path": "github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg",
+			"revision": "6d76b79f239843a04e8ad8dfd8fcadfa3920236f",
+			"revisionTime": "2016-12-20T17:45:53Z"
+		},
+		{
+			"checksumSHA1": "vopCLXHzYm+3l5fPKOf4/fQwrCM=",
+			"path": "github.com/prometheus/common/model",
+			"revision": "6d76b79f239843a04e8ad8dfd8fcadfa3920236f",
+			"revisionTime": "2016-12-20T17:45:53Z"
+		},
+		{
+			"checksumSHA1": "L+p4t3KrLDAKJnrreOz2BZIt9Mg=",
+			"path": "github.com/prometheus/procfs",
+			"revision": "fcdb11ccb4389efb1b210b7ffb623ab71c5fdd60",
+			"revisionTime": "2016-12-06T22:21:41Z"
+		},
+		{
+			"checksumSHA1": "LjPdvMphElL0GOVNQCsmZMVgWIw=",
+			"path": "github.com/rs/cors",
+			"revision": "a62a804a8a009876ca59105f7899938a1349f4b3",
+			"revisionTime": "2016-06-17T23:19:35Z"
+		},
+		{
+			"checksumSHA1": "hCRfPlNpqv8tvVivLzmXsoUOf1c=",
+			"path": "github.com/rs/xhandler",
+			"revision": "ed27b6fd65218132ee50cd95f38474a3d8a2cd12",
+			"revisionTime": "2016-06-18T19:32:21Z"
+		},
+		{
+			"checksumSHA1": "9jjO5GjLa0XF/nfWihF02RoH4qc=",
+			"path": "golang.org/x/net/context",
+			"revision": "905989bd20b7c354fd28a61074eed1c8f49ebc89",
+			"revisionTime": "2017-01-06T00:12:52Z"
+		},
+		{
+			"checksumSHA1": "uTQtOqR0ePMMcvuvAIksiIZxhqU=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
+			"revisionTime": "2016-12-14T18:38:57Z"
+		},
+		{
+			"checksumSHA1": "kQB2wRB3twjUp615F6zEwGHjNe0=",
+			"path": "golang.org/x/sys/windows",
+			"revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
+			"revisionTime": "2016-12-14T18:38:57Z"
+		}
+	],
+	"rootPath": "github.com/fiorix/freegeoip"
+}

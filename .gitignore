@@ -4,3 +4,4 @@ db.gz
 *.csv
 *.zip
 *.sqlite
+/vendor/*/
