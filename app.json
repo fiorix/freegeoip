@@ -1,0 +1,7 @@
+{
+  "name": "freegeoip",
+  "description": "IP geolocation web server",
+  "website": "https://github.com/fiorix/freegeoip",
+  "success_url": "/",
+  "keywords": ["golang", "geoip", "api"]
+}
