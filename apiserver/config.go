@@ -101,9 +101,9 @@ func (c *Config) AddFlags(fs *flag.FlagSet) {
 	fs.DurationVar(&c.RateLimitInterval, "quota-interval", c.RateLimitInterval, "Quota expiration interval, per source IP querying the API")
 	fs.StringVar(&c.InternalServerAddr, "internal-server", c.InternalServerAddr, "Address in form of ip:port to listen on for metrics and pprof")
 	fs.StringVar(&c.UpdatesHost, "updates-host", c.UpdatesHost, "MaxMind Updates Host")
-	fs.StringVar(&c.LicenseKey, "license-key", c.LicenseKey, "MaxMind License key")
-	fs.StringVar(&c.UserID, "user-id", c.UserID, "MaxMind User ID")
-	fs.StringVar(&c.ProductID, "product-id", c.ProductID, "MaxMinf product id (e.g GeoIP2-City)")
+	fs.StringVar(&c.LicenseKey, "license-key", c.LicenseKey, "MaxMind License Key (requires user-id)")
+	fs.StringVar(&c.UserID, "user-id", c.UserID, "MaxMind User ID (requires license-key)")
+	fs.StringVar(&c.ProductID, "product-id", c.ProductID, "MaxMind Product ID (e.g GeoIP2-City)")
 }
 
 func (c *Config) logWriter() io.Writer {

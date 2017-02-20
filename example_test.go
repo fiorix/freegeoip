@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func ExampleDatabaseQuery() {
+func ExampleOpen() {
 	db, err := Open("./testdata.gz")
 	if err != nil {
 		log.Fatal(err)
@@ -24,7 +24,7 @@ func ExampleDatabaseQuery() {
 	log.Printf("%#v", result)
 }
 
-func ExampleRemoteDatabaseQuery() {
+func ExampleOpenURL() {
 	updateInterval := 24 * time.Hour
 	maxRetryInterval := time.Hour
 	db, err := OpenURL(MaxMindDB, updateInterval, maxRetryInterval)

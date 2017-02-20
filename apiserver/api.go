@@ -269,12 +269,16 @@ func openDB(c *Config) (*freegeoip.DB, error) {
 	// This is a paid product. Get the updates URL.
 	if len(c.UserID) > 0 && len(c.LicenseKey) > 0 {
 		var err error
-		c.DB, err = freegeoip.GeoIPUpdateURL(c.UpdatesHost, c.UserID, c.LicenseKey, c.ProductID)
+		c.DB, err = freegeoip.MaxMindUpdateURL(
+			c.UpdatesHost,
+			c.ProductID,
+			c.UserID,
+			c.LicenseKey,
+		)
 		if err != nil {
 			return nil, err
-		} else {
-			log.Println("Using updates URL:", c.DB)
 		}
+		log.Println("Using updates URL:", c.DB)
 	}
 
 	u, err := url.Parse(c.DB)

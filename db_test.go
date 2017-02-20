@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,29 +18,36 @@ import (
 
 var testFile = "testdata/db.gz"
 
-func TestGeoIPUpdateURL(t *testing.T) {
-	t.Skip("Updates information required")
-	licenseKey := ""
-	UserID := ""
-	url, err := GeoIPUpdateURL("updates.maxmind.com", licenseKey, UserID, "GeoIP2-City")
+func TestMaxMindUpdateURL(t *testing.T) {
+	UserID := "hello"
+	LicenseKey := "world"
+	u, err := MaxMindUpdateURL(
+		"updates.maxmind.com",
+		"GeoIP2-City",
+		UserID,
+		LicenseKey,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	db := &DB{}
-	dbfile, err := db.download(url)
+	uu, err := url.Parse(u)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(testFile); err == nil {
-		err := os.Remove(testFile)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	err = os.Rename(dbfile, testFile)
-	if err != nil {
-		t.Fatal(err)
+	q := uu.Query()
+	switch {
+	case uu.Scheme != "https":
+		t.Fatalf("unexpected url scheme: want https, have %q", uu.Scheme)
+	case uu.Host != "updates.maxmind.com":
+		t.Fatalf("unexpected url host: want updates.maxmind.com, have %q", uu.Host)
+	case len(q["db_md5"]) == 0:
+		t.Fatal("missing db_md5 param")
+	case len(q["challenge_md5"]) == 0:
+		t.Fatal("missing challenge_md5 param")
+	case len(q["user_id"]) == 0 || q["user_id"][0] != UserID:
+		t.Fatalf("unexpected user id: want %q, have %q", UserID, q["user_id"])
+	case len(q["edition_id"]) == 0 || q["edition_id"][0] != "GeoIP2-City":
+		t.Fatalf("unexpected edition_id: %q", q["edition_id"])
 	}
 }
 

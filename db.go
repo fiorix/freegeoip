@@ -7,6 +7,7 @@ package freegeoip
 import (
 	"compress/gzip"
 	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
@@ -56,15 +58,15 @@ type DB struct {
 //
 // The database file is monitored by fsnotify and automatically
 // reloads when the file is updated or overwritten.
-func Open(dsn string) (db *DB, err error) {
-	db = &DB{
+func Open(dsn string) (*DB, error) {
+	db := &DB{
 		file:        dsn,
 		notifyQuit:  make(chan struct{}),
 		notifyOpen:  make(chan string, 1),
 		notifyError: make(chan error, 1),
 		notifyInfo:  make(chan string, 1),
 	}
-	err = db.openFile()
+	err := db.openFile()
 	if err != nil {
 		db.Close()
 		return nil, err
@@ -77,46 +79,56 @@ func Open(dsn string) (db *DB, err error) {
 	return db, nil
 }
 
-// Calculate geoipupdate URL
-// The auto update URL for paid products has a fun scheme.
-// Use this function to calculate that URL from various information
-func GeoIPUpdateURL(hostName string, userID string, licenseKey string, productID string) (url string, err error) {
-	// Get the file name from the product
-	url = fmt.Sprintf("%s://%s/app/update_getfilename?product_id=%s", "https", hostName, productID)
-	resp, err := http.Get(url)
+// MaxMindUpdateURL generates the URL for MaxMind paid databases.
+func MaxMindUpdateURL(hostname, productID, userID, licenseKey string) (string, error) {
+	limiter := func(r io.Reader) *io.LimitedReader {
+		return &io.LimitedReader{R: r, N: 1 << 30}
+	}
+	baseurl := "https://" + hostname + "/app/"
+	// Get the file name for the product ID.
+	u := baseurl + "update_getfilename?product_id=" + productID
+	resp, err := http.Get(u)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	md5hash := md5.New()
+	_, err = io.Copy(md5hash, limiter(resp.Body))
 	if err != nil {
 		return "", err
 	}
-	hexDigest := fmt.Sprintf("%x", md5.Sum(body))
-
-	// Get our client IP address
-	url = fmt.Sprintf("%s://%s/app/update_getipaddr", "https", hostName)
-	resp, err = http.Get(url)
+	sum := md5hash.Sum(nil)
+	hexdigest1 := hex.EncodeToString(sum[:])
+	// Get our client IP address.
+	resp, err = http.Get(baseurl + "update_getipaddr")
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
-	body, err = ioutil.ReadAll(resp.Body)
+	md5hash = md5.New()
+	io.WriteString(md5hash, licenseKey)
+	_, err = io.Copy(md5hash, limiter(resp.Body))
 	if err != nil {
 		return "", err
 	}
-	challenge := []byte(fmt.Sprintf("%s%s", licenseKey, body))
-	hexDigest2 := fmt.Sprintf("%x", md5.Sum(challenge))
-
-	// Create the URL
-	return fmt.Sprintf("%s://%s/app/update_secure?db_md5=%s&challenge_md5=%s&user_id=%s&edition_id=%s", "https", hostName, hexDigest, hexDigest2, userID, productID), nil
+	sum = md5hash.Sum(nil)
+	hexdigest2 := hex.EncodeToString(sum[:])
+	// Generate the URL.
+	params := url.Values{
+		"db_md5":        {hexdigest1},
+		"challenge_md5": {hexdigest2},
+		"user_id":       {userID},
+		"edition_id":    {productID},
+	}
+	u = baseurl + "update_secure?" + params.Encode()
+	return u, nil
 }
 
 // OpenURL creates and initializes a DB from a URL.
 // It automatically downloads and updates the file in background, and
 // keeps a local copy on $TMPDIR.
-func OpenURL(url string, updateInterval, maxRetryInterval time.Duration) (db *DB, err error) {
-	db = &DB{
+func OpenURL(url string, updateInterval, maxRetryInterval time.Duration) (*DB, error) {
+	db := &DB{
 		file:             defaultDB,
 		notifyQuit:       make(chan struct{}),
 		notifyOpen:       make(chan string, 1),
@@ -127,7 +139,7 @@ func OpenURL(url string, updateInterval, maxRetryInterval time.Duration) (db *DB
 	}
 	db.openFile() // Optional, might fail.
 	go db.autoUpdate(url)
-	err = db.watchFile()
+	err := db.watchFile()
 	if err != nil {
 		db.Close()
 		return nil, fmt.Errorf("fsnotify failed for %s: %s", db.file, err)
@@ -371,19 +383,12 @@ func (db *DB) sendInfo(message string) {
 	}
 }
 
-// Lookup takes an IP address and a pointer to the result value to decode
-// into. The result value pointed to must be a data value that corresponds
-// to a record in the database. This may include a struct representation
-// of the data, a map capable of holding the data or an empty interface{}
-// value.
+// Lookup performs a database lookup of the given IP address, and stores
+// the response into the result value. The result value must be a struct
+// with specific fields and tags as described here:
+// https://godoc.org/github.com/oschwald/maxminddb-golang#Reader.Lookup
 //
-// If result is a pointer to a struct, the struct need not include a field
-// for every value that may be in the database. If a field is not present
-// in the structure, the decoder will not decode that field, reducing the
-// time required to decode the record.
-//
-// See https://godoc.org/github.com/oschwald/maxminddb-golang#Reader.Lookup
-// for details.
+// See the DefaultQuery for an example of the result struct.
 func (db *DB) Lookup(addr net.IP, result interface{}) error {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
@@ -420,7 +425,7 @@ type DefaultQuery struct {
 	} `maxminddb:"postal"`
 }
 
-// Close the database.
+// Close closes the database.
 func (db *DB) Close() {
 	db.mu.Lock()
 	defer db.mu.Unlock()
