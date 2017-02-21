@@ -41,6 +41,7 @@ var (
 // DB is the IP geolocation database.
 type DB struct {
 	file        string            // Database file name.
+	checksum    string            // MD5 of the unzipped database file
 	reader      *maxminddb.Reader // Actual db object.
 	notifyQuit  chan struct{}     // Stop auto-update and watch goroutines.
 	notifyOpen  chan string       // Notify when a db file is open.
@@ -177,7 +178,7 @@ func (db *DB) watchEvents(watcher *fsnotify.Watcher) {
 }
 
 func (db *DB) openFile() error {
-	reader, err := db.newReader(db.file)
+	reader, checksum, err := db.newReader(db.file)
 	if err != nil {
 		return err
 	}
@@ -185,29 +186,31 @@ func (db *DB) openFile() error {
 	if err != nil {
 		return err
 	}
-	db.setReader(reader, stat.ModTime())
+	db.setReader(reader, stat.ModTime(), checksum)
 	return nil
 }
 
-func (db *DB) newReader(dbfile string) (*maxminddb.Reader, error) {
+func (db *DB) newReader(dbfile string) (*maxminddb.Reader, string, error) {
 	f, err := os.Open(dbfile)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer f.Close()
 	gzf, err := gzip.NewReader(f)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer gzf.Close()
 	b, err := ioutil.ReadAll(gzf)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return maxminddb.FromBytes(b)
+	checksum := fmt.Sprintf("%x", md5.Sum(b))
+	mmdb, err := maxminddb.FromBytes(b)
+	return mmdb, checksum, err
 }
 
-func (db *DB) setReader(reader *maxminddb.Reader, modtime time.Time) {
+func (db *DB) setReader(reader *maxminddb.Reader, modtime time.Time, checksum string) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	if db.closed {
@@ -219,6 +222,7 @@ func (db *DB) setReader(reader *maxminddb.Reader, modtime time.Time) {
 	}
 	db.reader = reader
 	db.lastUpdated = modtime.UTC()
+	db.checksum = checksum
 	select {
 	case db.notifyOpen <- db.file:
 	default:
@@ -228,6 +232,7 @@ func (db *DB) setReader(reader *maxminddb.Reader, modtime time.Time) {
 func (db *DB) autoUpdate(url string) {
 	backoff := time.Second
 	for {
+		db.sendInfo("starting update")
 		err := db.runUpdate(url)
 		if err != nil {
 			bs := backoff.Seconds()
@@ -237,6 +242,7 @@ func (db *DB) autoUpdate(url string) {
 		} else {
 			backoff = db.updateInterval
 		}
+		db.sendInfo("finished update")
 		select {
 		case <-db.notifyQuit:
 			return
@@ -247,7 +253,6 @@ func (db *DB) autoUpdate(url string) {
 }
 
 func (db *DB) runUpdate(url string) error {
-	db.sendInfo("starting update")
 	yes, err := db.needUpdate(url)
 	if err != nil {
 		return err
@@ -264,7 +269,6 @@ func (db *DB) runUpdate(url string) error {
 		// Cleanup the tempfile if renaming failed.
 		os.RemoveAll(tmpfile)
 	}
-	db.sendInfo("finished update")
 	return err
 }
 
@@ -273,11 +277,19 @@ func (db *DB) needUpdate(url string) (bool, error) {
 	if err != nil {
 		return true, nil // Local db is missing, must be downloaded.
 	}
+
 	resp, err := http.Head(url)
 	if err != nil {
 		return false, err
 	}
 	defer resp.Body.Close()
+
+	// Check X-Database-MD5 if it exists
+	headerMd5 := resp.Header.Get("X-Database-MD5")
+	if len(headerMd5) > 0 && db.checksum != headerMd5 {
+		return true, nil
+	}
+
 	if stat.Size() != resp.ContentLength {
 		return true, nil
 	}
@@ -285,7 +297,6 @@ func (db *DB) needUpdate(url string) (bool, error) {
 }
 
 func (db *DB) download(url string) (tmpfile string, err error) {
-	db.sendInfo("starting download")
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -302,7 +313,6 @@ func (db *DB) download(url string) (tmpfile string, err error) {
 	if err != nil {
 		return "", err
 	}
-	db.sendInfo("finished download")
 	return tmpfile, nil
 }
 
