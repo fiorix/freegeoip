@@ -47,7 +47,7 @@ func NewHandler(c *Config) (http.Handler, error) {
 		return nil, fmt.Errorf("failed to open database: %v", err)
 	}
 	cf := cors.New(cors.Options{
-		AllowedOrigins:   []string{c.CORSOrigin},
+		AllowedOrigins:   strings.Split(c.CORSOrigin, ","),
 		AllowedMethods:   []string{"GET"},
 		AllowCredentials: true,
 	})
