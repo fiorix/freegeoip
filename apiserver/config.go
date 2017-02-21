@@ -16,34 +16,40 @@ import (
 
 // Config is the configuration of the freegeoip server.
 type Config struct {
-	ServerAddr         string
-	TLSServerAddr      string
-	TLSCertFile        string
-	TLSKeyFile         string
-	APIPrefix          string
-	CORSOrigin         string
-	ReadTimeout        time.Duration
-	WriteTimeout       time.Duration
-	PublicDir          string
-	DB                 string
-	UpdateInterval     time.Duration
-	RetryInterval      time.Duration
-	UseXForwardedFor   bool
-	Silent             bool
-	LogToStdout        bool
-	LogTimestamp       bool
-	RedisAddr          string
-	RedisTimeout       time.Duration
-	MemcacheAddr       string
-	MemcacheTimeout    time.Duration
-	RateLimitBackend   string
-	RateLimitLimit     uint64
-	RateLimitInterval  time.Duration
-	InternalServerAddr string
-	UpdatesHost        string
-	LicenseKey         string
-	UserID             string
-	ProductID          string
+	FastOpen            bool   // TCP Fast Open
+	Naggle              bool   // TCP Naggle (buffered, disables TCP_NODELAY)
+	ServerAddr          string // HTTP server addr
+	TLSServerAddr       string // HTTPS server addr
+	TLSCertFile         string
+	TLSKeyFile          string
+	LetsEncrypt         bool
+	LetsEncryptCacheDir string
+	LetsEncryptEmail    string
+	LetsEncryptHosts    string
+	APIPrefix           string
+	CORSOrigin          string
+	ReadTimeout         time.Duration
+	WriteTimeout        time.Duration
+	PublicDir           string
+	DB                  string
+	UpdateInterval      time.Duration
+	RetryInterval       time.Duration
+	UseXForwardedFor    bool
+	Silent              bool
+	LogToStdout         bool
+	LogTimestamp        bool
+	RedisAddr           string
+	RedisTimeout        time.Duration
+	MemcacheAddr        string
+	MemcacheTimeout     time.Duration
+	RateLimitBackend    string
+	RateLimitLimit      uint64
+	RateLimitInterval   time.Duration
+	InternalServerAddr  string
+	UpdatesHost         string
+	LicenseKey          string
+	UserID              string
+	ProductID           string
 
 	errorLog  *log.Logger
 	accessLog *log.Logger
@@ -52,34 +58,46 @@ type Config struct {
 // NewConfig creates and initializes a new Config with default values.
 func NewConfig() *Config {
 	return &Config{
-		ServerAddr:        ":8080",
-		TLSCertFile:       "cert.pem",
-		TLSKeyFile:        "key.pem",
-		APIPrefix:         "/",
-		CORSOrigin:        "*",
-		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      15 * time.Second,
-		DB:                freegeoip.MaxMindDB,
-		UpdateInterval:    24 * time.Hour,
-		RetryInterval:     2 * time.Hour,
-		LogTimestamp:      true,
-		RedisAddr:         "localhost:6379",
-		RedisTimeout:      time.Second,
-		MemcacheAddr:      "localhost:11211",
-		MemcacheTimeout:   time.Second,
-		RateLimitBackend:  "redis",
-		RateLimitInterval: time.Hour,
-		UpdatesHost:       "updates.maxmind.com",
-		ProductID:         "GeoIP2-City",
+		FastOpen:            false,
+		Naggle:              false,
+		ServerAddr:          ":8080",
+		TLSCertFile:         "cert.pem",
+		TLSKeyFile:          "key.pem",
+		LetsEncrypt:         false,
+		LetsEncryptCacheDir: ".",
+		LetsEncryptEmail:    "",
+		LetsEncryptHosts:    "",
+		APIPrefix:           "/",
+		CORSOrigin:          "*",
+		ReadTimeout:         30 * time.Second,
+		WriteTimeout:        15 * time.Second,
+		DB:                  freegeoip.MaxMindDB,
+		UpdateInterval:      24 * time.Hour,
+		RetryInterval:       2 * time.Hour,
+		LogTimestamp:        true,
+		RedisAddr:           "localhost:6379",
+		RedisTimeout:        time.Second,
+		MemcacheAddr:        "localhost:11211",
+		MemcacheTimeout:     time.Second,
+		RateLimitBackend:    "redis",
+		RateLimitInterval:   time.Hour,
+		UpdatesHost:         "updates.maxmind.com",
+		ProductID:           "GeoIP2-City",
 	}
 }
 
 // AddFlags adds configuration flags to the given FlagSet.
 func (c *Config) AddFlags(fs *flag.FlagSet) {
+	fs.BoolVar(&c.Naggle, "tcp-naggle", c.Naggle, "Enable TCP Nagle's algorithm (disables NO_DELAY)")
+	fs.BoolVar(&c.FastOpen, "tcp-fast-open", c.FastOpen, "Enable TCP fast open")
 	fs.StringVar(&c.ServerAddr, "http", c.ServerAddr, "Address in form of ip:port to listen on for HTTP")
 	fs.StringVar(&c.TLSServerAddr, "https", c.TLSServerAddr, "Address in form of ip:port to listen on for HTTPS")
 	fs.StringVar(&c.TLSCertFile, "cert", c.TLSCertFile, "X.509 certificate file for HTTPS server")
 	fs.StringVar(&c.TLSKeyFile, "key", c.TLSKeyFile, "X.509 key file for HTTPS server")
+	fs.BoolVar(&c.LetsEncrypt, "letsencrypt", c.LetsEncrypt, "Enable automatic TLS using letsencrypt.org")
+	fs.StringVar(&c.LetsEncryptEmail, "letsencrypt-email", c.LetsEncryptEmail, "Optional email to register with letsencrypt (default is anonymous)")
+	fs.StringVar(&c.LetsEncryptHosts, "letsencrypt-hosts", c.LetsEncryptHosts, "Comma separated list of hosts for the certificate (required)")
+	fs.StringVar(&c.LetsEncryptCacheDir, "letsencrypt-cache-dir", c.LetsEncryptCacheDir, "Letsencrypt cache dir (for storing certs)")
 	fs.StringVar(&c.APIPrefix, "api-prefix", c.APIPrefix, "URL prefix for API endpoints")
 	fs.StringVar(&c.CORSOrigin, "cors-origin", c.CORSOrigin, "CORS origin API endpoints")
 	fs.DurationVar(&c.ReadTimeout, "read-timeout", c.ReadTimeout, "Read timeout for HTTP and HTTPS client conns")

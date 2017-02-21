@@ -11,10 +11,12 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 
 	// embed pprof server.
 	_ "net/http/pprof"
 
+	"github.com/fiorix/go-listener/listener"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -69,21 +71,52 @@ func connStateMetrics(proto string) connStateFunc {
 	}
 }
 
+func listenerOpts(c *Config) []listener.Option {
+	opts := []listener.Option{}
+	if c.FastOpen {
+		opts = append(opts, listener.FastOpen())
+	}
+	if c.Naggle {
+		opts = append(opts, listener.Naggle())
+	}
+	return opts
+}
+
 func runServer(c *Config, f http.Handler) {
 	log.Println("freegeoip http server starting on", c.ServerAddr)
+	ln, err := listener.New(c.ServerAddr, listenerOpts(c)...)
+	if err != nil {
+		log.Fatal(err)
+	}
 	srv := &http.Server{
-		Addr:         c.ServerAddr,
 		Handler:      f,
 		ReadTimeout:  c.ReadTimeout,
 		WriteTimeout: c.WriteTimeout,
 		ErrorLog:     c.errorLogger(),
 		ConnState:    connStateMetrics("http"),
 	}
-	log.Fatal(srv.ListenAndServe())
+	log.Fatal(srv.Serve(ln))
 }
 
 func runTLSServer(c *Config, f http.Handler) {
 	log.Println("freegeoip https server starting on", c.TLSServerAddr)
+	opts := listenerOpts(c)
+	if c.LetsEncrypt {
+		if c.LetsEncryptHosts == "" {
+			log.Fatal("letsencrypt hosts not set")
+		}
+		opts = append(opts, listener.LetsEncrypt(
+			c.LetsEncryptCacheDir,
+			c.LetsEncryptEmail,
+			strings.Split(c.LetsEncryptHosts, ",")...,
+		))
+	} else {
+		opts = append(opts, listener.TLS(c.TLSCertFile, c.TLSKeyFile))
+	}
+	ln, err := listener.New(c.TLSServerAddr, opts...)
+	if err != nil {
+		log.Fatal(err)
+	}
 	srv := &http.Server{
 		Addr:         c.TLSServerAddr,
 		Handler:      f,
@@ -92,7 +125,7 @@ func runTLSServer(c *Config, f http.Handler) {
 		ErrorLog:     c.errorLogger(),
 		ConnState:    connStateMetrics("https"),
 	}
-	log.Fatal(srv.ListenAndServeTLS(c.TLSCertFile, c.TLSKeyFile))
+	log.Fatal(srv.Serve(ln))
 }
 
 func runInternalServer(c *Config) {
