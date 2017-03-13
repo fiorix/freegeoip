@@ -38,7 +38,7 @@ yum install docker
 Run the freegeoip web server:
 
 ```bash
-docker run --net=host --restart=always -d fiorix/freegeoip
+docker run --restart=always -p 8080:8080 -d fiorix/freegeoip
 ```
 
 Test:
