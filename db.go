@@ -411,6 +411,7 @@ func (db *DB) Lookup(addr net.IP, result interface{}) error {
 // DefaultQuery is the default query used for database lookups.
 type DefaultQuery struct {
 	Continent struct {
+		Code  string            `maxminddb:"code"`
 		Names map[string]string `maxminddb:"names"`
 	} `maxminddb:"continent"`
 	Country struct {
