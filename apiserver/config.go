@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/fiorix/freegeoip"
@@ -126,6 +127,77 @@ func (c *Config) AddFlags(fs *flag.FlagSet) {
 	fs.StringVar(&c.ProductID, "product-id", c.ProductID, "MaxMind Product ID (e.g GeoIP2-City)")
 	fs.StringVar(&c.NewrelicName, "newrelic-name", c.NewrelicName, "Newrepic APM application name")
 	fs.StringVar(&c.NewrelicKey, "newrelic-key", c.NewrelicKey, "Nerelic API key")
+
+	err := setFlagsFromEnv("FREEGEOIP", fs)
+	if err != nil {
+    //c.errorLogger(err)
+	}
+}
+
+// SetFlagsFromEnv parses all registered flags in the given flagset,
+// and if they are not already set it attempts to set their values from
+// environment variables. Environment variables take the name of the flag but
+// are UPPERCASE, have the given prefix  and any dashes are replaced by
+// underscores - for example: some-flag => FREEGEOIP_SOME_FLAG
+func setFlagsFromEnv(prefix string, fs *flag.FlagSet) error {
+	var err error
+	alreadySet := make(map[string]bool)
+	fs.Visit(func(f *flag.Flag) {
+		alreadySet[flagToEnv(prefix, f.Name)] = true
+	})
+	usedEnvKey := make(map[string]bool)
+	fs.VisitAll(func(f *flag.Flag) {
+		err = setFlagFromEnv(fs, prefix, f.Name, usedEnvKey, alreadySet, true)
+	})
+
+	verifyEnv(prefix, usedEnvKey, alreadySet)
+
+	return err
+}
+
+func verifyEnv(prefix string, usedEnvKey, alreadySet map[string]bool) {
+	for _, env := range os.Environ() {
+		kv := strings.SplitN(env, "=", 2)
+		if len(kv) != 2 {
+			//plog.Warningf("found invalid env %s", env)
+		}
+		if usedEnvKey[kv[0]] {
+			continue
+		}
+		if alreadySet[kv[0]] {
+			//plog.Infof("recognized environment variable %s, but unused: shadowed by corresponding flag ", kv[0])
+			continue
+		}
+		if strings.HasPrefix(env, prefix+"_") {
+			//plog.Warningf("unrecognized environment variable %s", env)
+		}
+	}
+}
+
+// FlagToEnv converts flag string to upper-case environment variable key string.
+func flagToEnv(prefix, name string) string {
+	return prefix + "_" + strings.ToUpper(strings.Replace(name, "-", "_", -1))
+}
+
+type flagSetter interface {
+	Set(fk string, fv string) error
+}
+
+func setFlagFromEnv(fs flagSetter, prefix, fname string, usedEnvKey, alreadySet map[string]bool, log bool) error {
+	key := flagToEnv(prefix, fname)
+	if !alreadySet[key] {
+		val := os.Getenv(key)
+		if val != "" {
+			usedEnvKey[key] = true
+			if serr := fs.Set(fname, val); serr != nil {
+				//return fmt.Errorf("invalid value %q for %s: %v", val, key, serr)
+			}
+			if log {
+				//plog.Infof("recognized and used environment variable %s=%s", key, val)
+			}
+		}
+	}
+	return nil
 }
 
 func (c *Config) logWriter() io.Writer {
