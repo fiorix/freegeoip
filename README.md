@@ -56,11 +56,18 @@ There are [pre-compiled binaries](https://github.com/fiorix/freegeoip/releases) 
 There is also a [Chef cookbook](https://supermarket.chef.io/cookbooks/freegeoip) to deploy it automatically.
 
 <a name="serveroptions">
+
 ### Server Options
 
 You can configure the freegeoip web server to listen on a port
 other than the default 8080, and also listen on HTTPS by passing
 an ip:port and X.509 certificate and key files.
+
+For example, to have freegeoip listen on port 12904, run the following command:
+
+```
+docker run --restart=always -p 12904:12904 -d fiorix/freegeoip -http 0.0.0.0:12904
+```
 
 These and many other options are described in the help. If you're
 using Docker, you can see them like this:
