@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"bufio"
 
 	"github.com/howeyc/fsnotify"
 	"github.com/oschwald/maxminddb-golang"
@@ -196,18 +197,45 @@ func (db *DB) newReader(dbfile string) (*maxminddb.Reader, string, error) {
 		return nil, "", err
 	}
 	defer f.Close()
-	gzf, err := gzip.NewReader(f)
+
+	isFileGzip, err := isGzip(f) 
 	if err != nil {
 		return nil, "", err
 	}
-	defer gzf.Close()
-	b, err := ioutil.ReadAll(gzf)
-	if err != nil {
-		return nil, "", err
+
+	var b []byte
+
+	if isFileGzip {
+		gzf, err := gzip.NewReader(f)
+		if err != nil {
+			return nil, "", err
+		}
+		defer gzf.Close()
+		content, err := ioutil.ReadAll(gzf)
+		if err != nil {
+			return nil, "", err
+		}
+		b = content
+	} else {
+		content, err := ioutil.ReadAll(f)
+		if err != nil {
+			return nil, "", err
+		}
+		b = content
 	}
 	checksum := fmt.Sprintf("%x", md5.Sum(b))
 	mmdb, err := maxminddb.FromBytes(b)
 	return mmdb, checksum, err
+}
+
+func isGzip(f *os.File) (bool, error) {
+	// check first two bytes to see if file is gzip'd 
+	bufferedReader := bufio.NewReader(f)
+	firstTwoBytesInFile, err := bufferedReader.Peek(2) //read 2 bytes
+	if err != nil {
+		return false, err
+	}
+	return (firstTwoBytesInFile[0] == 0x1f) && (firstTwoBytesInFile[1] == 0x8b), nil
 }
 
 func (db *DB) setReader(reader *maxminddb.Reader, modtime time.Time, checksum string) {
