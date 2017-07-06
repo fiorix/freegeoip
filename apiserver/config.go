@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/fiorix/freegeoip"
+	"github.com/kelseyhightower/envconfig"
 )
 
 // Config is the configuration of the freegeoip server.
@@ -90,6 +91,10 @@ func NewConfig() *Config {
 
 // AddFlags adds configuration flags to the given FlagSet.
 func (c *Config) AddFlags(fs *flag.FlagSet) {
+	err := envconfig.Process("freegeoip", c)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 	fs.BoolVar(&c.Naggle, "tcp-naggle", c.Naggle, "Enable TCP Nagle's algorithm (disables NO_DELAY)")
 	fs.BoolVar(&c.FastOpen, "tcp-fast-open", c.FastOpen, "Enable TCP fast open")
 	fs.StringVar(&c.ServerAddr, "http", c.ServerAddr, "Address in form of ip:port to listen on for HTTP")
