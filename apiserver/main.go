@@ -73,6 +73,9 @@ func connStateMetrics(proto string) connStateFunc {
 
 func listenerOpts(c *Config) []listener.Option {
 	opts := []listener.Option{}
+	if c.HTTP2 {
+		opts = append(opts, listener.HTTP2())
+	}
 	if c.FastOpen {
 		opts = append(opts, listener.FastOpen())
 	}
@@ -103,7 +106,7 @@ func runTLSServer(c *Config, f http.Handler) {
 	opts := listenerOpts(c)
 	if c.LetsEncrypt {
 		if c.LetsEncryptHosts == "" {
-			log.Fatal("letsencrypt hosts not set")
+			log.Fatal("must set at least one host using --letsencrypt-hosts")
 		}
 		opts = append(opts, listener.LetsEncrypt(
 			c.LetsEncryptCacheDir,
@@ -124,6 +127,7 @@ func runTLSServer(c *Config, f http.Handler) {
 		WriteTimeout: c.WriteTimeout,
 		ErrorLog:     c.errorLogger(),
 		ConnState:    connStateMetrics("https"),
+		TLSConfig:    ln.TLSConfig(),
 	}
 	log.Fatal(srv.Serve(ln))
 }

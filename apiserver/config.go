@@ -19,6 +19,7 @@ import (
 type Config struct {
 	FastOpen            bool   // TCP Fast Open
 	Naggle              bool   // TCP Naggle (buffered, disables TCP_NODELAY)
+	HTTP2               bool   // Enables HTTP/2 when TLS is enabled
 	ServerAddr          string // HTTP server addr
 	TLSServerAddr       string // HTTPS server addr
 	TLSCertFile         string
@@ -63,6 +64,7 @@ func NewConfig() *Config {
 	return &Config{
 		FastOpen:            false,
 		Naggle:              false,
+		HTTP2:               true,
 		ServerAddr:          ":8080",
 		TLSCertFile:         "cert.pem",
 		TLSKeyFile:          "key.pem",
@@ -97,6 +99,7 @@ func (c *Config) AddFlags(fs *flag.FlagSet) {
 	}
 	fs.BoolVar(&c.Naggle, "tcp-naggle", c.Naggle, "Enable TCP Nagle's algorithm (disables NO_DELAY)")
 	fs.BoolVar(&c.FastOpen, "tcp-fast-open", c.FastOpen, "Enable TCP fast open")
+	fs.BoolVar(&c.HTTP2, "http2", c.HTTP2, "Enable HTTP/2 when TLS is enabled")
 	fs.StringVar(&c.ServerAddr, "http", c.ServerAddr, "Address in form of ip:port to listen on for HTTP")
 	fs.StringVar(&c.TLSServerAddr, "https", c.TLSServerAddr, "Address in form of ip:port to listen on for HTTPS")
 	fs.StringVar(&c.TLSCertFile, "cert", c.TLSCertFile, "X.509 certificate file for HTTPS server")
