@@ -73,9 +73,6 @@ func connStateMetrics(proto string) connStateFunc {
 
 func listenerOpts(c *Config) []listener.Option {
 	opts := []listener.Option{}
-	if c.HTTP2 {
-		opts = append(opts, listener.HTTP2())
-	}
 	if c.FastOpen {
 		opts = append(opts, listener.FastOpen())
 	}
@@ -104,6 +101,9 @@ func runServer(c *Config, f http.Handler) {
 func runTLSServer(c *Config, f http.Handler) {
 	log.Println("freegeoip https server starting on", c.TLSServerAddr)
 	opts := listenerOpts(c)
+	if c.HTTP2 {
+		opts = append(opts, listener.HTTP2())
+	}
 	if c.LetsEncrypt {
 		if c.LetsEncryptHosts == "" {
 			log.Fatal("must set at least one host using --letsencrypt-hosts")

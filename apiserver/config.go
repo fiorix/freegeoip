@@ -21,6 +21,7 @@ type Config struct {
 	Naggle              bool          `envconfig:"TCP_NAGGLE"`
 	ServerAddr          string        `envconfig:"HTTP"`
 	HTTP2               bool          `envconfig:"HTTP2"`
+	HSTS                string        `envconfig:"HSTS"`
 	TLSServerAddr       string        `envconfig:"HTTPS"`
 	TLSCertFile         string        `envconfig:"CERT"`
 	TLSKeyFile          string        `envconfig:"KEY"`
@@ -64,8 +65,9 @@ func NewConfig() *Config {
 	return &Config{
 		FastOpen:            false,
 		Naggle:              false,
-		HTTP2:               true,
 		ServerAddr:          ":8080",
+		HTTP2:               true,
+		HSTS:                "",
 		TLSCertFile:         "cert.pem",
 		TLSKeyFile:          "key.pem",
 		LetsEncrypt:         false,
@@ -96,8 +98,9 @@ func (c *Config) AddFlags(fs *flag.FlagSet) {
 	defer envconfig.Process("freegeoip", c)
 	fs.BoolVar(&c.Naggle, "tcp-naggle", c.Naggle, "Enable TCP Nagle's algorithm (disables NO_DELAY)")
 	fs.BoolVar(&c.FastOpen, "tcp-fast-open", c.FastOpen, "Enable TCP fast open")
-	fs.BoolVar(&c.HTTP2, "http2", c.HTTP2, "Enable HTTP/2 when TLS is enabled")
 	fs.StringVar(&c.ServerAddr, "http", c.ServerAddr, "Address in form of ip:port to listen on for HTTP")
+	fs.BoolVar(&c.HTTP2, "http2", c.HTTP2, "Enable HTTP/2 when TLS is enabled")
+	fs.StringVar(&c.HSTS, "hsts", c.HSTS, "Set HSTS to the value provided on all responses")
 	fs.StringVar(&c.TLSServerAddr, "https", c.TLSServerAddr, "Address in form of ip:port to listen on for HTTPS")
 	fs.StringVar(&c.TLSCertFile, "cert", c.TLSCertFile, "X.509 certificate file for HTTPS server")
 	fs.StringVar(&c.TLSKeyFile, "key", c.TLSKeyFile, "X.509 key file for HTTPS server")

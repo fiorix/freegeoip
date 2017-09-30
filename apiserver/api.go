@@ -169,6 +169,9 @@ func (f *apiHandler) iplookup(writer writerFunc) http.HandlerFunc {
 			http.Error(w, "Try again later.", http.StatusServiceUnavailable)
 			return
 		}
+		if r.TLS != nil && f.conf.HSTS != "" {
+			w.Header().Set("Strict-Transport-Security", f.conf.HSTS)
+		}
 		w.Header().Set("X-Database-Date", f.db.Date().Format(http.TimeFormat))
 		resp := q.Record(ip, r.Header.Get("Accept-Language"))
 		writer(w, r, resp)
