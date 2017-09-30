@@ -17,43 +17,43 @@ import (
 
 // Config is the configuration of the freegeoip server.
 type Config struct {
-	FastOpen            bool   // TCP Fast Open
-	Naggle              bool   // TCP Naggle (buffered, disables TCP_NODELAY)
-	HTTP2               bool   // Enables HTTP/2 when TLS is enabled
-	ServerAddr          string // HTTP server addr
-	TLSServerAddr       string // HTTPS server addr
-	TLSCertFile         string
-	TLSKeyFile          string
-	LetsEncrypt         bool
-	LetsEncryptCacheDir string
-	LetsEncryptEmail    string
-	LetsEncryptHosts    string
-	APIPrefix           string
-	CORSOrigin          string
-	ReadTimeout         time.Duration
-	WriteTimeout        time.Duration
-	PublicDir           string
-	DB                  string
-	UpdateInterval      time.Duration
-	RetryInterval       time.Duration
-	UseXForwardedFor    bool
-	Silent              bool
-	LogToStdout         bool
-	LogTimestamp        bool
-	RedisAddr           string
-	RedisTimeout        time.Duration
-	MemcacheAddr        string
-	MemcacheTimeout     time.Duration
-	RateLimitBackend    string
-	RateLimitLimit      uint64
-	RateLimitInterval   time.Duration
-	InternalServerAddr  string
-	UpdatesHost         string
-	LicenseKey          string
-	UserID              string
-	ProductID           string
-	NewrelicName        string
-	NewrelicKey         string
+	FastOpen            bool          `envconfig:"TCP_FAST_OPEN"`
+	Naggle              bool          `envconfig:"TCP_NAGGLE"`
+	ServerAddr          string        `envconfig:"HTTP"`
+	HTTP2               bool          `envconfig:"HTTP2"`
+	TLSServerAddr       string        `envconfig:"HTTPS"`
+	TLSCertFile         string        `envconfig:"CERT"`
+	TLSKeyFile          string        `envconfig:"KEY"`
+	LetsEncrypt         bool          `envconfig:"LETSENCRYPT"`
+	LetsEncryptCacheDir string        `envconfig:"LETSENCRYPT_CACHE_DIR"`
+	LetsEncryptEmail    string        `envconfig:"LETSENCRYPT_EMAIL"`
+	LetsEncryptHosts    string        `envconfig:"LETSENCRYPT_HOSTS"`
+	APIPrefix           string        `envconfig:"API_PREFIX"`
+	CORSOrigin          string        `envconfig:"CORS_ORIGIN"`
+	ReadTimeout         time.Duration `envconfig:"READ_TIMEOUT"`
+	WriteTimeout        time.Duration `envconfig:"WRITE_TIMEOUT"`
+	PublicDir           string        `envconfig:"PUBLIC"`
+	DB                  string        `envconfig:"DB"`
+	UpdateInterval      time.Duration `envconfig:"UPDATE_INTERVAL"`
+	RetryInterval       time.Duration `envconfig:"RETRY_INTERVAL"`
+	UseXForwardedFor    bool          `envconfig:"USE_X_FORWARDED_FOR"`
+	Silent              bool          `envconfig:"SILENT"`
+	LogToStdout         bool          `envconfig:"LOGTOSTDOUT"`
+	LogTimestamp        bool          `envconfig:"LOGTIMESTAMP"`
+	RedisAddr           string        `envconfig:"REDIS"`
+	RedisTimeout        time.Duration `envconfig:"REDIS_TIMEOUT"`
+	MemcacheAddr        string        `envconfig:"MEMCACHE"`
+	MemcacheTimeout     time.Duration `envconfig:"MEMCACHE_TIMEOUT"`
+	RateLimitBackend    string        `envconfig:"QUOTA_BACKEND"`
+	RateLimitLimit      uint64        `envconfig:"QUOTA_MAX"`
+	RateLimitInterval   time.Duration `envconfig:"QUOTA_INTERVAL"`
+	InternalServerAddr  string        `envconfig:"INTERNAL_SERVER"`
+	UpdatesHost         string        `envconfig:"UPDATES_HOST"`
+	LicenseKey          string        `envconfig:"LICENSE_KEY"`
+	UserID              string        `envconfig:"USER_ID"`
+	ProductID           string        `envconfig:"PRODUCT_ID"`
+	NewrelicName        string        `envconfig:"NEWRELIC_NAME"`
+	NewrelicKey         string        `envconfig:"NEWRELIC_KEY"`
 
 	errorLog  *log.Logger
 	accessLog *log.Logger
@@ -93,10 +93,7 @@ func NewConfig() *Config {
 
 // AddFlags adds configuration flags to the given FlagSet.
 func (c *Config) AddFlags(fs *flag.FlagSet) {
-	err := envconfig.Process("freegeoip", c)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	defer envconfig.Process("freegeoip", c)
 	fs.BoolVar(&c.Naggle, "tcp-naggle", c.Naggle, "Enable TCP Nagle's algorithm (disables NO_DELAY)")
 	fs.BoolVar(&c.FastOpen, "tcp-fast-open", c.FastOpen, "Enable TCP fast open")
 	fs.BoolVar(&c.HTTP2, "http2", c.HTTP2, "Enable HTTP/2 when TLS is enabled")
