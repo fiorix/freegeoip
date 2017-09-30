@@ -64,6 +64,7 @@ See the [Server Options](#serveroptions) section below for more information on c
 For automation, check out the [freegeoip chef cookbook](https://supermarket.chef.io/cookbooks/freegeoip) or the (legacy) [Ansible Playbook](./cmd/freegeoip/ansible-playbook) for Ubuntu 14.04 LTS.
 
 <a name="serveroptions">
+
 ### Server Options
 
 To see all the available options, use the `-help` option:
@@ -153,6 +154,7 @@ Both are disabled by default, but can be enabled by passing the `-internal-serve
 HTTP pprof is available at `/debug/pprof` and the examples from the [pprof](https://golang.org/pkg/net/http/pprof/) package documentation should work on the freegeiop web server.
 
 <a name="packagefreegeoip">
+
 ## Package freegeoip
 
 The freegeoip package for the Go programming language provides two APIs:
