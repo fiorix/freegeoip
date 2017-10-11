@@ -14,28 +14,25 @@ This section is for people who desire to run the freegeoip web server on their o
 
 ### Docker
 
-Install Docker on Ubuntu:
+#### Install Docker
 
-```bash
-sudo apt-get install docker.io
-```
+Docker has [install instructions for many platforms](https://docs.docker.com/engine/installation/),
+including
+- [Ubuntu](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/)
+- [CentOS](https://docs.docker.com/engine/installation/linux/docker-ce/centos/)
+- [Mac](https://docs.docker.com/docker-for-mac/install/)
 
-Install Docker on CentOS 7:
-
-```bash
-yum install docker
-```
-
-Run the freegeoip web server:
+#### Run the API in a container
 
 ```bash
 docker run --restart=always -p 8080:8080 -d fiorix/freegeoip
 ```
 
-Test:
+#### Test
 
 ```bash
 curl localhost:8080/json/1.2.3.4
+# => {"ip":"1.2.3.4","country_code":"US","country_name":"United States", # ...
 ```
 
 ### Other Linux, OS X, FreeBSD, and Windows
