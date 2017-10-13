@@ -116,3 +116,35 @@ func TestWriters(t *testing.T) {
 		}
 	}
 }
+
+func TestParseAcceptLanguage(t *testing.T) {
+	var names = make(map[string]string)
+	names["en"] = "Romania"
+	names["de"] = "Rumänien"
+	names["ro"] = "România"
+	names["fr"] = "Roumanie"
+	testParseAcceptLanguage(t, names, "de", "de")
+	testParseAcceptLanguage(t, names, "de-DE", "de")
+	testParseAcceptLanguage(t, names, "de-DE, en", "de")
+	testParseAcceptLanguage(t, names, "en-US, de-DE", "en")
+	testParseAcceptLanguage(t, names, "fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5", "fr")
+	testParseAcceptLanguage(t, names, "en;q=0.1, de;q=0.8, fr;q=0.7, *;q=0.5", "de")
+
+	// less languages
+	names = make(map[string]string)
+	names["en"] = "Romania"
+	names["de"] = "Rumänien"
+	testParseAcceptLanguage(t, names, "fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5", "en")
+
+	// no languages
+	names = make(map[string]string)
+	testParseAcceptLanguage(t, names, "fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5", "en")
+}
+
+func testParseAcceptLanguage(t *testing.T, names map[string]string, header string, language string) {
+	result := parseAcceptLanguage(header, names)
+
+	if result != language {
+		t.Fatalf("Parsed language '%s' from header '%s'  doesn't match language '%s'", result, header, language)
+	}
+}
