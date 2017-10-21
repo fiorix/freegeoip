@@ -30,6 +30,7 @@ import (
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/cors"
+	"golang.org/x/text/language"
 
 	"github.com/fiorix/freegeoip"
 )
@@ -227,10 +228,8 @@ type geoipQuery struct {
 }
 
 func (q *geoipQuery) Record(ip net.IP, lang string) *responseRecord {
-	// TODO: parse accept-language value from lang.
-	if q.Country.Names[lang] == "" {
-		lang = "en"
-	}
+	lang = parseAcceptLanguage(lang, q.Country.Names)
+
 	r := &responseRecord{
 		IP:          ip.String(),
 		CountryCode: q.Country.ISOCode,
@@ -247,6 +246,29 @@ func (q *geoipQuery) Record(ip net.IP, lang string) *responseRecord {
 		r.RegionName = q.Region[0].Names[lang]
 	}
 	return r
+}
+
+func parseAcceptLanguage(header string, dbLangs map[string]string) string {
+	// supported languages -- i.e. languages available in the DB
+	matchLangs := []language.Tag{
+		language.English,
+	}
+
+	// parse available DB languages and add to supported
+	for name := range dbLangs {
+		matchLangs = append(matchLangs, language.Raw.Make(name))
+	}
+
+	var matcher = language.NewMatcher(matchLangs)
+
+	// parse header
+	t, _, _ := language.ParseAcceptLanguage(header)
+	// match most acceptable language
+	tag, _, _ := matcher.Match(t...)
+	// extract base language
+	base, _ := tag.Base()
+
+	return base.String()
 }
 
 func roundFloat(val float64, roundOn float64, places int) (newVal float64) {
