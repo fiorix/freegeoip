@@ -21,24 +21,6 @@
 			"revisionTime": "2017-02-08T21:30:04Z"
 		},
 		{
-			"checksumSHA1": "bvd8LkQAIwPZND7b3vpVsPSbkqQ=",
-			"path": "github.com/fiorix/freegeoip",
-			"revision": "2dd1041b59f1341a60bdbecfc4c918a8e86f30b6",
-			"revisionTime": "2017-01-06T11:01:25Z"
-		},
-		{
-			"checksumSHA1": "3NOCRqHwvi2qGzdFJpUbuRNvp9s=",
-			"path": "github.com/fiorix/freegeoip/apiserver",
-			"revision": "2dd1041b59f1341a60bdbecfc4c918a8e86f30b6",
-			"revisionTime": "2017-01-06T11:01:25Z"
-		},
-		{
-			"checksumSHA1": "s3x0QTPmuue1OQckgsD00CvvS4k=",
-			"path": "github.com/fiorix/freegeoip/cmd/freegeoip",
-			"revision": "2dd1041b59f1341a60bdbecfc4c918a8e86f30b6",
-			"revisionTime": "2017-01-06T11:01:25Z"
-		},
-		{
 			"checksumSHA1": "vUi/+n01Nx+mByM/1KVJnkPvo7s=",
 			"path": "github.com/fiorix/go-listener/listener",
 			"revision": "dbaa12f318e53bfcad4e7e6fd1c342c27c05ad27",
@@ -255,5 +237,5 @@
 			"revisionTime": "2017-10-09T19:53:40Z"
 		}
 	],
-	"rootPath": "github.com/fiorix/freegeoip"
+	"rootPath": "github.com/apilayer/freegeoip"
 }

@@ -11,8 +11,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/fiorix/freegeoip"
 	"github.com/kelseyhightower/envconfig"
+
+	"github.com/apilayer/freegeoip"
 )
 
 // Config is the configuration of the freegeoip server.
