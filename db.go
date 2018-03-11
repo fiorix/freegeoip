@@ -414,8 +414,9 @@ type DefaultQuery struct {
 		Names map[string]string `maxminddb:"names"`
 	} `maxminddb:"continent"`
 	Country struct {
-		ISOCode string            `maxminddb:"iso_code"`
-		Names   map[string]string `maxminddb:"names"`
+		ISOCode           string            `maxminddb:"iso_code"`
+		IsInEuropeanUnion bool              `maxminddb:"is_in_european_union"`
+		Names             map[string]string `maxminddb:"names"`
 	} `maxminddb:"country"`
 	Region []struct {
 		ISOCode string            `maxminddb:"iso_code"`
