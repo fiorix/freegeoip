@@ -1,6 +1,6 @@
 # freegeoip - Important Announcement
 
-[The old freegeoip API is now deprecated and will be discontinued on July 1st, 2018]
+*[The old freegeoip API is now deprecated and will be discontinued on July 1st, 2018]*
 
 Launched more than 6 years ago, the freegeoip.net API has grown into one of the biggest and most widely used APIs for IP to location services worldwide. The API is used by thousands of developers, SMBs and large corporations around the globe and is currently handling more than 2 billion requests per day. After years of operation and the API remaining almost unchanged, today we announce the complete re-launch of freegeoip into a faster, more advanced and more scalable API service called ipstack. All users that wish to continue using our IP to location service will be required to sign up to obtain a free API access key and perform a few simple changes to their integration. While the new API offers the ability to return data in the same structure as the old freegeoip API, the new API structure offers various options of delivering much more advanced data for IP Addresses.
 
