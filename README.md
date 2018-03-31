@@ -9,10 +9,10 @@ Launched more than 6 years ago, the freegeoip.net API has grown into one of the 
 As of March 31 2018 the old freegeoip API is deprecated and a completely re-designed API is now accessible at http://api.ipstack.com. While the new API offers the same capabilities as the old one and also has the option of returning data in the legacy format, the API URL has now changed and all users are required to sign up for a free API Access Key to use the service.
 
 1. Get a free ipstack Account and Access Key
-Head over to ipstack.com and follow the instructions to create your account and obtain your access token. If you only need basic IP to Geolocation data and do not require more than 10,000 requests per month, you can use the free account. If you'd like more advanced features or more requests than included in the free account you will need to choose one of the paid options. You can find an overview of all available plans at http://ipstack.com/product
+Head over to https://ipstack.com and follow the instructions to create your account and obtain your access token. If you only need basic IP to Geolocation data and do not require more than 10,000 requests per month, you can use the free account. If you'd like more advanced features or more requests than included in the free account you will need to choose one of the paid options. You can find an overview of all available plans at https://ipstack.com/product
 
 2. Integrate the new API URL
-The new API comes with a completely new endpoint (api.ipstack.com) and requires you to append your API Access Key to the URL as a GET parameter. For complete integration instructions, please head over to the API Documentation at http://ipstack.com/documentation. While the new API offers a completely reworked response structure with many additional data points, we also offer the option to receive results in the old freegeoip.net format in JSON or XML.
+The new API comes with a completely new endpoint (api.ipstack.com) and requires you to append your API Access Key to the URL as a GET parameter. For complete integration instructions, please head over to the API Documentation at https://ipstack.com/documentation. While the new API offers a completely reworked response structure with many additional data points, we also offer the option to receive results in the old freegeoip.net format in JSON or XML.
 
 To receive your API results in the old freegeoip format, please simply append &legacy=1 to the new API URL. 
 
@@ -20,11 +20,11 @@ JSON Example: http://api.ipstack.com/186.116.207.169?access_key=YOUR_ACCESS_KEY&
 
 XML Example: http://api.ipstack.com/186.116.207.169?access_key=YOUR_ACCESS_KEY&output=xml&legacy=1
 
-New features with ipstack
-While the new ipstack service now runs on a commercial/freemium model, we have worked hard at building a faster, more scalable, and more advanced IP to location API product. You can read more about all the new features by navigating to http://ipstack.com, but here's a list of the most important changes and additions:
+## New features with ipstack
+While the new ipstack service now runs on a commercial/freemium model, we have worked hard at building a faster, more scalable, and more advanced IP to location API product. You can read more about all the new features by navigating to https://ipstack.com, but here's a list of the most important changes and additions:
 
 - We're still free for basic usage
-While we now offer paid / premium options for our more advanced users, our core product and IP to Country/Region/City product is still completely free of charge for up to 10,000 requests per month. If you need more advanced data or more requests, you can choose one of the paid plans listed at http://ipstack.com/product
+While we now offer paid / premium options for our more advanced users, our core product and IP to Country/Region/City product is still completely free of charge for up to 10,000 requests per month. If you need more advanced data or more requests, you can choose one of the paid plans listed at https://ipstack.com/product
 
 -  Batch Requests
 Need to validate more than 1 IP Address in a single API Call? Our new Bulk Lookup Feature (available on our paid plans) allows you to geolocate up to 50 IP Addresses in a single API Call.
