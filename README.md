@@ -9,9 +9,11 @@ Launched more than 6 years ago, the freegeoip.net API has grown into one of the 
 As of March 31 2018 the old freegeoip API is deprecated and a completely re-designed API is now accessible at http://api.ipstack.com. While the new API offers the same capabilities as the old one and also has the option of returning data in the legacy format, the API URL has now changed and all users are required to sign up for a free API Access Key to use the service.
 
 1. Get a free ipstack Account and Access Key
+
 Head over to https://ipstack.com and follow the instructions to create your account and obtain your access token. If you only need basic IP to Geolocation data and do not require more than 10,000 requests per month, you can use the free account. If you'd like more advanced features or more requests than included in the free account you will need to choose one of the paid options. You can find an overview of all available plans at https://ipstack.com/product
 
 2. Integrate the new API URL
+
 The new API comes with a completely new endpoint (api.ipstack.com) and requires you to append your API Access Key to the URL as a GET parameter. For complete integration instructions, please head over to the API Documentation at https://ipstack.com/documentation. While the new API offers a completely reworked response structure with many additional data points, we also offer the option to receive results in the old freegeoip.net format in JSON or XML.
 
 To receive your API results in the old freegeoip format, please simply append &legacy=1 to the new API URL. 
@@ -24,20 +26,25 @@ XML Example: http://api.ipstack.com/186.116.207.169?access_key=YOUR_ACCESS_KEY&o
 While the new ipstack service now runs on a commercial/freemium model, we have worked hard at building a faster, more scalable, and more advanced IP to location API product. You can read more about all the new features by navigating to https://ipstack.com, but here's a list of the most important changes and additions:
 
 - We're still free for basic usage
+
 While we now offer paid / premium options for our more advanced users, our core product and IP to Country/Region/City product is still completely free of charge for up to 10,000 requests per month. If you need more advanced data or more requests, you can choose one of the paid plans listed at https://ipstack.com/product
 
 -  Batch Requests
+
 Need to validate more than 1 IP Address in a single API Call? Our new Bulk Lookup Feature (available on our paid plans) allows you to geolocate up to 50 IP Addresses in a single API Call.
 
 - Much more Data
+
 While the old freegeoip API was limited to provide only the most basic IP to location data, our new API provides more than 20 additional data points including Language, Time Zone, Current Time, Currencies, Connection & ASN Information, and much more. To learn more about all the data points available, please head over to the ipstack website.
 
 - Security & Fraud Prevention Tools
+
 Do you want to prevent fraudulent traffic from arriving at your website or from abusing your service? Easily spot malicious / proxy / VPN traffic by using our new Security Module, which outputs a lot of valuable security information about an IP Address.
 
 Next Steps
 
 - Deprecation of the old API
+
 While we want to keep the disruption to our current users as minimal as possible, we are planning to shut the old API down on July 1st, 2018. This should give all users enough time to adapt to changes, and should we still see high volumes of traffic going to the old API by that date, we may decide to extend it further. In any case, we highly recommend you switch to the new API as soon as possible. We will keep you posted here about any changes to the planned shutdown date.
 
 - Any Questions? Please get in touch!
