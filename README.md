@@ -1,4 +1,4 @@
-![freegeoip ipstack](https://github.com/fixerAPI/fixer/blob/master/warning.png?raw=true)
+![freegeoip ipstack](https://raw.githubusercontent.com/apilayer/freegeoip/master/freegeo-warning.png)
 
 # freegeoip - Important Announcement
 
