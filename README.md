@@ -1,3 +1,5 @@
+![freegeoip ipstack](https://github.com/fixerAPI/fixer/blob/master/warning.png?raw=true)
+
 # freegeoip - Important Announcement
 
 *[The old freegeoip API is now deprecated and will be discontinued on July 1st, 2018]*
