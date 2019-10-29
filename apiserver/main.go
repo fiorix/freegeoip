@@ -17,7 +17,6 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/fiorix/go-listener/listener"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Version tag.
@@ -133,7 +132,6 @@ func runTLSServer(c *Config, f http.Handler) {
 }
 
 func runInternalServer(c *Config) {
-	http.Handle("/metrics", prometheus.Handler())
 	log.Println("freegeoip internal server starting on", c.InternalServerAddr)
 	log.Fatal(http.ListenAndServe(c.InternalServerAddr, nil))
 }
