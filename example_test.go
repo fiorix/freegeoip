@@ -11,7 +11,7 @@ import (
 )
 
 func ExampleOpen() {
-	db, err := Open("./testdata.gz")
+	db, err := Open("./testdata")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,7 +21,6 @@ func ExampleOpen() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	log.Printf("%#v", result)
 }
 
 func ExampleOpenURL() {

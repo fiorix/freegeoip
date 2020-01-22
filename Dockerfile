@@ -1,10 +1,17 @@
-FROM golang:1.9
+FROM golang:1.13
+
+ENV GO111MODULE=auto
+
+ARG SRC=/go/src/github.com/fiorix/freegeoip
+
+WORKDIR ${SRC}
 
 COPY cmd/freegeoip/public /var/www
 
-ADD . /go/src/github.com/fiorix/freegeoip
+ADD . ${SRC}
+
 RUN \
-	cd /go/src/github.com/fiorix/freegeoip/cmd/freegeoip && \
+	cd ${SRC}/cmd/freegeoip && \
 	go get -d && go install && \
 	apt-get update && apt-get install -y libcap2-bin && \
 	setcap cap_net_bind_service=+ep /go/bin/freegeoip && \
@@ -12,6 +19,7 @@ RUN \
 	useradd -ms /bin/bash freegeoip
 
 USER freegeoip
+
 ENTRYPOINT ["/go/bin/freegeoip"]
 
 EXPOSE 8080

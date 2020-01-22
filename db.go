@@ -5,6 +5,7 @@
 package freegeoip
 
 import (
+	"archive/tar"
 	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
@@ -20,6 +21,7 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"regexp"
 
 	"github.com/howeyc/fsnotify"
 	"github.com/oschwald/maxminddb-golang"
@@ -32,10 +34,13 @@ var (
 	ErrUnavailable = errors.New("no database available")
 
 	// Local cached copy of a database downloaded from a URL.
-	defaultDB = filepath.Join(os.TempDir(), "freegeoip", "db.gz")
+	defaultDB = filepath.Join(os.TempDir(), "freegeoip", "db.tar.gz")
 
 	// MaxMindDB is the URL of the free MaxMind GeoLite2 database.
 	MaxMindDB = "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
+
+	// MaxMindFileName default filename from downloadable
+	MaxMindFileName = "GeoLite2-City.mmdb"
 )
 
 // DB is the IP geolocation database.
@@ -196,18 +201,40 @@ func (db *DB) newReader(dbfile string) (*maxminddb.Reader, string, error) {
 		return nil, "", err
 	}
 	defer f.Close()
+
 	gzf, err := gzip.NewReader(f)
 	if err != nil {
-		return nil, "", err
+		fmt.Println(err)
 	}
 	defer gzf.Close()
-	b, err := ioutil.ReadAll(gzf)
-	if err != nil {
-		return nil, "", err
+
+	tr := tar.NewReader(gzf)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break // End of archive
+		}
+		if err != nil {
+			return nil, "", err
+		}
+
+		filename, err := regexp.MatchString(MaxMindFileName, hdr.Name)
+		if err != nil {
+			fmt.Printf("filename not match: %s:%v", hdr.Name, err)
+			break;
+		}
+		
+		if filename {
+			b, err := ioutil.ReadAll(tr)
+			if err != nil {
+				return nil, "", err
+			}
+			checksum := fmt.Sprintf("%x", md5.Sum(b))
+			mmdb, err := maxminddb.FromBytes(b)
+			return mmdb, checksum, err
+		}
 	}
-	checksum := fmt.Sprintf("%x", md5.Sum(b))
-	mmdb, err := maxminddb.FromBytes(b)
-	return mmdb, checksum, err
+	return nil, "", err
 }
 
 func (db *DB) setReader(reader *maxminddb.Reader, modtime time.Time, checksum string) {
@@ -303,7 +330,7 @@ func (db *DB) download(url string) (tmpfile string, err error) {
 	}
 	defer resp.Body.Close()
 	tmpfile = filepath.Join(os.TempDir(),
-		fmt.Sprintf("_freegeoip.%d.db.gz", time.Now().UnixNano()))
+		fmt.Sprintf("_freegeoip.%d.db.tar.gz", time.Now().UnixNano()))
 	f, err := os.Create(tmpfile)
 	if err != nil {
 		return "", err
