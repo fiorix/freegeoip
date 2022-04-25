@@ -1,8 +1,0 @@
-- name: Deploy iptables configuration
-  template: src=iptables.rules
-            dest=/etc/iptables/rules.v4
-            owner=root
-            group=root
-            mode=0644
-  notify:
-    - reload-iptables

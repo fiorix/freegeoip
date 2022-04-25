@@ -1,2 +1,0 @@
-- name: restart-freegeoip
-  service: name=freegeoip state=restarted

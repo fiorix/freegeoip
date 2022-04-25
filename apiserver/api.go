@@ -28,7 +28,6 @@ import (
 	"github.com/go-web/httprl/memcacherl"
 	"github.com/go-web/httprl/redisrl"
 	newrelic "github.com/newrelic/go-agent"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/cors"
 	"golang.org/x/text/language"
 
@@ -103,7 +102,7 @@ func newPublicDirHandler(path string) http.HandlerFunc {
 	if path != "" {
 		handler = http.FileServer(http.Dir(path))
 	}
-	return prometheus.InstrumentHandler("frontend", handler)
+	return handler.ServeHTTP
 }
 
 func hstsMiddleware(policy string) httpmux.MiddlewareFunc {
@@ -155,14 +154,12 @@ func clientMetricsMiddleware(db *freegeoip.DB) httpmux.MiddlewareFunc {
 type writerFunc func(w http.ResponseWriter, r *http.Request, d *responseRecord)
 
 func (f *apiHandler) register(name string, writer writerFunc) http.HandlerFunc {
-	var h http.Handler
-	if f.nrapp == nil {
-		h = prometheus.InstrumentHandler(name, f.iplookup(writer))
-	} else {
-		h = prometheus.InstrumentHandler(newrelic.WrapHandle(f.nrapp, name, f.iplookup(writer)))
-	}
-
-	return f.cors.Handler(h).ServeHTTP
+	// if f.nrapp == nil {
+	// 	h = prometheus.InstrumentHandler(name, f.iplookup(writer))
+	// } else {
+	// 	h = prometheus.InstrumentHandler(newrelic.WrapHandle(f.nrapp, name, f.iplookup(writer)))
+	// }
+	return f.cors.Handler(f.iplookup(writer)).ServeHTTP
 }
 
 func (f *apiHandler) iplookup(writer writerFunc) http.HandlerFunc {

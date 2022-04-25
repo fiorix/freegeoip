@@ -1,5 +1,17 @@
 # freegeoip
 
+**Forked from fiorix and updated a little bit**
+
+Main changes in this fork:
+- Use a new DB url
+- Update to Go 1.18
+- Use `go mod` for dependencies
+- Remove custom http listener and use just the standard library http listener.
+  - This removes letencrypt support as well as some other features
+- Remove prometheus handler wrapper
+
+---
+
 **NOTE:** as of April 2018 this repository is no longer active. Please visit https://github.com/apilayer/freegeoip/ for the current version.
 
 ---

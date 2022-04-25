@@ -1,2 +1,0 @@
-- name: restart-nodeexporter
-  service: name=node_exporter state=restarted
